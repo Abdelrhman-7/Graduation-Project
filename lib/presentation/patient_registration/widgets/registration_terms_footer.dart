@@ -6,7 +6,7 @@ import '../../../core/resources/string_manager.dart';
 import '../../../core/resources/values_manager.dart';
 
 class RegistrationTermsFooter extends StatelessWidget {
-  final VoidCallback onCompleteRegistration;
+  final VoidCallback? onCompleteRegistration;
 
   const RegistrationTermsFooter({
     super.key,

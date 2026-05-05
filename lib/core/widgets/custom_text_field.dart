@@ -13,6 +13,7 @@ class CustomTextField extends StatelessWidget {
   final TextEditingController? controller;
   final TextInputType? keyboardType;
   final String? Function(String?)? validator;
+  final void Function(String)? onChanged;
 
   const CustomTextField({
     super.key,
@@ -25,7 +26,11 @@ class CustomTextField extends StatelessWidget {
     this.controller,
     this.keyboardType,
     this.validator,
+    this.onChanged,
+    this.readOnly = false,
   });
+
+  final bool readOnly;
 
   @override
   Widget build(BuildContext context) {
@@ -66,6 +71,8 @@ class CustomTextField extends StatelessWidget {
             obscureText: obscureText,
             keyboardType: keyboardType,
             validator: validator,
+            onChanged: onChanged,
+            readOnly: readOnly,
             decoration: InputDecoration(
               hintText: hintText,
               hintStyle: GoogleFonts.notoSans(

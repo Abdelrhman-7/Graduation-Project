@@ -55,6 +55,10 @@ class AppStrings {
   static const String ageHint = 'Enter your age';
   static const String gender = 'Gender';
   static const String genderHint = 'Select your gender';
+  static const String phoneNumber = 'Phone Number';
+  static const String phoneNumberHint = '+20 123 456 7890';
+  static const String address = 'Address';
+  static const String addressHint = 'Cairo, Egypt';
 
   // Form fields (Provider)
   static const String providerEmailHint = 'e.g., john@example.com';
