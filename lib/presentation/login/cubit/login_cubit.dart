@@ -7,11 +7,13 @@ import 'login_state.dart';
 class LoginCubit extends Cubit<LoginState> {
   final ApiManager _apiService;
   final SharedPrefController _prefController = SharedPrefController();
+  LoginCubit(this._apiService) : super(LoginInitial());
+  final ApiManager _apiService;
+  final SharedPrefController _prefController = SharedPrefController();
 
   LoginCubit(this._apiService) : super(LoginInitial());
 
   bool isObscure = true;
-
   void togglePasswordVisibility() {
     isObscure = !isObscure;
     emit(LoginPasswordVisibilityChanged());
@@ -19,6 +21,17 @@ class LoginCubit extends Cubit<LoginState> {
 
   Future<void> login(LoginRequest request) async {
     emit(LoginLoading());
+    try {
+      final response = await _apiService.login(request);
+      if (response.status == true) {
+        await _prefController.saveLogin(request.email);
+        emit(LoginSuccess(response));
+      } else {
+        emit(LoginError(response.message ?? 'Login failed'));
+      }
+    } catch (e) {
+      emit(LoginError(e.toString()));
+    }
     try {
       final response = await _apiService.login(request);
 

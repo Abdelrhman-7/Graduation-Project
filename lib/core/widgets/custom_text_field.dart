@@ -28,7 +28,13 @@ class CustomTextField extends StatelessWidget {
     this.validator,
     this.onChanged,
     this.readOnly = false,
+    this.initialValue,
+    this.onChanged,
+    this.readOnly = false,
   });
+
+  final bool readOnly;
+  final String? initialValue;
 
   final bool readOnly;
 
@@ -45,7 +51,7 @@ class CustomTextField extends StatelessWidget {
             ),
             child: Text(
               label!,
-              style: GoogleFonts.notoSans(
+              style: GoogleFonts.lexend(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: ColorManager.headlineText,
@@ -67,6 +73,7 @@ class CustomTextField extends StatelessWidget {
           ),
           child: TextFormField(
             controller: controller,
+            initialValue: initialValue,
             maxLines: maxLines,
             obscureText: obscureText,
             keyboardType: keyboardType,

@@ -1,3 +1,5 @@
+// ignore_for_file: duplicate_ignore, deprecated_member_use
+
 import 'package:flutter/material.dart';
 import '../../../core/resources/color_manager.dart';
 import '../../../core/resources/string_manager.dart';
@@ -19,6 +21,7 @@ class AuthChoiceViewBody extends StatelessWidget {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
+            // ignore: deprecated_member_use
             ColorManager.primary.withOpacity(0.1),
             Colors.white,
           ],

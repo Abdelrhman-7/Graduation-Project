@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import '../models/login_model.dart';
 import '../models/register_model.dart';
+import '../models/logout_model.dart';
 
 class ApiManager {
   final Dio _dio;

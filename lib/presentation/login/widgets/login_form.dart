@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:graduationproject/presentation/login/cubit/login_state.dart';
+import 'package:graduationproject/presentation/patient_home_dashboard/view/patient_home_dashboard_view.dart';
+import 'package:graduationproject/presentation/doctor/view/doctor_home_view.dart';
+import '../../role_selection/cubit/role_selection_state.dart';
 import '../../../core/resources/color_manager.dart';
 import '../../../core/resources/string_manager.dart';
 import '../../../core/resources/values_manager.dart';
@@ -11,6 +14,8 @@ import '../../../data/models/login_model.dart';
 import '../../patient_home/view/patient_home_view.dart';
 
 class LoginForm extends StatefulWidget {
+  final UserRole role;
+  const LoginForm({super.key, required this.role});
   const LoginForm({super.key});
 
   @override
@@ -18,6 +23,8 @@ class LoginForm extends StatefulWidget {
 }
 
 class _LoginFormState extends State<LoginForm> {
+  final _emailController = TextEditingController(text: 'abdo77@gmail.com');
+  final _passwordController = TextEditingController(text: '123456789@#\$Abdo');
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
@@ -140,6 +147,11 @@ class _LoginFormState extends State<LoginForm> {
                 Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(builder: (_) => const PatientHomeView()),
+                  MaterialPageRoute(
+                    builder: (_) => widget.role == UserRole.doctor
+                        ? const DoctorHomeView()
+                        : const PatientHomeDashboardView(),
+                  ),
                   (route) => false,
                 );
               }
@@ -155,6 +167,9 @@ class _LoginFormState extends State<LoginForm> {
                             context.read<LoginCubit>().login(
                               LoginRequest(
                                 email: _emailController.text.trim().toLowerCase(),
+                                email: _emailController.text
+                                    .trim()
+                                    .toLowerCase(),
                                 password: _passwordController.text.trim(),
                               ),
                             );
@@ -181,6 +196,7 @@ class _LoginFormState extends State<LoginForm> {
               );
             },
           ),
+
           const SizedBox(height: AppSize.s32),
 
           // Don't have an account
