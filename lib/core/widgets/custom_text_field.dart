@@ -13,6 +13,7 @@ class CustomTextField extends StatelessWidget {
   final TextEditingController? controller;
   final TextInputType? keyboardType;
   final String? Function(String?)? validator;
+  final void Function(String)? onChanged;
 
   const CustomTextField({
     super.key,
@@ -25,7 +26,13 @@ class CustomTextField extends StatelessWidget {
     this.controller,
     this.keyboardType,
     this.validator,
+    this.onChanged,
+    this.readOnly = false,
+    this.initialValue,
   });
+
+  final bool readOnly;
+  final String? initialValue;
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +47,7 @@ class CustomTextField extends StatelessWidget {
             ),
             child: Text(
               label!,
-              style: GoogleFonts.notoSans(
+              style: GoogleFonts.lexend(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: ColorManager.headlineText,
@@ -62,10 +69,13 @@ class CustomTextField extends StatelessWidget {
           ),
           child: TextFormField(
             controller: controller,
+            initialValue: initialValue,
             maxLines: maxLines,
             obscureText: obscureText,
             keyboardType: keyboardType,
             validator: validator,
+            onChanged: onChanged,
+            readOnly: readOnly,
             decoration: InputDecoration(
               hintText: hintText,
               hintStyle: GoogleFonts.notoSans(

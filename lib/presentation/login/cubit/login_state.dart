@@ -1,4 +1,4 @@
-part of 'login_cubit.dart';
+import '../../../data/models/login_model.dart';
 
 abstract class LoginState {}
 
@@ -6,14 +6,14 @@ class LoginInitial extends LoginState {}
 
 class LoginLoading extends LoginState {}
 
-class LoginSuccess extends LoginState {}
+class LoginSuccess extends LoginState {
+  final LoginResponse response;
+  LoginSuccess(this.response);
+}
 
 class LoginError extends LoginState {
   final String message;
   LoginError(this.message);
 }
 
-class LoginPasswordVisibilityChanged extends LoginState {
-  final bool isObscure;
-  LoginPasswordVisibilityChanged(this.isObscure);
-}
+class LoginPasswordVisibilityChanged extends LoginState {}

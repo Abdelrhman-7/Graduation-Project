@@ -69,4 +69,81 @@ class ThemeManager {
       useMaterial3: true,
     );
   }
+
+  // Chat Text Styles
+  static TextStyle getChatDateStyle() => GoogleFonts.lexend(
+        fontSize: 11,
+        fontWeight: FontWeight.w700,
+        color: ColorManager.chatPrimary,
+        letterSpacing: 1.1, // 10%
+      );
+
+  static TextStyle getDoctorBubbleStyle() => GoogleFonts.lexend(
+        fontSize: 14,
+        fontWeight: FontWeight.w400,
+        color: ColorManager.headlineText,
+        height: 1.6,
+      );
+
+  static TextStyle getPatientBubbleStyle() => GoogleFonts.lexend(
+        fontSize: 14,
+        fontWeight: FontWeight.w400,
+        color: ColorManager.white,
+        height: 1.6,
+      );
+
+  static TextStyle getChatTimeStyle() => GoogleFonts.lexend(
+        fontSize: 10,
+        fontWeight: FontWeight.w500,
+        color: ColorManager.chatTime,
+      );
+
+  static TextStyle getDoctorNameStyle() => GoogleFonts.lexend(
+        fontSize: 16,
+        fontWeight: FontWeight.w700,
+        color: ColorManager.headlineText,
+      );
+
+  static TextStyle getDoctorStatusStyle() => GoogleFonts.lexend(
+        fontSize: 12,
+        fontWeight: FontWeight.w500,
+        color: ColorManager.chatPrimary,
+      );
+
+  // Lab Results Text Styles
+  static TextStyle getLabHeading1Style() => GoogleFonts.lexend(
+        fontSize: 32,
+        fontWeight: FontWeight.w700,
+        color: ColorManager.ebony,
+      );
+
+  static TextStyle getLabHeading3Style() => GoogleFonts.lexend(
+        fontSize: 18,
+        fontWeight: FontWeight.w700,
+        color: ColorManager.ebony,
+      );
+
+  static TextStyle getLabHeading4Style() => GoogleFonts.lexend(
+        fontSize: 16,
+        fontWeight: FontWeight.w700,
+        color: ColorManager.ebony,
+      );
+
+  static TextStyle getLabBodyStyle() => GoogleFonts.lexend(
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+        color: ColorManager.grayChateau,
+      );
+
+  static TextStyle getLabBadgeStyle(Color color) => GoogleFonts.lexend(
+        fontSize: 10,
+        fontWeight: FontWeight.w700,
+        color: color,
+      );
+
+  static TextStyle getLabDateStyle() => GoogleFonts.lexend(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        color: ColorManager.grayChateau,
+      );
 }

@@ -1,21 +1,31 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-
-part 'login_state.dart';
+import '../../../data/api/api_manager.dart';
+import '../../../data/models/login_model.dart';
+import '../../../data/repository/shared_pref_controller.dart';
+import 'login_state.dart';
 
 class LoginCubit extends Cubit<LoginState> {
-  LoginCubit() : super(LoginInitial());
-
+  final ApiManager _apiService;
+  final SharedPrefController _prefController = SharedPrefController();
+  LoginCubit(this._apiService) : super(LoginInitial());
   bool isObscure = true;
-
   void togglePasswordVisibility() {
     isObscure = !isObscure;
-    emit(LoginPasswordVisibilityChanged(isObscure));
+    emit(LoginPasswordVisibilityChanged());
   }
 
-  void login(String email, String password) async {
+  Future<void> login(LoginRequest request) async {
     emit(LoginLoading());
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 2));
-    emit(LoginSuccess());
+    try {
+      final response = await _apiService.login(request);
+      if (response.status == true) {
+        await _prefController.saveLogin(request.email);
+        emit(LoginSuccess(response));
+      } else {
+        emit(LoginError(response.message ?? 'Login failed'));
+      }
+    } catch (e) {
+      emit(LoginError(e.toString()));
+    }
   }
 }
