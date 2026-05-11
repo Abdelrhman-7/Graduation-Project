@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'core/resources/theme_manager.dart';
 import 'presentation/auth_choice/view/auth_choice_view.dart';
+import 'presentation/patient_home_dashboard/view/patient_home_dashboard_view.dart';
 import 'data/api/api_manager.dart';
 import 'data/repository/repository.dart';
 import 'presentation/login/cubit/login_cubit.dart';
@@ -35,7 +36,10 @@ class MyApp extends StatelessWidget {
       child: MultiBlocProvider(
         providers: [
           BlocProvider(
-            create: (context) => LoginCubit(context.read<ApiManager>()),
+            create: (context) => LoginCubit(
+              context.read<ApiManager>(),
+              context.read<SharedPrefController>(),
+            ),
           ),
           BlocProvider(
             create: (context) =>
@@ -47,7 +51,7 @@ class MyApp extends StatelessWidget {
           title: 'Graduation Project',
           theme: ThemeManager.getApplicationTheme(),
           home: isLoggedIn
-              ? const AuthChoiceView() // This should probably go to Dashboard if logged in
+              ? const PatientHomeDashboardView()
               : const AuthChoiceView(),
         ),
       ),

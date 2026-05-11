@@ -280,7 +280,7 @@ class ApiManager {
 
   Future<bool> chooseRole(String role) async {
     try {
-      final response = await _dio.post(
+      final response = await _dio.get(
         'Identity/AccountApi/ChooseRole',
         queryParameters: {'role': role},
       );

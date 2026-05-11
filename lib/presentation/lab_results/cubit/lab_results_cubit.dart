@@ -8,7 +8,7 @@ class LabResultsCubit extends Cubit<LabResultsState> {
     emit(LabResultsLoading());
     try {
       // Mocking API call
-      await Future.delayed(const Duration(seconds: 1));
+      await Future.delayed(const Duration(milliseconds: 300));
       emit(LabResultsSuccess(reports: [], detailedResults: []));
     } catch (e) {
       emit(LabResultsError(e.toString()));

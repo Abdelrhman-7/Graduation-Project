@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/resources/string_manager.dart';
 import '../../chat/view/chat_view.dart';
 import '../../lab_results/view/lab_results_view.dart';
+import '../../patient_profile/view/patient_profile_view.dart';
 import '../widgets/patient_bottom_nav.dart';
 import '../cubit/patient_home_dashboard_cubit.dart';
 import '../cubit/patient_home_dashboard_state.dart';
@@ -194,31 +195,39 @@ class _TopBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Stack(
-            children: [
-              CircleAvatar(
-                radius: 20 * scale,
-                backgroundColor: const Color(0xFFE2E8F0),
-                child: Icon(
-                  Icons.person,
-                  size: 20 * scale,
-                  color: const Color(0xFF64748B),
-                ),
-              ),
-              Positioned(
-                right: 0,
-                bottom: 0,
-                child: Container(
-                  width: 12 * scale,
-                  height: 12 * scale,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF22C55E),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2 * scale),
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const PatientProfileView()),
+              );
+            },
+            child: Stack(
+              children: [
+                CircleAvatar(
+                  radius: 20 * scale,
+                  backgroundColor: const Color(0xFFE2E8F0),
+                  child: Icon(
+                    Icons.person,
+                    size: 20 * scale,
+                    color: const Color(0xFF64748B),
                   ),
                 ),
-              ),
-            ],
+                Positioned(
+                  right: 0,
+                  bottom: 0,
+                  child: Container(
+                    width: 12 * scale,
+                    height: 12 * scale,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF22C55E),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2 * scale),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
           SizedBox(width: 12 * scale),
           Expanded(
@@ -632,48 +641,56 @@ class _StatsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.fromLTRB(
-        17 * scale,
-        10 * scale,
-        17 * scale,
-        17 * scale,
-      ),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFF1F5F9), Colors.white],
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const LabResultsView()),
+        );
+      },
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.fromLTRB(
+          17 * scale,
+          10 * scale,
+          17 * scale,
+          17 * scale,
         ),
-        borderRadius: BorderRadius.circular(12 * scale),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: Row(
-        children: [
-          _StatItem(
-            scale: scale,
-            icon: Icons.favorite_border,
-            iconBg: const Color(0xFFFEE2E2),
-            label: AppStrings.heartRate,
-            value: '72',
-            suffix: AppStrings.bpm,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFFF1F5F9), Colors.white],
           ),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 12 * scale),
-            child: Container(
-              width: 1,
-              height: 32 * scale,
-              color: const Color(0xFFE2E8F0),
+          borderRadius: BorderRadius.circular(12 * scale),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+        ),
+        child: Row(
+          children: [
+            _StatItem(
+              scale: scale,
+              icon: Icons.favorite_border,
+              iconBg: const Color(0xFFFEE2E2),
+              label: AppStrings.heartRate,
+              value: '72',
+              suffix: AppStrings.bpm,
             ),
-          ),
-          _StatItem(
-            scale: scale,
-            icon: Icons.bloodtype_outlined,
-            iconBg: const Color(0xFFE7EDF3),
-            iconColor: const Color(0xFF3B82F6),
-            label: AppStrings.bloodType,
-            value: 'O+',
-          ),
-        ],
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 12 * scale),
+              child: Container(
+                width: 1,
+                height: 32 * scale,
+                color: const Color(0xFFE2E8F0),
+              ),
+            ),
+            _StatItem(
+              scale: scale,
+              icon: Icons.bloodtype_outlined,
+              iconBg: const Color(0xFFE7EDF3),
+              iconColor: const Color(0xFF3B82F6),
+              label: AppStrings.bloodType,
+              value: 'O+',
+            ),
+          ],
+        ),
       ),
     );
   }

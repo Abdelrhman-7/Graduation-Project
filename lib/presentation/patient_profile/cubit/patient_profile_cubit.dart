@@ -20,7 +20,7 @@ class PatientProfileCubit extends Cubit<PatientProfileState> {
       final email = await sharedPrefController.getEmail() ?? 'N/A';
 
       // Mocking API call for other fields
-      await Future.delayed(const Duration(milliseconds: 800));
+      await Future.delayed(const Duration(milliseconds: 300));
       emit(
         PatientProfileSuccess(
           name: 'Alex Rivera',

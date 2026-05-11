@@ -6,8 +6,8 @@ import 'login_state.dart';
 
 class LoginCubit extends Cubit<LoginState> {
   final ApiManager _apiService;
-  final SharedPrefController _prefController = SharedPrefController();
-  LoginCubit(this._apiService) : super(LoginInitial());
+  final SharedPrefController _prefController;
+  LoginCubit(this._apiService, this._prefController) : super(LoginInitial());
   bool isObscure = true;
   void togglePasswordVisibility() {
     isObscure = !isObscure;

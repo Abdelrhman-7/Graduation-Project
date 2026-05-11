@@ -201,12 +201,12 @@ class AppStrings {
   static const String postSurgeryFollowUp = 'Post-surgery Follow-up';
 
   // Provider Registration
-  static const String providerRegistration = 'Provider Registration';
+  //static const String providerRegistration = 'Provider Registration';
   static const String medicalSpecialization = 'Medical Specialization';
   static const String selectSpecialty = 'Select your specialty';
   static const String medicalLicenseNumber = 'Medical License Number';
   static const String licenseHint = 'e.g., MD-12345678';
-  static const String yearsOfExperience = 'Years of Experience';
+  //static const String yearsOfExperience = 'Years of Experience';
   static const String yearsHint = 'e.g., 5';
   static const String identityVerification = 'Identity Verification';
   static const String uploadCredentials = 'Upload Credentials';

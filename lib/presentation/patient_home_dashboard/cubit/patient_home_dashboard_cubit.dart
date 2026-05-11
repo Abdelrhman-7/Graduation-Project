@@ -8,7 +8,7 @@ class PatientHomeDashboardCubit extends Cubit<PatientHomeDashboardState> {
     emit(PatientHomeDashboardLoading());
     try {
       // Mocking API call
-      await Future.delayed(const Duration(seconds: 1));
+      await Future.delayed(const Duration(milliseconds: 300));
       emit(PatientHomeDashboardSuccess(
         userName: 'Alex',
         medications: [

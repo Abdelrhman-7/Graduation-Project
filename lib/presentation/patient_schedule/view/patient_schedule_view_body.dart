@@ -6,6 +6,8 @@ import '../../patient_home_dashboard/view/patient_home_dashboard_view.dart';
 import '../../patient_home_dashboard/widgets/appointment_card.dart';
 import '../../patient_home_dashboard/widgets/past_visit_item.dart';
 
+import '../../patient_home_dashboard/widgets/patient_bottom_nav.dart';
+
 class PatientScheduleViewBody extends StatefulWidget {
   const PatientScheduleViewBody({super.key});
 
@@ -37,7 +39,7 @@ class _PatientScheduleViewBodyState extends State<PatientScheduleViewBody> {
             ),
           ),
         ),
-        _buildBottomNav(context),
+        const PatientBottomNav(currentIndex: 1),
       ],
     );
   }

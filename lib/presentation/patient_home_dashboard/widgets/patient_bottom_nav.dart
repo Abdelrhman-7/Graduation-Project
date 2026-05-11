@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:graduationproject/presentation/patient_home_dashboard/view/patient_home_dashboard_view.dart';
 import '../../../../core/resources/string_manager.dart';
 import '../../patient_schedule/view/patient_schedule_view.dart';
 import '../../lab_results/view/lab_results_view.dart';
@@ -30,7 +31,12 @@ class PatientBottomNav extends StatelessWidget {
               active: currentIndex == 0,
               onTap: () {
                 if (currentIndex != 0) {
-                   Navigator.of(context).popUntil((route) => route.isFirst);
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const PatientHomeDashboardView(),
+                    ),
+                  );
                 }
               },
             ),
@@ -61,9 +67,7 @@ class PatientBottomNav extends StatelessWidget {
                 if (currentIndex != 2) {
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(
-                      builder: (_) => const LabResultsView(),
-                    ),
+                    MaterialPageRoute(builder: (_) => const LabResultsView()),
                   );
                 }
               },
@@ -109,6 +113,7 @@ class _NavItem extends StatelessWidget {
     final c = active ? const Color(0xFF137FEC) : const Color(0xFF94A3B8);
     return GestureDetector(
       onTap: onTap,
+      behavior: HitTestBehavior.opaque,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
