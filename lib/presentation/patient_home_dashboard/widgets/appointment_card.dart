@@ -9,6 +9,7 @@ class AppointmentCard extends StatelessWidget {
   final String specialty;
   final String dateTime;
   final String imagePath;
+  final String timeSlot;
 
   const AppointmentCard({
     super.key,
@@ -16,6 +17,7 @@ class AppointmentCard extends StatelessWidget {
     required this.specialty,
     required this.dateTime,
     required this.imagePath,
+    this.timeSlot = '10:00 AM',
   });
 
   @override
@@ -113,7 +115,7 @@ class AppointmentCard extends StatelessWidget {
                 ),
                 const SizedBox(width: AppSize.s8),
                 Text(
-                  '10:00 AM',
+                  timeSlot,
                   style: GoogleFonts.lexend(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,

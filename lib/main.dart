@@ -13,21 +13,32 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final prefController = SharedPrefController();
   final bool isLoggedIn = await prefController.isLoggedIn();
+  final apiManager = await ApiManager.create();
 
-  runApp(MyApp(isLoggedIn: isLoggedIn, prefController: prefController));
+  runApp(MyApp(
+    isLoggedIn: isLoggedIn,
+    prefController: prefController,
+    apiManager: apiManager,
+  ));
 }
 
 class MyApp extends StatelessWidget {
   final bool isLoggedIn;
   final SharedPrefController prefController;
-  
-  const MyApp({super.key, required this.isLoggedIn, required this.prefController});
+  final ApiManager apiManager;
+
+  const MyApp({
+    super.key,
+    required this.isLoggedIn,
+    required this.prefController,
+    required this.apiManager,
+  });
 
   @override
   Widget build(BuildContext context) {
     return MultiRepositoryProvider(
       providers: [
-        RepositoryProvider(create: (context) => ApiManager()),
+        RepositoryProvider<ApiManager>(create: (context) => apiManager),
         RepositoryProvider(create: (context) => prefController),
         RepositoryProvider(
           create: (context) => Repository(context.read<ApiManager>()),

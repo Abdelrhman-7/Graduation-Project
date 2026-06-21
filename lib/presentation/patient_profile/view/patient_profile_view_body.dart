@@ -29,6 +29,10 @@ class PatientProfileViewBody extends StatelessWidget {
                 MaterialPageRoute(builder: (_) => const AuthChoiceView()),
                 (route) => false,
               );
+            } else if (state is PatientProfileImageDeleted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Image deleted successfully!')),
+              );
             }
           },
           builder: (context, state) {
@@ -50,6 +54,7 @@ class PatientProfileViewBody extends StatelessWidget {
                               scale: scale,
                               name: state.name,
                               patientId: state.patientId,
+                              imageUrl: state.imageUrl,
                             ),
                             ProfileStatsRow(
                               scale: scale,
@@ -84,6 +89,31 @@ class PatientProfileViewBody extends StatelessWidget {
                                   AppStrings.lastUpdated +
                                   ' 30 ' +
                                   AppStrings.daysAgo,
+                            ),
+                            ProfileMenuItem(
+                              scale: scale,
+                              icon: Icons.person_remove_rounded,
+                              title: 'Delete Account',
+                              iconColor: const Color(0xFFEF4444),
+                              onTap: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (ctx) => AlertDialog(
+                                    title: const Text('Delete Account'),
+                                    content: const Text('Are you sure you want to delete your account? This action cannot be undone.'),
+                                    actions: [
+                                      TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.pop(ctx);
+                                          context.read<PatientProfileCubit>().deleteAccount();
+                                        },
+                                        child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
                             ),
                             ProfileMenuItem(
                               scale: scale,

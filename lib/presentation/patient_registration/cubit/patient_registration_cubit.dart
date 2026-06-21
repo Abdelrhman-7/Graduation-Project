@@ -1,20 +1,22 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../data/api/api_manager.dart';
-import '../../../data/models/register_model.dart';
+import '../../../data/models/Auth/register_model.dart';
 import 'patient_registration_state.dart';
 
 class PatientRegistrationCubit extends Cubit<PatientRegistrationState> {
   final ApiManager _apiService;
 
-  PatientRegistrationCubit(this._apiService) : super(PatientRegistrationInitial());
+  PatientRegistrationCubit(this._apiService)
+    : super(PatientRegistrationInitial());
 
   String fullName = 'Abdo';
-  String email = 'abdo77@gmail.com';
+  String email = 'wwwabdo77@gmail.com';
   String dateOfBirth = '';
-  String phoneNumber = '';
-  String address = '';
+  String phoneNumber = '01008765502';
+  String address = 'cairo';
   String gender = 'Male';
-  String password = '123456789@#\$Abdo';
+  String password = '01008765502Abdo@';
+  String confirmPassword = '01008765502Abdo@';
   String? imagePath;
 
   final List<String> _allergies = [];
@@ -27,6 +29,7 @@ class PatientRegistrationCubit extends Cubit<PatientRegistrationState> {
   void updateAddress(String value) => address = value;
   void updateGender(String value) => gender = value;
   void updatePassword(String value) => password = value;
+  void updateConfirmPassword(String value) => confirmPassword = value;
   void updateImagePath(String? value) => imagePath = value;
 
   void toggleAllergy(String allergy) {
@@ -64,9 +67,13 @@ class PatientRegistrationCubit extends Cubit<PatientRegistrationState> {
     try {
       final request = RegisterRequest(
         fullName: fullName,
-        userName: fullName.replaceAll(' ', ''), // ASP.NET Identity requires unique UserName without spaces
+        userName: fullName.replaceAll(
+          ' ',
+          '',
+        ), // ASP.NET Identity requires unique UserName without spaces
         email: email,
         password: password,
+        confirmPassword: confirmPassword,
         phoneNumber: phoneNumber,
         address: address,
         gender: gender,
@@ -74,7 +81,10 @@ class PatientRegistrationCubit extends Cubit<PatientRegistrationState> {
         imageFile: imagePath,
       );
 
-      final result = await _apiService.register(request);
+      final result = await _apiService.register(
+        request: request,
+        isDoctor: false,
+      );
 
       if (result.status == true) {
         emit(PatientRegistrationSuccess(result.message));

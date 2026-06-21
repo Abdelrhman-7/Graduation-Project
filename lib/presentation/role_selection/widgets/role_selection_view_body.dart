@@ -6,6 +6,7 @@ import '../../../core/resources/values_manager.dart';
 import '../cubit/role_selection_cubit.dart';
 import '../cubit/role_selection_state.dart';
 import '../widgets/role_card.dart';
+import '../../doctor/register%20screen/view/doctor_register_view.dart';
 import '../../patient_registration/view/patient_registration_view.dart';
 import '../../login/view/login_view.dart';
 
@@ -32,8 +33,9 @@ class RoleSelectionViewBody extends StatelessWidget {
           MaterialPageRoute(builder: (_) => const PatientRegistrationView()),
         );
       } else if (selectedRole == UserRole.doctor) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Doctor registration coming soon!')),
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const DoctorRegisterView()),
         );
       }
     }

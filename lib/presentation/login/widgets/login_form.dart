@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:graduationproject/presentation/login/cubit/login_state.dart';
 import 'package:graduationproject/presentation/patient_home_dashboard/view/patient_home_dashboard_view.dart';
-import 'package:graduationproject/presentation/doctor/view/doctor_home_view.dart';
+import 'package:graduationproject/presentation/doctor/home/view/doctor_home_view.dart';
+import 'package:graduationproject/presentation/admin/admin_home_view.dart';
 import '../../role_selection/cubit/role_selection_state.dart';
 import '../../../core/resources/color_manager.dart';
 import '../../../core/resources/string_manager.dart';
@@ -10,7 +11,7 @@ import '../../../core/resources/values_manager.dart';
 import '../../../core/widgets/custom_text_field.dart';
 import '../../forgot_password/view/forgot_password_view.dart';
 import '../cubit/login_cubit.dart';
-import '../../../data/models/login_model.dart';
+import '../../../data/models/Auth/login_model.dart';
 
 class LoginForm extends StatefulWidget {
   final UserRole role;
@@ -20,9 +21,22 @@ class LoginForm extends StatefulWidget {
 }
 
 class _LoginFormState extends State<LoginForm> {
-  final _emailController = TextEditingController(text: 'abdo77@gmail.com');
-  final _passwordController = TextEditingController(text: '123456789@#\$Abdo');
+  late final TextEditingController _emailController;
+  late final TextEditingController _passwordController;
   final _formKey = GlobalKey<FormState>();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.role == UserRole.doctor) {
+      _emailController = TextEditingController(text: "abdo85@gmail.com");
+      _passwordController = TextEditingController(text: "Abdo88@#\$gmail.com");
+    } else {
+      _emailController = TextEditingController(text: 'wwwabdo77@gmail.com');
+      _passwordController = TextEditingController(text: '01008765502Abdo@');
+    }
+  }
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -135,14 +149,34 @@ class _LoginFormState extends State<LoginForm> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Login successful!')),
                 );
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => widget.role == UserRole.doctor
-                        ? const DoctorHomeView()
-                        : const PatientHomeDashboardView(),
+                
+                final email = _emailController.text.trim().toLowerCase();
+                if (email == 'admin@gmail.com') {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const AdminHomeView(),
+                    ),
+                    (route) => false,
+                  );
+                } else {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => widget.role == UserRole.doctor
+                          ? const DoctorHomeView()
+                          : const PatientHomeDashboardView(),
+                    ),
+                    (route) => false,
+                  );
+                }
+              }
+              if (state is LoginError) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(state.message),
+                    backgroundColor: Colors.red,
                   ),
-                  (route) => false,
                 );
               }
             },
@@ -161,6 +195,7 @@ class _LoginFormState extends State<LoginForm> {
                                     .toLowerCase(),
                                 password: _passwordController.text.trim(),
                               ),
+                              widget.role == UserRole.doctor ? 'Doctor' : 'Patient',
                             );
                           }
                         },

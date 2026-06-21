@@ -70,24 +70,28 @@ class _PatientRegistrationViewBodyState extends State<PatientRegistrationViewBod
                 CustomTextField(
                   label: AppStrings.fullName,
                   hintText: AppStrings.fullNameHint,
+                  initialValue: context.read<PatientRegistrationCubit>().fullName,
                   onChanged: (v) => context.read<PatientRegistrationCubit>().updateFullName(v),
                 ),
                 const SizedBox(height: AppSize.s20),
                 CustomTextField(
                   label: AppStrings.emailAddress,
                   hintText: AppStrings.emailHint,
+                  initialValue: context.read<PatientRegistrationCubit>().email,
                   onChanged: (v) => context.read<PatientRegistrationCubit>().updateEmail(v),
                 ),
                 const SizedBox(height: AppSize.s20),
                 CustomTextField(
                   label: AppStrings.phoneNumber,
                   hintText: AppStrings.phoneNumberHint,
+                  initialValue: context.read<PatientRegistrationCubit>().phoneNumber,
                   onChanged: (v) => context.read<PatientRegistrationCubit>().updatePhoneNumber(v),
                 ),
                 const SizedBox(height: AppSize.s20),
                 CustomTextField(
                   label: AppStrings.address,
                   hintText: AppStrings.addressHint,
+                  initialValue: context.read<PatientRegistrationCubit>().address,
                   onChanged: (v) => context.read<PatientRegistrationCubit>().updateAddress(v),
                 ),
                 const SizedBox(height: AppSize.s20),
@@ -282,7 +286,12 @@ class _PatientRegistrationViewBodyState extends State<PatientRegistrationViewBod
         InkWell(
           onTap: () async {
             final picker = ImagePicker();
-            final image = await picker.pickImage(source: ImageSource.gallery);
+            final image = await picker.pickImage(
+              source: ImageSource.gallery,
+              imageQuality: 70,
+              maxWidth: 1440,
+              maxHeight: 1440,
+            );
             if (image != null) {
               if (context.mounted) {
                 context.read<PatientRegistrationCubit>().updateImagePath(image.path);

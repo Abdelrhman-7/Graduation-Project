@@ -9,11 +9,12 @@ class PatientHomeDashboardLoading extends PatientHomeDashboardState {}
 
 class PatientHomeDashboardSuccess extends PatientHomeDashboardState {
   final String userName;
+  final String? imageUrl;
   final List<dynamic> medications;
-  // Add other dashboard data here
 
   PatientHomeDashboardSuccess({
     required this.userName,
+    this.imageUrl,
     required this.medications,
   });
 }

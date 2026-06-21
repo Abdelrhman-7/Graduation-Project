@@ -5,6 +5,7 @@ import '../../../../core/resources/string_manager.dart';
 import '../../chat/view/chat_view.dart';
 import '../../lab_results/view/lab_results_view.dart';
 import '../../patient_profile/view/patient_profile_view.dart';
+import '../../patient_booking/view/patient_booking_view.dart';
 import '../widgets/patient_bottom_nav.dart';
 import '../cubit/patient_home_dashboard_cubit.dart';
 import '../cubit/patient_home_dashboard_state.dart';
@@ -36,6 +37,9 @@ class PatientHomeDashboardViewBody extends StatelessWidget {
             final userName = state is PatientHomeDashboardSuccess
                 ? state.userName
                 : 'Alex';
+            final imageUrl = state is PatientHomeDashboardSuccess
+                ? state.imageUrl
+                : null;
 
             return Container(
               color: bg,
@@ -44,7 +48,7 @@ class PatientHomeDashboardViewBody extends StatelessWidget {
                   constraints: const BoxConstraints(maxWidth: 430),
                   child: Column(
                     children: [
-                      _TopBar(scale: scale, userName: userName),
+                      _TopBar(scale: scale, userName: userName, imageUrl: imageUrl),
                       Expanded(
                         child: SingleChildScrollView(
                           padding: EdgeInsets.fromLTRB(
@@ -78,6 +82,14 @@ class PatientHomeDashboardViewBody extends StatelessWidget {
                                     icon: Icons.calendar_today_outlined,
                                     label: AppStrings.book,
                                     color: const Color(0xFF137FEC),
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => const PatientBookingView(),
+                                        ),
+                                      );
+                                    },
                                   ),
                                   _QuickAction(
                                     scale: scale,
@@ -168,9 +180,10 @@ class PatientHomeDashboardViewBody extends StatelessWidget {
 }
 
 class _TopBar extends StatelessWidget {
-  const _TopBar({required this.scale, required this.userName});
+  const _TopBar({required this.scale, required this.userName, this.imageUrl});
   final double scale;
   final String userName;
+  final String? imageUrl;
 
   @override
   Widget build(BuildContext context) {
@@ -200,18 +213,28 @@ class _TopBar extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const PatientProfileView()),
-              );
+              ).then((_) {
+                // لما يرجع من الـ Profile، نعيد تحميل البيانات
+                if (context.mounted) {
+                  context.read<PatientHomeDashboardCubit>().getDashboardData();
+                }
+              });
             },
             child: Stack(
               children: [
                 CircleAvatar(
                   radius: 20 * scale,
                   backgroundColor: const Color(0xFFE2E8F0),
-                  child: Icon(
-                    Icons.person,
-                    size: 20 * scale,
-                    color: const Color(0xFF64748B),
-                  ),
+                  backgroundImage: (imageUrl != null && imageUrl!.isNotEmpty)
+                      ? NetworkImage(imageUrl!) as ImageProvider
+                      : null,
+                  child: (imageUrl == null || imageUrl!.isEmpty)
+                      ? Icon(
+                          Icons.person,
+                          size: 20 * scale,
+                          color: const Color(0xFF64748B),
+                        )
+                      : null,
                 ),
                 Positioned(
                   right: 0,
@@ -363,7 +386,7 @@ class _NextAppointmentCard extends StatelessWidget {
               ),
               image: const DecorationImage(
                 image: NetworkImage(
-                  'https://www.figma.com/api/mcp/asset/102b10e8-65fa-4246-94fe-4533eb611db6',
+                  'https://i.pravatar.cc/300?u=doctor',
                 ),
                 fit: BoxFit.cover,
               ),
