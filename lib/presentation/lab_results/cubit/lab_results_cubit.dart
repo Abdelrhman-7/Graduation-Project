@@ -1,17 +1,42 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../data/repository/repository.dart';
 import 'lab_results_state.dart';
 
 class LabResultsCubit extends Cubit<LabResultsState> {
-  LabResultsCubit() : super(LabResultsInitial());
+  final Repository repository;
+  
+  LabResultsCubit(this.repository) : super(LabResultsInitial());
 
-  void getLabResults() async {
-    emit(LabResultsLoading());
+  void submitHealthMetrics({
+    required String systolic,
+    required String diastolic,
+    required String heartRate,
+    required String bloodSugar,
+    required String weight,
+    required String notes,
+  }) async {
+    emit(LabResultsSubmitLoading());
     try {
-      // Mocking API call
-      await Future.delayed(const Duration(milliseconds: 300));
-      emit(LabResultsSuccess(reports: [], detailedResults: []));
+      // Mocking API call for saving health metrics
+      await Future.delayed(const Duration(seconds: 1));
+      
+      final record = {
+        'heartRate': heartRate,
+        'bloodPressure': '$systolic/$diastolic',
+        'bloodSugar': bloodSugar,
+        'weight': weight,
+        'notes': notes,
+        'timestamp': DateTime.now().toIso8601String(),
+      };
+      await repository.addPatientHealthMetricRecord(record);
+      
+      if (!isClosed) {
+        emit(LabResultsSubmitSuccess());
+      }
     } catch (e) {
-      emit(LabResultsError(e.toString()));
+      if (!isClosed) {
+        emit(LabResultsSubmitError(e.toString()));
+      }
     }
   }
 }

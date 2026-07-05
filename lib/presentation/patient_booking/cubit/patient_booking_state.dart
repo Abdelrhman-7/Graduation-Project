@@ -34,9 +34,30 @@ class PatientBookingSchedulesSuccess extends PatientBookingState {
   PatientBookingSchedulesSuccess(this.schedules);
 }
 
-class PatientBookingBookingSuccess extends PatientBookingState {}
+class PatientBookingBookingSuccess extends PatientBookingState {
+  /// appointmentId من الـ API — إن توفّر يُستخدم للدفع الإلكتروني
+  final int? appointmentId;
+  PatientBookingBookingSuccess({this.appointmentId});
+}
 
 class PatientBookingError extends PatientBookingState {
   final String message;
   PatientBookingError(this.message);
+}
+
+// ── Payment States ──────────────────────────────────────────────
+
+/// جارٍ معالجة الدفع
+class PatientPaymentProcessing extends PatientBookingState {}
+
+/// نجاح الدفع بالبطاقة
+class PatientPaymentSuccess extends PatientBookingState {
+  final String message;
+  PatientPaymentSuccess(this.message);
+}
+
+/// فشل الدفع
+class PatientPaymentError extends PatientBookingState {
+  final String message;
+  PatientPaymentError(this.message);
 }

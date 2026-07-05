@@ -43,8 +43,18 @@ class CreateScheduleCubit extends Cubit<CreateScheduleState> {
   Future<void> loadAllSchedules() async {
     emit(CreateScheduleLoading());
     try {
-      clinics = await clinicRepository.getDoctorClinics();
-      
+      try {
+        clinics = await clinicRepository.getDoctorClinics();
+      } catch (e) {
+        final message = e.toString().replaceFirst('Exception: ', '').trim();
+        emit(CreateScheduleError(
+          message.isNotEmpty
+              ? message
+              : 'Failed to load clinics. Please try again.',
+        ));
+        return;
+      }
+
       // 1. Try to fetch all schedules directly from the GetAllSchedules API
       List<dynamic> fetchedSchedules = [];
       try {
@@ -73,10 +83,22 @@ class CreateScheduleCubit extends Cubit<CreateScheduleState> {
               }
               clinicName = matchingClinic?.name;
             }
+            var resolvedClinicId = clinicId;
+            if (resolvedClinicId == null && clinicName != null) {
+              for (final c in clinics) {
+                if (c.name.trim().toLowerCase() == clinicName.trim().toLowerCase()) {
+                  resolvedClinicId = c.id;
+                  break;
+                }
+              }
+            }
+            if (resolvedClinicId == null && clinics.isNotEmpty) {
+              resolvedClinicId = clinics.first.id;
+            }
             schedules.add({
               ...s,
               '_clinicName': clinicName ?? 'Clinic',
-              '_clinicId': clinicId,
+              '_clinicId': resolvedClinicId,
             });
           } else {
             schedules.add(s);

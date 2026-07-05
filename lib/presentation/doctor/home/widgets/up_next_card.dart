@@ -40,7 +40,7 @@ class UpNextCard extends StatelessWidget {
               children: [
                 Text(
                   AppStrings.upNext,
-                  style: GoogleFonts.lexend(
+                  style: GoogleFonts.cairo(
                     fontSize: s(14),
                     fontWeight: FontWeight.w600,
                     color: ColorManager.primary,
@@ -57,7 +57,7 @@ class UpNextCard extends StatelessWidget {
                   ),
                   child: Text(
                     appointment['status'],
-                    style: GoogleFonts.lexend(
+                    style: GoogleFonts.cairo(
                       fontSize: s(12),
                       fontWeight: FontWeight.w600,
                       color: ColorManager.primary,
@@ -93,7 +93,7 @@ class UpNextCard extends StatelessWidget {
                         children: [
                           Text(
                             appointment['patientName'],
-                            style: GoogleFonts.lexend(
+                            style: GoogleFonts.cairo(
                               fontSize: s(18),
                               fontWeight: FontWeight.w700,
                               color: ColorManager.headlineText,
@@ -101,7 +101,7 @@ class UpNextCard extends StatelessWidget {
                           ),
                           Text(
                             appointment['type'],
-                            style: GoogleFonts.lexend(
+                            style: GoogleFonts.cairo(
                               fontSize: s(14),
                               fontWeight: FontWeight.w400,
                               color: ColorManager.subtitleText,
@@ -140,7 +140,7 @@ class UpNextCard extends StatelessWidget {
                     ),
                     child: Text(
                       AppStrings.startVideoVisit,
-                      style: GoogleFonts.lexend(
+                      style: GoogleFonts.cairo(
                         fontSize: s(16),
                         fontWeight: FontWeight.w700,
                       ),

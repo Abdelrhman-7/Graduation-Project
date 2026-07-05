@@ -119,7 +119,7 @@ class AppStrings {
   static const String book = 'Book';
   static const String refill = 'Refill';
   static const String chat = 'Chat';
-  static const String labs = 'Labs';
+  static const String labs = 'Health Tracker';
   static const String currentMedications = 'Current Medications';
   static const String active = 'ACTIVE';
   static const String refillBadge = 'REFILL';
@@ -145,8 +145,9 @@ class AppStrings {
   static const String attachmentMessage =
       "Here is the photo of the medication bottle for reference.";
 
-  // Lab Results
-  static const String labResults = 'Lab Results';
+  // Lab Results -> Health Tracker
+  static const String labResults = 'Health Tracker';
+  static const String wallet = 'Wallet';
   static const String hemoglobinTrend = 'Hemoglobin Trend';
   static const String gDl = 'g/dL';
   static const String latestReports = 'Latest Reports';

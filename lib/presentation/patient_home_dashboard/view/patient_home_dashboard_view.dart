@@ -29,10 +29,7 @@ class _PatientHomeDashboardViewState extends State<PatientHomeDashboardView>
       value: _cubit,
       child: Scaffold(
         body: SafeArea(
-          // لما الـ user يرجع من أي شاشة، نعيد تحميل البيانات تلقائياً
-          child: NotificationListener<ScrollNotification>(
-            child: _HomeRefreshWrapper(cubit: _cubit),
-          ),
+          child: _HomeRefreshWrapper(cubit: _cubit),
         ),
       ),
     );

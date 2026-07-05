@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/resources/color_manager.dart';
 import '../../../../core/resources/string_manager.dart';
 import '../../patient_home_dashboard/widgets/appointment_card.dart';
+import '../../patient_booking/view/patient_booking_view.dart';
+import '../../patient_booking/view/payment_card_view.dart';
+import '../../patient_booking/cubit/patient_booking_cubit.dart';
+import '../cubit/patient_schedule_cubit.dart';
+import '../../patient_appointment_details/view/patient_appointment_details_view.dart';
 
 class UpcomingAppointmentsSection extends StatelessWidget {
   final List<dynamic> appointments;
 
-  const UpcomingAppointmentsSection({
-    super.key,
-    required this.appointments,
-  });
+  const UpcomingAppointmentsSection({super.key, required this.appointments});
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +25,7 @@ class UpcomingAppointmentsSection extends StatelessWidget {
           children: [
             Text(
               AppStrings.nextSessions,
-              style: GoogleFonts.lexend(
+              style: GoogleFonts.cairo(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
                 color: ColorManager.headlineText,
@@ -36,24 +39,46 @@ class UpcomingAppointmentsSection extends StatelessWidget {
           _buildEmptyState()
         else
           ...appointments.map((appt) {
-            final doctorName = appt['doctorName'] ??
-                appt['doctor']?['fullName'] ??
-                appt['doctor']?['name'] ??
-                'Unknown Doctor';
-            final specialty = appt['specialty'] ??
+            String rawDocName = (appt['doctorName'] ?? '').toString();
+            if (rawDocName == 'Doctor' || rawDocName.isEmpty) rawDocName = (appt['DoctorName'] ?? '').toString();
+            if (rawDocName == 'Doctor' || rawDocName.isEmpty) rawDocName = (appt['doctorFullName'] ?? '').toString();
+            if (rawDocName == 'Doctor' || rawDocName.isEmpty) rawDocName = (appt['DoctorFullName'] ?? '').toString();
+            if (rawDocName == 'Doctor' || rawDocName.isEmpty) rawDocName = (appt['doctor']?['fullName'] ?? '').toString();
+            if (rawDocName == 'Doctor' || rawDocName.isEmpty) rawDocName = (appt['doctor']?['name'] ?? '').toString();
+            if (rawDocName == 'Doctor' || rawDocName.isEmpty) rawDocName = (appt['doctor']?['userName'] ?? '').toString();
+            if (rawDocName == 'Doctor' || rawDocName.isEmpty) rawDocName = (appt['doctor']?['UserName'] ?? '').toString();
+            if (rawDocName == 'Doctor' || rawDocName.isEmpty) rawDocName = (appt['userName'] ?? '').toString();
+            if (rawDocName == 'Doctor' || rawDocName.isEmpty) rawDocName = (appt['UserName'] ?? '').toString();
+            
+            final doctorName = (rawDocName == 'Doctor' || rawDocName.isEmpty) ? 'Unknown Doctor' : rawDocName;
+            final specialty =
+                appt['specialty'] ??
                 appt['doctor']?['specialty'] ??
                 appt['clinicName'] ??
                 appt['clinic']?['name'] ??
                 '';
-            final date = appt['bookingDate'] ??
+            final status = (appt['status'] ?? '').toString().toLowerCase();
+            final specialtyDisplay = status.contains('pending')
+                ? 'Waiting for doctor approval'
+                : status.contains('approved') || status.contains('accept')
+                ? 'Confirmed appointment'
+                : specialty.toString();
+            final date =
+                appt['bookingDate'] ??
                 appt['appointmentDate'] ??
                 appt['date'] ??
                 appt['scheduledDate'] ??
                 '';
-            final timeSlot = appt['timeSlot'] ??
+            final timeSlot =
+                appt['timeSlot'] ??
                 appt['time'] ??
                 appt['startTime'] ??
                 '10:00 AM';
+            final bookingId = appt['id'] is int
+                ? appt['id'] as int
+                : int.tryParse(appt['id']?.toString() ?? '') ?? 0;
+            final doctorImageUrl =
+                appt['doctor']?['imageUrl']?.toString() ?? '';
 
             // Format date nicely if possible
             String displayDate = date.toString();
@@ -61,20 +86,174 @@ class UpcomingAppointmentsSection extends StatelessWidget {
               final parsedDate = DateTime.tryParse(date.toString());
               if (parsedDate != null) {
                 final months = [
-                  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+                  'Jan',
+                  'Feb',
+                  'Mar',
+                  'Apr',
+                  'May',
+                  'Jun',
+                  'Jul',
+                  'Aug',
+                  'Sep',
+                  'Oct',
+                  'Nov',
+                  'Dec',
                 ];
                 displayDate =
                     '${months[parsedDate.month - 1]} ${parsedDate.day}, ${parsedDate.year}';
               }
             } catch (_) {}
 
+            final cubit = context.read<PatientScheduleCubit>();
+            final state = context.watch<PatientScheduleCubit>().state;
+            final isCancelling =
+                state is PatientScheduleProcessing &&
+                state.processingBookingId == bookingId;
+
+            // ── Pay Now detection ────────────────────────────────────────────
+            // The API doesn't return paymentMethod, so we show Pay Now for
+            // all confirmed/approved appointments and let the server validate.
+            final rawStatus = (appt['status'] ?? '').toString().toLowerCase();
+            final isConfirmed =
+                rawStatus.contains('confirm') ||
+                rawStatus.contains('accept') ||
+                rawStatus.contains('approv');
+            final rawPayStatus = (appt['paymentStatus'] ?? appt['PaymentStatus'] ?? '')
+                .toString()
+                .toLowerCase();
+            final isPaid =
+                rawPayStatus.contains('paid') ||
+                rawPayStatus.contains('complet') ||
+                rawPayStatus.contains('success');
+            final paymentMethod = (appt['paymentMethod'] ?? appt['PaymentMethod'] ?? '').toString().toLowerCase();
+            final isPayable = isConfirmed && !isPaid;
+            // ────────────────────────────────────────────────────────────────
+
+            // Extract amount & names for payment screen
+            // Try all possible field paths the API might use
+            final consultationFee =
+                appt['consultationPrice'] ??
+                appt['ConsultationPrice'] ??
+                appt['price'] ??
+                appt['Price'] ??
+                appt['fee'] ??
+                appt['Fee'] ??
+                appt['amount'] ??
+                appt['Amount'] ??
+                appt['consultationFee'] ??
+                appt['ConsultationFee'] ??
+                // Try nested inside 'clinic'
+                appt['clinic']?['consultationPrice'] ??
+                appt['clinic']?['ConsultationPrice'] ??
+                appt['clinic']?['price'] ??
+                appt['Clinic']?['consultationPrice'] ??
+                appt['Clinic']?['price'] ??
+                // Try nested inside 'schedule'
+                appt['schedule']?['consultationPrice'] ??
+                appt['schedule']?['price'] ??
+                appt['Schedule']?['consultationPrice'] ??
+                // Try nested inside 'doctor'
+                appt['doctor']?['consultationPrice'] ??
+                appt['doctor']?['price'] ??
+                0.0;
+            final amount = (consultationFee is num)
+                ? consultationFee.toDouble()
+                : double.tryParse(consultationFee.toString()) ?? 0.0;
+            final clinicNameForPay =
+                appt['clinicName']?.toString() ??
+                appt['clinic']?['name']?.toString() ??
+                '';
+
             return AppointmentCard(
               doctorName: doctorName.toString(),
-              specialty: specialty.toString(),
+              specialty: specialtyDisplay,
               dateTime: displayDate,
               timeSlot: timeSlot.toString(),
-              imagePath: appt['doctor']?['imageUrl']?.toString() ?? '',
+              imagePath: doctorImageUrl,
+              bookingId: bookingId,
+              isCancelling: isCancelling,
+              isPayable: isPayable,
+              // Pay Now: open payment screen
+              onPayNow: isPayable
+                  ? () {
+                      final bookingCubit = PatientBookingCubit(
+                        context.read<PatientScheduleCubit>().repository,
+                      );
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => PaymentCardView(
+                            appointmentId: bookingId,
+                            amount: amount,
+                            doctorName: doctorName.toString(),
+                            clinicName: clinicNameForPay,
+                            cubit: bookingCubit,
+                          ),
+                        ),
+                      ).then((_) {
+                        // Refresh after payment to update card status
+                        cubit.fetchAppointments();
+                      });
+                    }
+                  : null,
+              // Cancel: call cubit → API → refresh list
+              onCancel: bookingId > 0
+                  ? () => cubit.cancelBooking(bookingId)
+                  : null,
+              onEdit: bookingId > 0
+                  ? () {
+                      final controller = TextEditingController();
+                      showDialog(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          title: const Text('Edit Appointment'),
+                          content: TextField(
+                            controller: controller,
+                            decoration: const InputDecoration(
+                              labelText: 'New Reason for Visit',
+                            ),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(ctx);
+                                cubit.editAppointment(bookingId, {
+                                  'reasonForVisit': controller.text,
+                                });
+                              },
+                              child: const Text('Save'),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+                  : null,
+              // Reschedule: go to booking screen to pick new time
+              onReschedule: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const PatientBookingView()),
+                );
+              },
+              // Details: navigate directly with bookingId
+              onDetails: () {
+                if (bookingId > 0) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          PatientAppointmentDetailsView(bookingId: bookingId),
+                    ),
+                  );
+                }
+              },
             );
           }),
       ],
@@ -102,7 +281,7 @@ class UpcomingAppointmentsSection extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               'No upcoming appointments',
-              style: GoogleFonts.lexend(
+              style: GoogleFonts.cairo(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: ColorManager.headlineText,
@@ -112,7 +291,7 @@ class UpcomingAppointmentsSection extends StatelessWidget {
             Text(
               'Book a clinic appointment to get started.',
               textAlign: TextAlign.center,
-              style: GoogleFonts.lexend(
+              style: GoogleFonts.cairo(
                 fontSize: 13,
                 color: ColorManager.bodyText,
               ),
@@ -138,7 +317,7 @@ class _PendingBadge extends StatelessWidget {
       ),
       child: Text(
         '$count ${AppStrings.pending}',
-        style: GoogleFonts.lexend(
+        style: GoogleFonts.cairo(
           fontSize: 10,
           fontWeight: FontWeight.w700,
           color: ColorManager.primary,

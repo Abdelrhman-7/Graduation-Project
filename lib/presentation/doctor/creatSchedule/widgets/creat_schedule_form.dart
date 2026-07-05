@@ -85,7 +85,7 @@ class CreateScheduleForm extends StatelessWidget {
                       controller: startTimeController,
                       readOnly: true,
                       onTap: isLoading ? null : onTapStartTime,
-                      decoration: _inputDecoration(Icons.access_time_rounded, hint: "09:00"),
+                      decoration: _inputDecoration(Icons.access_time_rounded, hint: "09:00 AM"),
                     ),
                   ],
                 ),
@@ -101,7 +101,7 @@ class CreateScheduleForm extends StatelessWidget {
                       controller: endTimeController,
                       readOnly: true,
                       onTap: isLoading ? null : onTapEndTime,
-                      decoration: _inputDecoration(Icons.access_time_filled_rounded, hint: "17:00"),
+                      decoration: _inputDecoration(Icons.access_time_filled_rounded, hint: "05:00 PM"),
                     ),
                   ],
                 ),
@@ -150,7 +150,7 @@ class _FieldLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: GoogleFonts.lexend(
+      style: GoogleFonts.cairo(
         fontSize: 14,
         fontWeight: FontWeight.w600,
         color: const Color(0xFF334155),
@@ -215,7 +215,7 @@ class _SubmitButton extends StatelessWidget {
               )
             : Text(
                 "Confirm Schedule",
-                style: GoogleFonts.lexend(fontSize: 16, fontWeight: FontWeight.w600),
+                style: GoogleFonts.cairo(fontSize: 16, fontWeight: FontWeight.w600),
               ),
       ),
     );

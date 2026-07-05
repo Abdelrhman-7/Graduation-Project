@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:graduationproject/presentation/doctor/profile/view/doctor_profile_view_body.dart';
 import 'package:graduationproject/presentation/doctor/creatSchedule/view/creat_schedule_view.dart';
+import 'package:graduationproject/data/repository/repository.dart';
+import 'package:graduationproject/data/repository/shared_pref_controller.dart';
+import 'package:graduationproject/presentation/doctor/profile/cubit/doctor_profile_cubit.dart';
 import '../../../../../core/resources/color_manager.dart';
 import '../cubit/doctor_home_cubit.dart';
 import '../cubit/doctor_home_state.dart';
@@ -10,6 +13,8 @@ import '../widgets/up_next_card.dart';
 import '../widgets/quick_actions.dart';
 import '../widgets/patient_requests.dart';
 import '../widgets/today_schedule.dart';
+import '../widgets/doctor_notifications_sheet.dart';
+import '../widgets/doctor_patients_view.dart';
 
 class DoctorHomeViewBody extends StatefulWidget {
   const DoctorHomeViewBody({super.key});
@@ -40,9 +45,17 @@ class _DoctorHomeViewBodyState extends State<DoctorHomeViewBody> {
                   children: [
                     Expanded(
                       child: _currentIndex == 3
-                          ? DoctorProfileViewBody(
-                              doctorName: state.doctorName,
-                              imageUrl: state.imageUrl,
+                          ? BlocProvider(
+                              create: (context) => DoctorProfileCubit(
+                                repository: context.read<Repository>(),
+                                sharedPrefController: context.read<SharedPrefController>(),
+                              ),
+                              child: DoctorProfileViewBody(
+                                doctorName: state.doctorName,
+                                imageUrl: state.imageUrl,
+                                age: state.age,
+                                patientsCount: state.allBookings.where((b) => b.isApproved || (b.status?.toLowerCase().contains('completed') ?? false)).length,
+                              ),
                             )
                           : _currentIndex == 0
                           ? SingleChildScrollView(
@@ -53,6 +66,10 @@ class _DoctorHomeViewBodyState extends State<DoctorHomeViewBody> {
                                     name: state.doctorName,
                                     imageUrl: state.imageUrl,
                                     specialty: state.specialty,
+                                    pendingNotifications:
+                                        state.notifications.length,
+                                    onNotificationsTap: () =>
+                                        showDoctorNotificationsSheet(context),
                                   ),
                                   UpNextCard(
                                     scale: scale,
@@ -62,7 +79,54 @@ class _DoctorHomeViewBodyState extends State<DoctorHomeViewBody> {
                                   PatientRequestsList(
                                     scale: scale,
                                     requests: state.patientRequests,
-                                  ),
+                                    processingBookingId: state.processingBookingId,
+                                    processingAction: state.processingAction,
+                                    onApprove: (id) async {
+                                      final ok = await context
+                                          .read<DoctorHomeCubit>()
+                                          .acceptBooking(id);
+                                      if (context.mounted && !ok) {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'Failed to accept booking. Backend may not support this yet.',
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    },
+                                      onDeny: (id) async {
+                                        final ok = await context
+                                            .read<DoctorHomeCubit>()
+                                            .rejectBooking(id);
+                                        if (context.mounted && !ok) {
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                'Failed to reject booking. Backend may not support this yet.',
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                      },
+                                      onComplete: (id) async {
+                                        final ok = await context
+                                            .read<DoctorHomeCubit>()
+                                            .completeBooking(id);
+                                        if (context.mounted && !ok) {
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                'Failed to complete booking. Backend may not support this yet.',
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                      },
+                                    ),
                                   TodayScheduleList(
                                     scale: scale,
                                     schedule: state.todaySchedule,
@@ -73,15 +137,9 @@ class _DoctorHomeViewBodyState extends State<DoctorHomeViewBody> {
                             )
                           : _currentIndex == 1
                           ? const CreateScheduleView()
-                          : Center(
-                              child: Text(
-                                "Coming Soon",
-                                style: TextStyle(
-                                  color: ColorManager.primary,
-                                  fontSize: s(18),
-                                ),
-                              ),
-                            ),
+                          : _currentIndex == 2
+                          ? const DoctorPatientsView()
+                          : const SizedBox(),
                     ),
                     _buildBottomNav(s),
                   ],

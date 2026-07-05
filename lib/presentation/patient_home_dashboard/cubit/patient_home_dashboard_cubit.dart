@@ -5,13 +5,16 @@ import 'patient_home_dashboard_state.dart';
 
 class PatientHomeDashboardCubit extends Cubit<PatientHomeDashboardState> {
   final Repository _repository;
+  Repository get repository => _repository;
   final SharedPrefController _sharedPrefController = SharedPrefController();
 
   PatientHomeDashboardCubit(this._repository)
       : super(PatientHomeDashboardInitial());
 
-  void getDashboardData() async {
-    emit(PatientHomeDashboardLoading());
+  void getDashboardData({bool silent = false}) async {
+    if (!silent) {
+      emit(PatientHomeDashboardLoading());
+    }
     try {
       // جيب البيانات من الـ API مباشرة
       final profileData = await _repository.getPatientProfile();
@@ -39,7 +42,7 @@ class PatientHomeDashboardCubit extends Cubit<PatientHomeDashboardState> {
           final raw = rawImage.toString();
           imageUrl = raw.startsWith('http')
               ? raw
-              : 'http://medicalsystem111.runasp.net$raw';
+              : 'http://clinicbook.runasp.net$raw';
           // احفظ الصورة في SharedPrefs عشان تبقى متاحة في كل مكان
           await _sharedPrefController.saveImage(imageUrl);
         }
@@ -62,9 +65,48 @@ class PatientHomeDashboardCubit extends Cubit<PatientHomeDashboardState> {
         imageUrl = storedImage;
       }
 
+      final notifications = await _repository.getPatientNotifications();
+      final lastViewedId = await _sharedPrefController.getLastViewedNotificationId();
+      int unreadCount = 0;
+      for (final n in notifications) {
+        if (n is Map<String, dynamic>) {
+          final idVal = n['id'] ?? n['Id'] ?? n['notificationId'] ?? n['NotificationId'] ?? 0;
+          final int id = idVal is int ? idVal : int.tryParse(idVal.toString()) ?? 0;
+          final isRead = n['isRead'] ?? n['IsRead'] ?? n['isViewed'] ?? n['IsViewed'] ?? false;
+          if (isRead == false && id > lastViewedId) {
+            unreadCount++;
+          }
+        } else {
+          // If fallback local store (BookingModel or other types)
+          unreadCount++;
+        }
+      }
+
+      dynamic nextAppt;
+      try {
+        final appointments = await _repository.getPatientAppointments();
+        final upcoming = appointments.where((a) {
+          final status = ((a is Map ? a['status'] : (a as dynamic).status) ?? '').toString().toLowerCase();
+          if (status.contains('cancel')) return false;
+          if (status.contains('reject')) return false;
+          if (status.contains('denied')) return false;
+          if (status.contains('complet')) return false;
+          return true;
+        }).toList();
+        if (upcoming.isNotEmpty) {
+          nextAppt = upcoming.first;
+        }
+      } catch (_) {}
+
+      final healthMetrics = await _repository.getPatientHealthMetrics();
+
       emit(PatientHomeDashboardSuccess(
         userName: userName,
         imageUrl: imageUrl,
+        unreadNotifications: unreadCount,
+        nextAppointment: nextAppt,
+        heartRate: healthMetrics['heartRate'] ?? '72',
+        bloodPressure: healthMetrics['bloodPressure'] ?? '120/80',
         medications: const [
           {'title': 'Amoxicillin', 'subtitle': '500mg • 1 pill/day', 'badge': 'Active'},
           {'title': 'Lisinopril', 'subtitle': '10mg • 1 pill/day', 'badge': 'Refill'},
@@ -77,9 +119,46 @@ class PatientHomeDashboardCubit extends Cubit<PatientHomeDashboardState> {
         final email = await _sharedPrefController.getEmail();
         final storedImage = await _sharedPrefController.getImage();
         final userName = storedName ?? email?.split('@').first ?? 'User';
+        final notifications = await _repository.getPatientNotifications();
+        final lastViewedId = await _sharedPrefController.getLastViewedNotificationId();
+        int unreadCount = 0;
+        for (final n in notifications) {
+          if (n is Map<String, dynamic>) {
+            final idVal = n['id'] ?? n['Id'] ?? n['notificationId'] ?? n['NotificationId'] ?? 0;
+            final int id = idVal is int ? idVal : int.tryParse(idVal.toString()) ?? 0;
+            final isRead = n['isRead'] ?? n['IsRead'] ?? n['isViewed'] ?? n['IsViewed'] ?? false;
+            if (isRead == false && id > lastViewedId) {
+              unreadCount++;
+            }
+          } else {
+            unreadCount++;
+          }
+        }
+        dynamic nextAppt;
+        try {
+          final appointments = await _repository.getPatientAppointments();
+          final upcoming = appointments.where((a) {
+            final status = ((a is Map ? a['status'] : (a as dynamic).status) ?? '').toString().toLowerCase();
+            if (status.contains('cancel')) return false;
+            if (status.contains('reject')) return false;
+            if (status.contains('denied')) return false;
+            if (status.contains('complet')) return false;
+            return true;
+          }).toList();
+          if (upcoming.isNotEmpty) {
+            nextAppt = upcoming.first;
+          }
+        } catch (_) {}
+
+        final healthMetrics = await _repository.getPatientHealthMetrics();
+
         emit(PatientHomeDashboardSuccess(
           userName: userName,
           imageUrl: storedImage,
+          unreadNotifications: unreadCount,
+          nextAppointment: nextAppt,
+          heartRate: healthMetrics['heartRate'] ?? '72',
+          bloodPressure: healthMetrics['bloodPressure'] ?? '120/80',
           medications: const [
             {'title': 'Amoxicillin', 'subtitle': '500mg • 1 pill/day', 'badge': 'Active'},
             {'title': 'Lisinopril', 'subtitle': '10mg • 1 pill/day', 'badge': 'Refill'},
@@ -91,3 +170,4 @@ class PatientHomeDashboardCubit extends Cubit<PatientHomeDashboardState> {
     }
   }
 }
+

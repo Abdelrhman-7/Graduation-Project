@@ -32,7 +32,17 @@ class _PatientScheduleContent extends StatefulWidget {
 }
 
 class _PatientScheduleContentState extends State<_PatientScheduleContent> {
-  int _selectedTab = 0; // 0 for Upcoming, 1 for Past
+  int _selectedTab = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<PatientScheduleCubit>().fetchAppointments();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -78,7 +88,7 @@ class _PatientScheduleContentState extends State<_PatientScheduleContent> {
                         const SizedBox(height: 16),
                         Text(
                           'Could not load appointments',
-                          style: GoogleFonts.lexend(
+                          style: GoogleFonts.cairo(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
                             color: const Color(0xFF0F172A),
@@ -88,7 +98,7 @@ class _PatientScheduleContentState extends State<_PatientScheduleContent> {
                         Text(
                           state.message,
                           textAlign: TextAlign.center,
-                          style: GoogleFonts.lexend(
+                          style: GoogleFonts.cairo(
                             fontSize: 13,
                             color: const Color(0xFF64748B),
                           ),

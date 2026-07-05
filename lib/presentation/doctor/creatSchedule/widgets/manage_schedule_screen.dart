@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import '../../../../core/resources/color_manager.dart';
 import '../../../../data/models/schudule/creatSchudel.dart';
 import '../cubit/creat_schedule_cubit.dart';
@@ -79,7 +80,7 @@ class _ManageScheduleScreenState extends State<ManageScheduleScreen>
           ],
           Text(
             'Manage Schedules',
-            style: GoogleFonts.lexend(
+            style: GoogleFonts.cairo(
               fontSize: 18,
               fontWeight: FontWeight.w700,
               color: const Color(0xFF1E293B),
@@ -100,9 +101,9 @@ class _ManageScheduleScreenState extends State<ManageScheduleScreen>
         indicatorColor: ColorManager.primary,
         indicatorWeight: 3,
         labelStyle:
-            GoogleFonts.lexend(fontSize: 14, fontWeight: FontWeight.w600),
+            GoogleFonts.cairo(fontSize: 14, fontWeight: FontWeight.w600),
         unselectedLabelStyle:
-            GoogleFonts.lexend(fontSize: 14, fontWeight: FontWeight.w500),
+            GoogleFonts.cairo(fontSize: 14, fontWeight: FontWeight.w500),
         tabs: const [
           Tab(icon: Icon(Icons.calendar_month_rounded), text: 'My Schedules'),
           Tab(icon: Icon(Icons.add_circle_outline_rounded), text: 'Add New'),
@@ -189,7 +190,7 @@ class _MySchedulesTab extends StatelessWidget {
                 icon: const Icon(Icons.add_rounded, color: Colors.white),
                 label: Text(
                   'Add Schedule',
-                  style: GoogleFonts.lexend(
+                  style: GoogleFonts.cairo(
                     fontWeight: FontWeight.w600,
                     color: Colors.white,
                   ),
@@ -214,7 +215,7 @@ class _MySchedulesTab extends StatelessWidget {
               const SizedBox(height: 16),
               Text(
                 'No schedules yet',
-                style: GoogleFonts.lexend(
+                style: GoogleFonts.cairo(
                   fontSize: 18,
                   fontWeight: FontWeight.w500,
                   color: Colors.grey,
@@ -223,7 +224,7 @@ class _MySchedulesTab extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 'Tap the button below to add your first schedule',
-                style: GoogleFonts.lexend(
+                style: GoogleFonts.cairo(
                   fontSize: 13,
                   color: Colors.grey.shade400,
                 ),
@@ -243,7 +244,7 @@ class _MySchedulesTab extends StatelessWidget {
             icon: const Icon(Icons.add_rounded, color: Colors.white),
             label: Text(
               'Add Schedule',
-              style: GoogleFonts.lexend(
+              style: GoogleFonts.cairo(
                 fontWeight: FontWeight.w600,
                 color: Colors.white,
               ),
@@ -292,16 +293,16 @@ class _MySchedulesTab extends StatelessWidget {
       builder: (dialogContext) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text('Delete Schedule',
-            style: GoogleFonts.lexend(fontWeight: FontWeight.bold)),
+            style: GoogleFonts.cairo(fontWeight: FontWeight.bold)),
         content: Text(
           'Are you sure you want to delete the "$day" schedule? This cannot be undone.',
-          style: GoogleFonts.lexend(fontSize: 14),
+          style: GoogleFonts.cairo(fontSize: 14),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
             child:
-                Text('Cancel', style: GoogleFonts.lexend(color: Colors.grey)),
+                Text('Cancel', style: GoogleFonts.cairo(color: Colors.grey)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -314,7 +315,7 @@ class _MySchedulesTab extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12)),
             ),
             child: Text('Delete',
-                style: GoogleFonts.lexend(color: Colors.white)),
+                style: GoogleFonts.cairo(color: Colors.white)),
           ),
         ],
       ),
@@ -336,14 +337,29 @@ class _ScheduleCard extends StatelessWidget {
     required this.onDelete,
   });
 
+  String _formatTime(String rawTime) {
+    if (rawTime == '--:--') return rawTime;
+    try {
+      final dt = DateFormat('HH:mm:ss').parse(rawTime);
+      return DateFormat('hh:mm a').format(dt);
+    } catch (_) {
+      try {
+        final dt = DateFormat('HH:mm').parse(rawTime);
+        return DateFormat('hh:mm a').format(dt);
+      } catch (_) {
+        return rawTime;
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final day = schedule['dayOfWeek'] ??
         schedule['DayOfWeek'] ??
         schedule['day'] ??
         'Unknown Day';
-    final start = schedule['startTime'] ?? schedule['StartTime'] ?? '--:--';
-    final end = schedule['endTime'] ?? schedule['EndTime'] ?? '--:--';
+    final start = _formatTime(schedule['startTime'] ?? schedule['StartTime'] ?? '--:--');
+    final end = _formatTime(schedule['endTime'] ?? schedule['EndTime'] ?? '--:--');
     final clinicName = schedule['_clinicName'] as String? ?? '';
 
     return Container(
@@ -385,7 +401,7 @@ class _ScheduleCard extends StatelessWidget {
               children: [
                 Text(
                   day.toString(),
-                  style: GoogleFonts.lexend(
+                  style: GoogleFonts.cairo(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
                     color: const Color(0xFF1E293B),
@@ -399,7 +415,7 @@ class _ScheduleCard extends StatelessWidget {
                     const SizedBox(width: 4),
                     Text(
                       '$start – $end',
-                      style: GoogleFonts.lexend(
+                      style: GoogleFonts.cairo(
                         fontSize: 13,
                         color: const Color(0xFF64748B),
                       ),
@@ -416,7 +432,7 @@ class _ScheduleCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           clinicName,
-                          style: GoogleFonts.lexend(
+                          style: GoogleFonts.cairo(
                             fontSize: 12,
                             color: const Color(0xFF94A3B8),
                           ),
@@ -490,14 +506,28 @@ class _EditScheduleDialogState extends State<_EditScheduleDialog> {
   late TextEditingController _startController;
   late TextEditingController _endController;
 
+  String _to12Hour(String text) {
+    try {
+      final dt = DateFormat('HH:mm:ss').parse(text);
+      return DateFormat('hh:mm a').format(dt);
+    } catch (_) {
+      try {
+        final dt = DateFormat('HH:mm').parse(text);
+        return DateFormat('hh:mm a').format(dt);
+      } catch (_) {
+        return text;
+      }
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     _selectedDay = _days.contains(widget.initialDay)
         ? widget.initialDay
         : _days.first;
-    _startController = TextEditingController(text: widget.initialStart);
-    _endController = TextEditingController(text: widget.initialEnd);
+    _startController = TextEditingController(text: _to12Hour(widget.initialStart));
+    _endController = TextEditingController(text: _to12Hour(widget.initialEnd));
   }
 
   @override
@@ -508,17 +538,33 @@ class _EditScheduleDialogState extends State<_EditScheduleDialog> {
   }
 
   Future<void> _pickTime(TextEditingController ctrl) async {
-    final parts = ctrl.text.split(':');
-    final initial = parts.length == 2
-        ? TimeOfDay(
-            hour: int.tryParse(parts[0]) ?? 9,
-            minute: int.tryParse(parts[1]) ?? 0)
-        : const TimeOfDay(hour: 9, minute: 0);
-    final picked = await showTimePicker(context: context, initialTime: initial);
+    TimeOfDay initial;
+    try {
+      final dt = DateFormat('hh:mm a').parse(ctrl.text);
+      initial = TimeOfDay(hour: dt.hour, minute: dt.minute);
+    } catch (_) {
+      try {
+        final dt = DateFormat('HH:mm').parse(ctrl.text);
+        initial = TimeOfDay(hour: dt.hour, minute: dt.minute);
+      } catch (_) {
+        initial = const TimeOfDay(hour: 9, minute: 0);
+      }
+    }
+    
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: initial,
+      builder: (context, child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
+          child: child!,
+        );
+      },
+    );
     if (picked != null) {
       setState(() {
-        ctrl.text =
-            '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+        final dt = DateTime(2000, 1, 1, picked.hour, picked.minute);
+        ctrl.text = DateFormat('hh:mm a').format(dt);
       });
     }
   }
@@ -536,14 +582,14 @@ class _EditScheduleDialogState extends State<_EditScheduleDialog> {
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       title: Text('Edit Schedule',
-          style: GoogleFonts.lexend(fontWeight: FontWeight.bold)),
+          style: GoogleFonts.cairo(fontWeight: FontWeight.bold)),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Day of Week',
-                style: GoogleFonts.lexend(
+                style: GoogleFonts.cairo(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: const Color(0xFF475569))),
@@ -577,16 +623,25 @@ class _EditScheduleDialogState extends State<_EditScheduleDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text('Cancel', style: GoogleFonts.lexend(color: Colors.grey)),
+          child: Text('Cancel', style: GoogleFonts.cairo(color: Colors.grey)),
         ),
         ElevatedButton(
           onPressed: () {
+            String to24Hour(String text) {
+              try {
+                final dt = DateFormat('hh:mm a').parse(text);
+                return DateFormat('HH:mm').format(dt);
+              } catch (_) {
+                return text;
+              }
+            }
+            
             final model = editClinicModel(
               id: widget.scheduleId,
               clinicId: widget.clinicId,
               day: _selectedDay,
-              startTime: _startController.text,
-              endTime: _endController.text,
+              startTime: to24Hour(_startController.text),
+              endTime: to24Hour(_endController.text),
             );
             widget.onSave(model);
             Navigator.pop(context);
@@ -596,7 +651,7 @@ class _EditScheduleDialogState extends State<_EditScheduleDialog> {
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
-          child: Text('Save', style: GoogleFonts.lexend(color: Colors.white)),
+          child: Text('Save', style: GoogleFonts.cairo(color: Colors.white)),
         ),
       ],
     );
@@ -623,9 +678,9 @@ class _AddScheduleTabState extends State<_AddScheduleTab> {
   String _selectedDay = 'Sunday';
   int? _selectedClinicId;
   final TextEditingController _startTimeController =
-      TextEditingController(text: '09:00');
+      TextEditingController(text: '09:00 AM');
   final TextEditingController _endTimeController =
-      TextEditingController(text: '17:00');
+      TextEditingController(text: '05:00 PM');
 
   @override
   void dispose() {
@@ -700,43 +755,71 @@ class _AddScheduleTabState extends State<_AddScheduleTab> {
   }
 
   Future<void> _selectTime(TextEditingController controller) async {
+    TimeOfDay initial;
+    try {
+      final dt = DateFormat('hh:mm a').parse(controller.text);
+      initial = TimeOfDay(hour: dt.hour, minute: dt.minute);
+    } catch (_) {
+      initial = const TimeOfDay(hour: 9, minute: 0);
+    }
+    
     final TimeOfDay? picked = await showTimePicker(
       context: context,
-      initialTime: const TimeOfDay(hour: 9, minute: 0),
+      initialTime: initial,
+      builder: (context, child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
+          child: child!,
+        );
+      },
     );
     if (picked != null) {
       setState(() {
-        controller.text =
-            '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+        final dt = DateTime(2000, 1, 1, picked.hour, picked.minute);
+        controller.text = DateFormat('hh:mm a').format(dt);
       });
     }
   }
 
   void _submitForm() {
     if (_selectedClinicId == null) return;
-    final startParts = _startTimeController.text.split(':');
-    final endParts = _endTimeController.text.split(':');
-    if (startParts.length == 2 && endParts.length == 2) {
-      final startTotal =
-          (int.tryParse(startParts[0]) ?? 0) * 60 + (int.tryParse(startParts[1]) ?? 0);
-      final endTotal =
-          (int.tryParse(endParts[0]) ?? 0) * 60 + (int.tryParse(endParts[1]) ?? 0);
-      if (startTotal >= endTotal) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Start time must be before end time!'),
-            backgroundColor: Colors.redAccent,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-        return;
+    
+    int getMinutes(String text) {
+      try {
+        final dt = DateFormat('hh:mm a').parse(text);
+        return dt.hour * 60 + dt.minute;
+      } catch (_) {
+        return 0;
+      }
+    }
+    
+    final startTotal = getMinutes(_startTimeController.text);
+    final endTotal = getMinutes(_endTimeController.text);
+    
+    if (startTotal >= endTotal) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Start time must be before end time!'),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    String to24Hour(String text) {
+      try {
+        final dt = DateFormat('hh:mm a').parse(text);
+        return DateFormat('HH:mm').format(dt);
+      } catch (_) {
+        return text;
       }
     }
 
     context.read<CreateScheduleCubit>().addSchedule(
           day: _selectedDay,
-          startTime: _startTimeController.text,
-          endTime: _endTimeController.text,
+          startTime: to24Hour(_startTimeController.text),
+          endTime: to24Hour(_endTimeController.text),
           clinicId: _selectedClinicId!,
         );
   }

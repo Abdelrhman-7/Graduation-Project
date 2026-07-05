@@ -24,7 +24,7 @@ class TodayScheduleList extends StatelessWidget {
         children: [
           Text(
             AppStrings.todaySchedule,
-            style: GoogleFonts.lexend(
+            style: GoogleFonts.cairo(
               fontSize: s(18),
               fontWeight: FontWeight.w700,
               color: ColorManager.headlineText,
@@ -46,7 +46,7 @@ class TodayScheduleList extends StatelessWidget {
                       width: s(65),
                       child: Text(
                         item['time'],
-                        style: GoogleFonts.lexend(
+                        style: GoogleFonts.cairo(
                           fontSize: s(13),
                           fontWeight: FontWeight.w500,
                           color: ColorManager.subtitleText,
@@ -103,7 +103,7 @@ class TodayScheduleList extends StatelessWidget {
                           children: [
                             Text(
                               item['title'],
-                              style: GoogleFonts.lexend(
+                              style: GoogleFonts.cairo(
                                 fontSize: s(15),
                                 fontWeight: FontWeight.w600,
                                 color: ColorManager.headlineText,
@@ -113,7 +113,7 @@ class TodayScheduleList extends StatelessWidget {
                               SizedBox(height: s(4)),
                               Text(
                                 item['patient'],
-                                style: GoogleFonts.lexend(
+                                style: GoogleFonts.cairo(
                                   fontSize: s(13),
                                   fontWeight: FontWeight.w400,
                                   color: ColorManager.subtitleText,

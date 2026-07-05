@@ -92,7 +92,7 @@ class ProfileHeader extends StatelessWidget {
               children: [
                 Text(
                   name,
-                  style: GoogleFonts.lexend(
+                  style: GoogleFonts.cairo(
                     fontSize: s(24),
                     fontWeight: FontWeight.w700,
                     color: ColorManager.headlineText,
@@ -103,7 +103,7 @@ class ProfileHeader extends StatelessWidget {
 
                 Text(
                   '${AppStrings.patientId} $patientId',
-                  style: GoogleFonts.lexend(
+                  style: GoogleFonts.cairo(
                     fontSize: s(14),
                     fontWeight: FontWeight.w500,
                     color: ColorManager.subtitleText,

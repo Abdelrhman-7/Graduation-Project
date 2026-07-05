@@ -66,7 +66,7 @@ class _DoctorClinicsViewState extends State<DoctorClinicsView> {
           centerTitle: true,
           title: Text(
             'Clinic List',
-            style: GoogleFonts.lexend(
+            style: GoogleFonts.cairo(
               fontSize: s(18),
               fontWeight: FontWeight.w700,
               color: const Color(0xFF0F172A),
@@ -81,7 +81,7 @@ class _DoctorClinicsViewState extends State<DoctorClinicsView> {
                   icon: Icon(Icons.person_rounded, size: s(16), color: const Color(0xFF475569)),
                   label: Text(
                     'Back to Doctor',
-                    style: GoogleFonts.lexend(
+                    style: GoogleFonts.cairo(
                       fontSize: s(12),
                       fontWeight: FontWeight.w700,
                       color: const Color(0xFF475569),
@@ -172,13 +172,13 @@ class _DoctorClinicsViewState extends State<DoctorClinicsView> {
                         _searchQuery = value;
                       });
                     },
-                    style: GoogleFonts.lexend(
+                    style: GoogleFonts.cairo(
                       fontSize: s(13),
                       color: const Color(0xFF0F172A),
                     ),
                     decoration: InputDecoration(
                       hintText: 'Search clinics...',
-                      hintStyle: GoogleFonts.lexend(
+                      hintStyle: GoogleFonts.cairo(
                         fontSize: s(13),
                         color: const Color(0xFF94A3B8),
                       ),
@@ -222,7 +222,7 @@ class _DoctorClinicsViewState extends State<DoctorClinicsView> {
                   ),
                   padding: EdgeInsets.symmetric(horizontal: s(14), vertical: s(12)),
                 ),
-                child: Text('Reset', style: GoogleFonts.lexend(fontSize: s(13), fontWeight: FontWeight.w600)),
+                child: Text('Reset', style: GoogleFonts.cairo(fontSize: s(13), fontWeight: FontWeight.w600)),
               ),
             ],
           ),
@@ -232,7 +232,7 @@ class _DoctorClinicsViewState extends State<DoctorClinicsView> {
             children: [
               Text(
                 'Sort by:',
-                style: GoogleFonts.lexend(
+                style: GoogleFonts.cairo(
                   fontSize: s(13),
                   fontWeight: FontWeight.w600,
                   color: const Color(0xFF64748B),
@@ -241,7 +241,7 @@ class _DoctorClinicsViewState extends State<DoctorClinicsView> {
               ChoiceChip(
                 label: Text(
                   'Name',
-                  style: GoogleFonts.lexend(
+                  style: GoogleFonts.cairo(
                     fontSize: s(12),
                     fontWeight: FontWeight.w600,
                     color: _isSortedByName ? Colors.white : const Color(0xFF475569),
@@ -294,7 +294,7 @@ class _DoctorClinicsViewState extends State<DoctorClinicsView> {
                 Expanded(
                   child: Text(
                     clinic.name,
-                    style: GoogleFonts.lexend(
+                    style: GoogleFonts.cairo(
                       fontSize: s(16),
                       fontWeight: FontWeight.w700,
                       color: const Color(0xFF0F172A),
@@ -331,7 +331,7 @@ class _DoctorClinicsViewState extends State<DoctorClinicsView> {
                 icon: Icon(Icons.event_note_rounded, size: s(16), color: Colors.white),
                 label: Text(
                   'View Schedules',
-                  style: GoogleFonts.lexend(
+                  style: GoogleFonts.cairo(
                     fontSize: s(14),
                     fontWeight: FontWeight.w700,
                     color: Colors.white,
@@ -365,7 +365,7 @@ class _DoctorClinicsViewState extends State<DoctorClinicsView> {
           Expanded(
             child: Text(
               value,
-              style: GoogleFonts.lexend(
+              style: GoogleFonts.cairo(
                 fontSize: s(13),
                 fontWeight: FontWeight.w500,
                 color: const Color(0xFF475569),
@@ -389,7 +389,7 @@ class _DoctorClinicsViewState extends State<DoctorClinicsView> {
           SizedBox(height: s(16)),
           Text(
             'Loading clinics...',
-            style: GoogleFonts.lexend(
+            style: GoogleFonts.cairo(
               fontSize: s(14),
               fontWeight: FontWeight.w500,
               color: const Color(0xFF64748B),
@@ -411,7 +411,7 @@ class _DoctorClinicsViewState extends State<DoctorClinicsView> {
             SizedBox(height: s(16)),
             Text(
               'Failed to load clinics',
-              style: GoogleFonts.lexend(
+              style: GoogleFonts.cairo(
                 fontSize: s(18),
                 fontWeight: FontWeight.w700,
                 color: const Color(0xFF0F172A),
@@ -421,7 +421,7 @@ class _DoctorClinicsViewState extends State<DoctorClinicsView> {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: GoogleFonts.lexend(fontSize: s(14), color: const Color(0xFF64748B)),
+              style: GoogleFonts.cairo(fontSize: s(14), color: const Color(0xFF64748B)),
             ),
             SizedBox(height: s(24)),
             ElevatedButton(
@@ -451,7 +451,7 @@ class _DoctorClinicsViewState extends State<DoctorClinicsView> {
             SizedBox(height: s(16)),
             Text(
               'No clinics found',
-              style: GoogleFonts.lexend(
+              style: GoogleFonts.cairo(
                 fontSize: s(18),
                 fontWeight: FontWeight.w700,
                 color: const Color(0xFF0F172A),
@@ -461,7 +461,7 @@ class _DoctorClinicsViewState extends State<DoctorClinicsView> {
             Text(
               'This doctor does not have any clinics registered.',
               textAlign: TextAlign.center,
-              style: GoogleFonts.lexend(fontSize: s(14), color: const Color(0xFF64748B)),
+              style: GoogleFonts.cairo(fontSize: s(14), color: const Color(0xFF64748B)),
             ),
           ],
         ),

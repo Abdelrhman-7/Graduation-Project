@@ -30,7 +30,7 @@ class RegistrationProgressBar extends StatelessWidget {
             children: [
               Text(
                 stepText,
-                style: GoogleFonts.lexend(
+                style: GoogleFonts.cairo(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   color: ColorManager.headlineText,
@@ -38,7 +38,7 @@ class RegistrationProgressBar extends StatelessWidget {
               ),
               Text(
                 percentText,
-                style: GoogleFonts.lexend(
+                style: GoogleFonts.cairo(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                   color: ColorManager.primary,

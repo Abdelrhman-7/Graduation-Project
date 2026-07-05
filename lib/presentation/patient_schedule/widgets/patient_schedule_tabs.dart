@@ -6,13 +6,11 @@ import '../../../../core/resources/string_manager.dart';
 class PatientScheduleTabs extends StatelessWidget {
   final int selectedTab;
   final Function(int) onTabSelected;
-
   const PatientScheduleTabs({
     super.key,
     required this.selectedTab,
     required this.onTabSelected,
   });
-
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -50,7 +48,6 @@ class _TabButton extends StatelessWidget {
   final String text;
   final bool isActive;
   final VoidCallback onTap;
-
   const _TabButton({
     required this.text,
     required this.isActive,
@@ -79,7 +76,7 @@ class _TabButton extends StatelessWidget {
         child: Text(
           text,
           textAlign: TextAlign.center,
-          style: GoogleFonts.lexend(
+          style: GoogleFonts.cairo(
             fontSize: 14,
             fontWeight: FontWeight.w600,
             color: isActive ? ColorManager.primary : ColorManager.bodyText,

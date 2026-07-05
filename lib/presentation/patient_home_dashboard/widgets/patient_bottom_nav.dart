@@ -122,7 +122,7 @@ class _NavItem extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             text,
-            style: GoogleFonts.lexend(
+            style: GoogleFonts.cairo(
               fontSize: 12,
               fontWeight: FontWeight.w500,
               color: c,

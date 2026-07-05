@@ -29,7 +29,7 @@ class CreateScheduleAppBar extends StatelessWidget {
           ],
           Text(
             'Create Schedule',
-            style: GoogleFonts.lexend(
+            style: GoogleFonts.cairo(
               fontSize: 18,
               fontWeight: FontWeight.w700,
               color: const Color(0xFF1E293B),

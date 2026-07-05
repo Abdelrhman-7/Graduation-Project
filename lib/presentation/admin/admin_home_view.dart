@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../core/resources/color_manager.dart';
-import '../../../core/resources/string_manager.dart';
 import 'manage_doctors/view/manage_doctors_view.dart';
 import 'manage_patients/view/manage_patients_view.dart';
 import 'package:graduationproject/presentation/login/view/login_view.dart';
@@ -8,7 +7,7 @@ import '../../../data/repository/shared_pref_controller.dart';
 import 'package:graduationproject/presentation/role_selection/cubit/role_selection_state.dart';
 
 class AdminHomeView extends StatefulWidget {
-  const AdminHomeView({Key? key}) : super(key: key);
+  const AdminHomeView({super.key});
 
   @override
   State<AdminHomeView> createState() => _AdminHomeViewState();
@@ -33,6 +32,7 @@ class _AdminHomeViewState extends State<AdminHomeView> {
             onPressed: () async {
               await SharedPrefController().clear();
               Navigator.pushAndRemoveUntil(
+                // ignore: use_build_context_synchronously
                 context,
                 MaterialPageRoute(
                   builder: (_) => const LoginView(role: UserRole.patient),

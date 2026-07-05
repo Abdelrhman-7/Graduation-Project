@@ -87,7 +87,7 @@ class _PatientEditProfileViewState extends State<PatientEditProfileView> {
       value: widget.cubit,
       child: Scaffold(
         appBar: AppBar(
-          title: Text('Edit Profile', style: GoogleFonts.lexend()),
+          title: Text('Edit Profile', style: GoogleFonts.cairo()),
           backgroundColor: ColorManager.primary,
           foregroundColor: Colors.white,
         ),
@@ -157,22 +157,87 @@ class _PatientEditProfileViewState extends State<PatientEditProfileView> {
                   const SizedBox(height: 16),
                   _buildTextField(_addressController, 'Address'),
                   const SizedBox(height: 16),
-                  _buildTextField(_genderController, 'Gender'),
+                  DropdownButtonFormField<String>(
+                    value: ['Male', 'Female'].contains(_genderController.text) ? _genderController.text : null,
+                    decoration: InputDecoration(
+                      labelText: 'Gender (Optional)',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: ColorManager.primary),
+                      ),
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'Male', child: Text('Male')),
+                      DropdownMenuItem(value: 'Female', child: Text('Female')),
+                    ],
+                    onChanged: (val) {
+                      if (val != null) _genderController.text = val;
+                    },
+                  ),
                   const SizedBox(height: 16),
-                  _buildTextField(_dobController, 'Date of Birth'),
+                  GestureDetector(
+                    onTap: () async {
+                      final date = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime(1900),
+                        lastDate: DateTime.now(),
+                      );
+                      if (date != null) {
+                        _dobController.text = "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+                      }
+                    },
+                    child: AbsorbPointer(
+                      child: _buildTextField(_dobController, 'Date of Birth (Optional)'),
+                    ),
+                  ),
                   const SizedBox(height: 32),
                   SizedBox(
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
                       onPressed: () {
+                        final fullName = _nameController.text.trim();
+                        final email = _emailController.text.trim();
+                        final phone = _phoneController.text.trim();
+                        final address = _addressController.text.trim();
+                        final gender = _genderController.text.trim();
+                        final dob = _dobController.text.trim();
+
+                        if (fullName.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please enter your Full Name')),
+                          );
+                          return;
+                        }
+                        if (email.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please enter your Email')),
+                          );
+                          return;
+                        }
+                        if (phone.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please enter your Phone Number')),
+                          );
+                          return;
+                        }
+                        if (address.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please enter your Address')),
+                          );
+                          return;
+                        }
+                        // Gender and DOB are optional, no validation required
+
                         widget.cubit.editProfile(
-                          fullName: _nameController.text.trim(),
-                          email: _emailController.text.trim(),
-                          phoneNumber: _phoneController.text.trim(),
-                          address: _addressController.text.trim(),
-                          gender: _genderController.text.trim(),
-                          dateOfBirth: _dobController.text.trim(),
+                          fullName: fullName,
+                          email: email,
+                          phoneNumber: phone,
+                          address: address,
+                          gender: gender.isEmpty ? null : gender,
+                          dateOfBirth: dob.isEmpty ? null : dob,
                           imagePath: _imageFile?.path,
                         );
                       },
@@ -180,7 +245,7 @@ class _PatientEditProfileViewState extends State<PatientEditProfileView> {
                         backgroundColor: ColorManager.primary,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      child: Text('Save Changes', style: GoogleFonts.lexend(color: Colors.white, fontSize: 16)),
+                      child: Text('Save Changes', style: GoogleFonts.cairo(color: Colors.white, fontSize: 16)),
                     ),
                   )
                 ],

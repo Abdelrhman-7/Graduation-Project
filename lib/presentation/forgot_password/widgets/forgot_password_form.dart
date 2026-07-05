@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import '../../../core/resources/color_manager.dart';
 import '../../../core/resources/string_manager.dart';
 import '../../../core/resources/values_manager.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../cubit/forgot_password_cubit.dart';
 import '../../../core/widgets/custom_text_field.dart';
-
 class ForgotPasswordForm extends StatefulWidget {
   const ForgotPasswordForm({super.key});
 
@@ -56,37 +57,50 @@ class _ForgotPasswordFormState extends State<ForgotPasswordForm> {
           const SizedBox(height: AppSize.s40),
 
           // Reset Button
-          SizedBox(
-            height: AppSize.s56,
-            child: ElevatedButton(
-              onPressed: () {
-                if (_formKey.currentState!.validate()) {
-                  // TODO: Implement Forgot Password API call
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Reset link sent! Please check your email.',
-                      ),
+          BlocConsumer<ForgotPasswordCubit, ForgotPasswordState>(
+            listener: (context, state) {
+              if (state is ForgotPasswordSuccess) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Reset link sent! Please check your email.')),
+                );
+                Navigator.maybePop(context);
+              } else if (state is ForgotPasswordError) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(state.message)),
+                );
+              }
+            },
+            builder: (context, state) {
+              return SizedBox(
+                height: AppSize.s56,
+                child: ElevatedButton(
+                  onPressed: state is ForgotPasswordLoading
+                      ? null
+                      : () {
+                          if (_formKey.currentState!.validate()) {
+                            context.read<ForgotPasswordCubit>().resetPassword(_emailController.text);
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: ColorManager.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppSize.s16),
                     ),
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: ColorManager.primary,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppSize.s16),
+                    elevation: 8,
+                    shadowColor: ColorManager.primaryOpacity15,
+                  ),
+                  child: state is ForgotPasswordLoading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text(
+                          AppStrings.resetPassword,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
-                elevation: 8,
-                shadowColor: ColorManager.primaryOpacity15,
-              ),
-              child: const Text(
-                AppStrings.resetPassword,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
+              );
+            },
           ),
           const SizedBox(height: AppSize.s32),
 

@@ -61,7 +61,7 @@ class _AddClinicViewBodyState extends State<AddClinicViewBody> {
         ),
         title: Text(
           'Add New Clinic',
-          style: GoogleFonts.lexend(
+          style: GoogleFonts.cairo(
             fontSize: 18,
             fontWeight: FontWeight.w700,
             color: const Color(0xFF1E293B),
@@ -168,7 +168,7 @@ class _AddClinicViewBodyState extends State<AddClinicViewBody> {
                         ? const CircularProgressIndicator(color: Colors.white)
                         : Text(
                             'Save Clinic',
-                            style: GoogleFonts.lexend(
+                            style: GoogleFonts.cairo(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                               color: Colors.white,
@@ -189,7 +189,7 @@ class _AddClinicViewBodyState extends State<AddClinicViewBody> {
       padding: const EdgeInsets.only(bottom: 8.0, left: 4.0),
       child: Text(
         label,
-        style: GoogleFonts.lexend(
+        style: GoogleFonts.cairo(
           fontSize: 14,
           fontWeight: FontWeight.w500,
           color: const Color(0xFF475569),
@@ -220,10 +220,10 @@ class _AddClinicViewBodyState extends State<AddClinicViewBody> {
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
-        style: GoogleFonts.lexend(fontSize: 15, color: const Color(0xFF1E293B)),
+        style: GoogleFonts.cairo(fontSize: 15, color: const Color(0xFF1E293B)),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: GoogleFonts.lexend(
+          hintStyle: GoogleFonts.cairo(
             fontSize: 15,
             color: const Color(0xFF94A3B8),
           ),

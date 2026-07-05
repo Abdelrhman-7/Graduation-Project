@@ -49,7 +49,7 @@ class ProfileMenuItem extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: GoogleFonts.lexend(
+                    style: GoogleFonts.cairo(
                       fontSize: s(16),
                       fontWeight: FontWeight.w600,
                       color: ColorManager.headlineText,
@@ -59,7 +59,7 @@ class ProfileMenuItem extends StatelessWidget {
                     SizedBox(height: s(2)),
                     Text(
                       subtitle!,
-                      style: GoogleFonts.lexend(
+                      style: GoogleFonts.cairo(
                         fontSize: s(13),
                         fontWeight: FontWeight.w400,
                         color: ColorManager.subtitleText,

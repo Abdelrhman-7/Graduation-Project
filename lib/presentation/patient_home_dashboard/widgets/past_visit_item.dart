@@ -8,12 +8,18 @@ class PastVisitItem extends StatelessWidget {
   final String doctorName;
   final String specialty;
   final String date;
+  final String? statusLabel;
+  final VoidCallback? onDetails;
+  final VoidCallback? onRate;
 
   const PastVisitItem({
     super.key,
     required this.doctorName,
     required this.specialty,
     required this.date,
+    this.statusLabel,
+    this.onDetails,
+    this.onRate,
   });
 
   @override
@@ -46,7 +52,7 @@ class PastVisitItem extends StatelessWidget {
               children: [
                 Text(
                   specialty, // In Figma, the main text is the checkup type
-                  style: GoogleFonts.lexend(
+                  style: GoogleFonts.cairo(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
                     color: ColorManager.headlineText,
@@ -54,7 +60,7 @@ class PastVisitItem extends StatelessWidget {
                 ),
                 Text(
                   '$doctorName • $date',
-                  style: GoogleFonts.lexend(
+                  style: GoogleFonts.cairo(
                     fontSize: 12,
                     color: ColorManager.bodyText,
                   ),
@@ -62,35 +68,78 @@ class PastVisitItem extends StatelessWidget {
               ],
             ),
           ),
+          if (onRate != null) ...[
+            IconButton(
+              icon: const Icon(
+                Icons.star_rate_rounded,
+                color: Color(0xFFEAB308),
+                size: 24,
+              ),
+              onPressed: onRate,
+              tooltip: 'Rate Doctor',
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+            ),
+            const SizedBox(width: AppSize.s8),
+          ],
+          if (onDetails != null) ...[
+            IconButton(
+              icon: const Icon(
+                Icons.info_outline,
+                color: ColorManager.primary,
+                size: 20,
+              ),
+              onPressed: onDetails,
+              tooltip: 'Details',
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+            ),
+            const SizedBox(width: AppSize.s8),
+          ],
           Container(
             decoration: BoxDecoration(
-              color: ColorManager.pendingBg,
+              color: _getBadgeBgColor(),
               borderRadius: BorderRadius.circular(9999),
             ),
-            child: TextButton(
-              onPressed: () {},
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 4,
-                ),
-                minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              child: Text(
-                AppStrings.viewSummary,
-                textAlign: TextAlign.center,
-                style: GoogleFonts.lexend(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: ColorManager.primary,
-                  height: 1.2,
-                ),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 6,
+            ),
+            child: Text(
+              statusLabel ?? AppStrings.viewSummary,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.cairo(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: _getBadgeTextColor(),
+                height: 1.2,
               ),
             ),
           ),
         ],
       ),
     );
+  }
+
+  Color _getBadgeBgColor() {
+    if (statusLabel == null) return ColorManager.pendingBg;
+    final status = statusLabel!.toLowerCase();
+    if (status.contains('cancel') ||
+        status.contains('reject') ||
+        status.contains('denied')) {
+      return ColorManager.cancelRedBg;
+    }
+    return ColorManager.pendingBg;
+  }
+
+  Color _getBadgeTextColor() {
+    if (statusLabel == null) return ColorManager.primary;
+    final status = statusLabel!.toLowerCase();
+    if (status.contains('cancel') ||
+        status.contains('reject') ||
+        status.contains('denied')) {
+      return ColorManager.cancelRedText;
+    }
+    return ColorManager.primary;
   }
 }

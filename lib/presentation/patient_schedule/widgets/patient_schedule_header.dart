@@ -33,7 +33,7 @@ class PatientScheduleHeader extends StatelessWidget {
           ),
           Text(
             AppStrings.appointments,
-            style: GoogleFonts.lexend(
+            style: GoogleFonts.cairo(
               fontSize: 18,
               fontWeight: FontWeight.w700,
               color: ColorManager.headlineText,

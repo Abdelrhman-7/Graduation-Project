@@ -59,7 +59,7 @@ class _PatientRegistrationViewBodyState extends State<PatientRegistrationViewBod
                 const SizedBox(height: AppSize.s8),
                 Text(
                   AppStrings.patientRegistrationDesc,
-                  style: GoogleFonts.lexend(
+                  style: GoogleFonts.cairo(
                     fontSize: 16,
                     color: ColorManager.bodyText,
                   ),
@@ -179,7 +179,7 @@ class _PatientRegistrationViewBodyState extends State<PatientRegistrationViewBod
       children: [
         Text(
           AppStrings.knownAllergies,
-          style: GoogleFonts.lexend(
+          style: GoogleFonts.cairo(
             fontSize: 16,
             fontWeight: FontWeight.w500,
             color: ColorManager.bodyText,
@@ -230,7 +230,7 @@ class _PatientRegistrationViewBodyState extends State<PatientRegistrationViewBod
       children: [
         Text(
           AppStrings.chronicConditions,
-          style: GoogleFonts.lexend(
+          style: GoogleFonts.cairo(
             fontSize: 16,
             fontWeight: FontWeight.w500,
             color: ColorManager.bodyText,
@@ -276,7 +276,7 @@ class _PatientRegistrationViewBodyState extends State<PatientRegistrationViewBod
       children: [
         Text(
           'Profile Picture',
-          style: GoogleFonts.lexend(
+          style: GoogleFonts.cairo(
             fontSize: 14,
             fontWeight: FontWeight.w600,
             color: ColorManager.headlineText,
@@ -317,7 +317,7 @@ class _PatientRegistrationViewBodyState extends State<PatientRegistrationViewBod
                 const SizedBox(width: AppSize.s12),
                 Text(
                   'Upload Photo',
-                  style: GoogleFonts.lexend(
+                  style: GoogleFonts.cairo(
                     fontSize: 16,
                     color: ColorManager.subtitleText,
                   ),

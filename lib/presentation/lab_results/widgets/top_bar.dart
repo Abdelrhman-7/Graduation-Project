@@ -6,8 +6,9 @@ import '../../../../core/resources/string_manager.dart';
 import '../../../../core/resources/theme_manager.dart';
 
 class LabResultsTopBar extends StatelessWidget {
-  const LabResultsTopBar({super.key, required this.scale});
+  const LabResultsTopBar({super.key, required this.scale, this.onHistoryTap});
   final double scale;
+  final VoidCallback? onHistoryTap;
 
   @override
   Widget build(BuildContext context) {
@@ -33,12 +34,12 @@ class LabResultsTopBar extends StatelessWidget {
             style: ThemeManager.getLabHeading3Style().copyWith(fontSize: s(18)),
           ),
           IconButton(
-            icon: SvgPicture.asset(
-              ImageAssets.more,
-              width: s(24),
-              height: s(24),
+            icon: Icon(
+              Icons.history_rounded,
+              size: s(24),
+              color: const Color(0xFF64748B),
             ),
-            onPressed: () {},
+            onPressed: onHistoryTap,
           ),
         ],
       ),

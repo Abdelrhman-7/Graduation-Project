@@ -47,7 +47,7 @@ class CustomTextField extends StatelessWidget {
             ),
             child: Text(
               label!,
-              style: GoogleFonts.lexend(
+              style: GoogleFonts.cairo(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: ColorManager.headlineText,

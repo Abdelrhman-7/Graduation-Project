@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:graduationproject/data/models/schudule/doctorModel.dart';
+import 'package:graduationproject/data/api/api_manager.dart';
 import '../cubit/patient_booking_cubit.dart';
 import '../cubit/patient_booking_state.dart';
 import 'doctor_clinics_view.dart';
@@ -10,12 +11,14 @@ class DoctorProfileView extends StatefulWidget {
   final int doctorId;
   final PatientBookingCubit cubit;
   final double scale;
+  final DoctorModel? initialDoctor;
 
   const DoctorProfileView({
     super.key,
     required this.doctorId,
     required this.cubit,
     required this.scale,
+    this.initialDoctor,
   });
 
   @override
@@ -24,11 +27,46 @@ class DoctorProfileView extends StatefulWidget {
 
 class _DoctorProfileViewState extends State<DoctorProfileView> {
   double s(double v) => v * widget.scale;
+  
+  String _averageRating = "0.0";
+  String _reviewCount = "0";
+  List<dynamic> _reviewsList = [];
 
   @override
   void initState() {
     super.initState();
-    widget.cubit.fetchDoctorDetails(widget.doctorId);
+    widget.cubit.fetchDoctorDetails(
+      widget.doctorId,
+      fallback: widget.initialDoctor,
+    );
+    _fetchRating();
+  }
+
+  Future<void> _fetchRating() async {
+    try {
+      final api = await ApiManager.create();
+      final reviews = await api.getPatientDoctorReviews(widget.doctorId);
+      if (reviews.isNotEmpty && mounted) {
+        double total = 0;
+        int count = 0;
+        for (var review in reviews) {
+          final rating = (review['rating'] as num?)?.toDouble() ?? 0.0;
+          if (rating > 0) {
+            total += rating;
+            count++;
+          }
+        }
+        if (count > 0) {
+          setState(() {
+            _averageRating = (total / count).toStringAsFixed(1);
+            _reviewCount = count.toString();
+            _reviewsList = reviews;
+          });
+        }
+      }
+    } catch (e) {
+      print('Error fetching rating: $e');
+    }
   }
 
   // Deterministic fallbacks
@@ -59,12 +97,15 @@ class _DoctorProfileViewState extends State<DoctorProfileView> {
           elevation: 0,
           leading: IconButton(
             icon: Icon(Icons.arrow_back, color: const Color(0xFF0F172A), size: s(24)),
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              widget.cubit.restoreDoctorsList();
+              Navigator.pop(context);
+            },
           ),
           centerTitle: true,
           title: Text(
             'Doctor Details',
-            style: GoogleFonts.lexend(
+            style: GoogleFonts.cairo(
               fontSize: s(18),
               fontWeight: FontWeight.w700,
               color: const Color(0xFF0F172A),
@@ -125,13 +166,44 @@ class _DoctorProfileViewState extends State<DoctorProfileView> {
                       // Doctor Name
                       Text(
                         doctor.fullName,
-                        style: GoogleFonts.lexend(
+                        style: GoogleFonts.cairo(
                           fontSize: s(22),
                           fontWeight: FontWeight.w800,
                           color: const Color(0xFF0F172A),
                         ),
                         textAlign: TextAlign.center,
                       ),
+                      if (_reviewCount != "0") ...[
+                        SizedBox(height: s(8)),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.star_rounded,
+                              color: Color(0xFFEAB308),
+                              size: 20,
+                            ),
+                            SizedBox(width: s(4)),
+                            Text(
+                              '$_averageRating/5',
+                              style: GoogleFonts.cairo(
+                                fontSize: s(14),
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF0F172A),
+                              ),
+                            ),
+                            SizedBox(width: s(4)),
+                            Text(
+                              '($_reviewCount reviews)',
+                              style: GoogleFonts.cairo(
+                                fontSize: s(14),
+                                fontWeight: FontWeight.w500,
+                                color: const Color(0xFF64748B),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                       SizedBox(height: s(16)),
 
                       // Main details card
@@ -174,96 +246,138 @@ class _DoctorProfileViewState extends State<DoctorProfileView> {
                       ),
                       SizedBox(height: s(24)),
 
-                      // Actions Row
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: () => Navigator.pop(context),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: const Color(0xFF475569),
-                                side: const BorderSide(color: Color(0xFFCBD5E1), width: 1.5),
-                                padding: EdgeInsets.symmetric(vertical: s(14)),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(s(12)),
+                      // Actions
+                      Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(s(12)),
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF137FEC), Color(0xFF06B6D4)],
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF137FEC).withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => DoctorClinicsView(
+                                  doctor: doctor,
+                                  cubit: widget.cubit,
+                                  scale: widget.scale,
                                 ),
                               ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.arrow_back_rounded, size: s(18)),
-                                  SizedBox(width: s(8)),
-                                  Text(
-                                    'Back to List',
-                                    style: GoogleFonts.lexend(
-                                      fontSize: s(14),
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: EdgeInsets.symmetric(vertical: s(14)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(s(12)),
                             ),
                           ),
-                          SizedBox(width: s(12)),
-                          Expanded(
-                            child: Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(s(12)),
-                                gradient: const LinearGradient(
-                                  colors: [Color(0xFF137FEC), Color(0xFF06B6D4)],
-                                  begin: Alignment.centerLeft,
-                                  end: Alignment.centerRight,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'View Clinics',
+                                style: GoogleFonts.cairo(
+                                  fontSize: s(14),
+                                  fontWeight: FontWeight.w700,
                                 ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color(0xFF137FEC).withOpacity(0.3),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
                               ),
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => DoctorClinicsView(
-                                        doctor: doctor,
-                                        cubit: widget.cubit,
-                                        scale: widget.scale,
-                                      ),
-                                    ),
-                                  );
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.transparent,
-                                  shadowColor: Colors.transparent,
-                                  foregroundColor: Colors.white,
-                                  elevation: 0,
-                                  padding: EdgeInsets.symmetric(vertical: s(14)),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(s(12)),
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
+                              SizedBox(width: s(8)),
+                              Icon(Icons.arrow_forward_rounded, size: s(18)),
+                            ],
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: s(24)),
+                      if (_reviewsList.isNotEmpty) ...[
+                        Text(
+                          'Patient Reviews',
+                          style: GoogleFonts.cairo(
+                            fontSize: s(18),
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF0F172A),
+                          ),
+                        ),
+                        SizedBox(height: s(12)),
+                        ..._reviewsList.map((review) {
+                          final rating = (review['rating'] as num?)?.toDouble() ?? 0.0;
+                          final comment = (review['comment'] ?? '').toString();
+                          final patientName = (review['patientName'] ?? 'Anonymous Patient').toString();
+                          return Container(
+                            margin: EdgeInsets.only(bottom: s(12)),
+                            padding: EdgeInsets.all(s(16)),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(s(16)),
+                              border: Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
                                   children: [
-                                    Text(
-                                      'View Clinics',
-                                      style: GoogleFonts.lexend(
-                                        fontSize: s(14),
-                                        fontWeight: FontWeight.w700,
-                                      ),
+                                    CircleAvatar(
+                                      radius: s(16),
+                                      backgroundColor: const Color(0xFFEFF6FF),
+                                      child: Icon(Icons.person, color: const Color(0xFF137FEC), size: s(18)),
                                     ),
                                     SizedBox(width: s(8)),
-                                    Icon(Icons.arrow_forward_rounded, size: s(18)),
+                                    Expanded(
+                                      child: Text(
+                                        patientName,
+                                        style: GoogleFonts.cairo(
+                                          fontSize: s(14),
+                                          fontWeight: FontWeight.w700,
+                                          color: const Color(0xFF0F172A),
+                                        ),
+                                      ),
+                                    ),
+                                    Row(
+                                      children: [
+                                        Icon(Icons.star_rounded, color: const Color(0xFFEAB308), size: s(16)),
+                                        SizedBox(width: s(4)),
+                                        Text(
+                                          rating.toStringAsFixed(1),
+                                          style: GoogleFonts.cairo(
+                                            fontSize: s(14),
+                                            fontWeight: FontWeight.w600,
+                                            color: const Color(0xFF0F172A),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ],
                                 ),
-                              ),
+                                if (comment.isNotEmpty) ...[
+                                  SizedBox(height: s(8)),
+                                  Text(
+                                    comment,
+                                    style: GoogleFonts.cairo(
+                                      fontSize: s(14),
+                                      color: const Color(0xFF475569),
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
-                          ),
-                        ],
-                      ),
+                          );
+                        }),
+                      ],
                       SizedBox(height: s(20)),
                     ],
                   ),
@@ -291,7 +405,7 @@ class _DoctorProfileViewState extends State<DoctorProfileView> {
               children: [
                 Text(
                   label,
-                  style: GoogleFonts.lexend(
+                  style: GoogleFonts.cairo(
                     fontSize: s(12),
                     fontWeight: FontWeight.w600,
                     color: const Color(0xFF94A3B8),
@@ -300,7 +414,7 @@ class _DoctorProfileViewState extends State<DoctorProfileView> {
                 SizedBox(height: s(2)),
                 Text(
                   value,
-                  style: GoogleFonts.lexend(
+                  style: GoogleFonts.cairo(
                     fontSize: s(14),
                     fontWeight: FontWeight.w600,
                     color: const Color(0xFF334155),
@@ -333,7 +447,7 @@ class _DoctorProfileViewState extends State<DoctorProfileView> {
           SizedBox(height: s(16)),
           Text(
             'Loading profile...',
-            style: GoogleFonts.lexend(
+            style: GoogleFonts.cairo(
               fontSize: s(14),
               fontWeight: FontWeight.w500,
               color: const Color(0xFF64748B),
@@ -355,7 +469,7 @@ class _DoctorProfileViewState extends State<DoctorProfileView> {
             SizedBox(height: s(16)),
             Text(
               'Failed to load details',
-              style: GoogleFonts.lexend(
+              style: GoogleFonts.cairo(
                 fontSize: s(18),
                 fontWeight: FontWeight.w700,
                 color: const Color(0xFF0F172A),
@@ -365,12 +479,15 @@ class _DoctorProfileViewState extends State<DoctorProfileView> {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: GoogleFonts.lexend(fontSize: s(14), color: const Color(0xFF64748B)),
+              style: GoogleFonts.cairo(fontSize: s(14), color: const Color(0xFF64748B)),
             ),
             SizedBox(height: s(24)),
             ElevatedButton(
               onPressed: () {
-                widget.cubit.fetchDoctorDetails(widget.doctorId);
+                widget.cubit.fetchDoctorDetails(
+                  widget.doctorId,
+                  fallback: widget.initialDoctor,
+                );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF137FEC),

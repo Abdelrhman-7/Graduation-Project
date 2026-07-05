@@ -5,16 +5,11 @@ abstract class LabResultsState {}
 
 class LabResultsInitial extends LabResultsState {}
 
-class LabResultsLoading extends LabResultsState {}
+class LabResultsSubmitLoading extends LabResultsState {}
 
-class LabResultsSuccess extends LabResultsState {
-  final List<dynamic> reports; // Placeholder for actual report model
-  final List<dynamic> detailedResults;
-  
-  LabResultsSuccess({required this.reports, required this.detailedResults});
-}
+class LabResultsSubmitSuccess extends LabResultsState {}
 
-class LabResultsError extends LabResultsState {
+class LabResultsSubmitError extends LabResultsState {
   final String message;
-  LabResultsError(this.message);
+  LabResultsSubmitError(this.message);
 }

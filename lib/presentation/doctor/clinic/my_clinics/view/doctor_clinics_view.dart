@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:graduationproject/data/models/booking/booking_model.dart';
 import 'package:graduationproject/data/models/schudule/cliniceSchedual.dart';
 import 'package:graduationproject/presentation/doctor/clinic/my_clinics/cubit/doctor_clinics_state.dart';
 import '../../../../../core/resources/color_manager.dart';
@@ -52,7 +53,9 @@ class _DoctorClinicsViewState extends State<DoctorClinicsView>
         if (snapshot.hasError || !snapshot.hasData) {
           return Scaffold(
             backgroundColor: const Color(0xFFF8FAFC),
-            body: Center(child: Text('Failed to initialize: ${snapshot.error}')),
+            body: Center(
+              child: Text('Failed to initialize: ${snapshot.error}'),
+            ),
           );
         }
         final apiManager = snapshot.data!;
@@ -72,7 +75,10 @@ class _DoctorClinicsViewState extends State<DoctorClinicsView>
                       controller: _tabController,
                       children: [
                         _MyClinicsTab(tabController: _tabController),
-                        _AddClinicTab(tabController: _tabController, apiManager: apiManager),
+                        _AddClinicTab(
+                          tabController: _tabController,
+                          apiManager: apiManager,
+                        ),
                       ],
                     ),
                   ),
@@ -107,14 +113,15 @@ class _DoctorClinicsViewState extends State<DoctorClinicsView>
               style: IconButton.styleFrom(
                 backgroundColor: const Color(0xFFF1F5F9),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
             const SizedBox(width: 12),
           ],
           Text(
             'My Clinics',
-            style: GoogleFonts.lexend(
+            style: GoogleFonts.cairo(
               fontSize: 18,
               fontWeight: FontWeight.w700,
               color: const Color(0xFF1E293B),
@@ -134,10 +141,14 @@ class _DoctorClinicsViewState extends State<DoctorClinicsView>
         unselectedLabelColor: const Color(0xFF94A3B8),
         indicatorColor: ColorManager.primary,
         indicatorWeight: 3,
-        labelStyle:
-            GoogleFonts.lexend(fontSize: 14, fontWeight: FontWeight.w600),
-        unselectedLabelStyle:
-            GoogleFonts.lexend(fontSize: 14, fontWeight: FontWeight.w500),
+        labelStyle: GoogleFonts.cairo(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+        ),
+        unselectedLabelStyle: GoogleFonts.cairo(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
         tabs: const [
           Tab(icon: Icon(Icons.local_hospital_outlined), text: 'My Clinics'),
           Tab(icon: Icon(Icons.add_circle_outline_rounded), text: 'Add New'),
@@ -184,7 +195,11 @@ class _MyClinicsTab extends StatelessWidget {
             children: [
               ListView.builder(
                 padding: const EdgeInsets.only(
-                    left: 20, right: 20, top: 20, bottom: 100),
+                  left: 20,
+                  right: 20,
+                  top: 20,
+                  bottom: 100,
+                ),
                 itemCount: state.clinics.length,
                 itemBuilder: (context, index) {
                   final clinic = state.clinics[index];
@@ -205,11 +220,13 @@ class _MyClinicsTab extends StatelessWidget {
                   onPressed: () => tabController.animateTo(1),
                   backgroundColor: ColorManager.primary,
                   elevation: 4,
-                  icon: const Icon(Icons.add_business_rounded,
-                      color: Colors.white),
+                  icon: const Icon(
+                    Icons.add_business_rounded,
+                    color: Colors.white,
+                  ),
                   label: Text(
                     'Add Clinic',
-                    style: GoogleFonts.lexend(
+                    style: GoogleFonts.cairo(
                       fontWeight: FontWeight.w600,
                       color: Colors.white,
                     ),
@@ -232,12 +249,15 @@ class _MyClinicsTab extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.local_hospital_outlined,
-                  size: 80, color: Colors.grey.shade300),
+              Icon(
+                Icons.local_hospital_outlined,
+                size: 80,
+                color: Colors.grey.shade300,
+              ),
               const SizedBox(height: 16),
               Text(
                 'No clinics added yet',
-                style: GoogleFonts.lexend(
+                style: GoogleFonts.cairo(
                   fontSize: 18,
                   fontWeight: FontWeight.w500,
                   color: Colors.grey,
@@ -246,7 +266,7 @@ class _MyClinicsTab extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 'Tap the button below to add your first clinic',
-                style: GoogleFonts.lexend(
+                style: GoogleFonts.cairo(
                   fontSize: 13,
                   color: Colors.grey.shade400,
                 ),
@@ -266,7 +286,7 @@ class _MyClinicsTab extends StatelessWidget {
             icon: const Icon(Icons.add_business_rounded, color: Colors.white),
             label: Text(
               'Add Clinic',
-              style: GoogleFonts.lexend(
+              style: GoogleFonts.cairo(
                 fontWeight: FontWeight.w600,
                 color: Colors.white,
               ),
@@ -278,17 +298,18 @@ class _MyClinicsTab extends StatelessWidget {
   }
 
   void _showBookings(
-      BuildContext context, int clinicId, String clinicName) async {
+    BuildContext context,
+    int clinicId,
+    String clinicName,
+  ) async {
+    final cubit = context.read<DoctorClinicsCubit>();
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (_) => const Center(child: CircularProgressIndicator()),
     );
     try {
-      final bookings = await context
-          .read<DoctorClinicsCubit>()
-          .clinicRepository
-          .getClinicBookings(clinicId);
+      final bookings = await cubit.clinicRepository.getClinicBookings(clinicId);
       // ignore: use_build_context_synchronously
       Navigator.pop(context);
       showModalBottomSheet(
@@ -304,6 +325,62 @@ class _MyClinicsTab extends StatelessWidget {
             clinicId: clinicId,
             clinicName: clinicName,
             bookings: bookings,
+            onAccept: (id) async {
+              BookingModel? bookingModel;
+              try {
+                final match = bookings.firstWhere((b) {
+                  final bid =
+                      b['bookingId'] ?? b['BookingId'] ?? b['id'] ?? b['Id'];
+                  return bid?.toString() == id.toString();
+                });
+                if (match != null) {
+                  bookingModel = BookingModel.fromJson(
+                    Map<String, dynamic>.from(match),
+                  );
+                }
+              } catch (_) {}
+
+              final ok = await cubit.clinicRepository.acceptDoctorBooking(
+                id,
+                booking: bookingModel,
+              );
+              if (context.mounted && !ok) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Failed to accept booking')),
+                );
+              } else {
+                Navigator.pop(context);
+                _showBookings(context, clinicId, clinicName);
+              }
+            },
+            onReject: (id) async {
+              BookingModel? bookingModel;
+              try {
+                final match = bookings.firstWhere((b) {
+                  final bid =
+                      b['bookingId'] ?? b['BookingId'] ?? b['id'] ?? b['Id'];
+                  return bid?.toString() == id.toString();
+                });
+                if (match != null) {
+                  bookingModel = BookingModel.fromJson(
+                    Map<String, dynamic>.from(match),
+                  );
+                }
+              } catch (_) {}
+
+              final ok = await cubit.clinicRepository.rejectDoctorBooking(
+                id,
+                booking: bookingModel,
+              );
+              if (context.mounted && !ok) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Failed to reject booking')),
+                );
+              } else {
+                Navigator.pop(context);
+                _showBookings(context, clinicId, clinicName);
+              }
+            },
           ),
         ),
       );
@@ -332,19 +409,22 @@ class _MyClinicsTab extends StatelessWidget {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('Delete Clinic',
-            style: GoogleFonts.lexend(fontWeight: FontWeight.bold)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          'Delete Clinic',
+          style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
+        ),
         content: Text(
           'Are you sure you want to delete this clinic? This action cannot be undone.',
-          style: GoogleFonts.lexend(fontSize: 14),
+          style: GoogleFonts.cairo(fontSize: 14),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: Text('Cancel',
-                style: GoogleFonts.lexend(color: Colors.grey)),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.cairo(color: Colors.grey),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
@@ -354,10 +434,13 @@ class _MyClinicsTab extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.redAccent,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
-            child: Text('Delete',
-                style: GoogleFonts.lexend(color: Colors.white)),
+            child: Text(
+              'Delete',
+              style: GoogleFonts.cairo(color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -410,7 +493,7 @@ class _AddClinicTabState extends State<_AddClinicTab> {
     return BlocProvider(
       create: (_) => AddClinicCubit(ClinicRepository(widget.apiManager)),
       child: BlocConsumer<AddClinicCubit, AddClinicState>(
-        listener: (context, state) {
+        listener: (context, state) async {
           if (state is AddClinicSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
@@ -420,8 +503,8 @@ class _AddClinicTabState extends State<_AddClinicTab> {
               ),
             );
             _clearForm();
-            // Reload the list then switch to My Clinics tab
-            context.read<DoctorClinicsCubit>().loadClinics();
+            // Reload the list and WAIT for it to finish, then switch to My Clinics tab
+            await context.read<DoctorClinicsCubit>().loadClinics();
             widget.tabController.animateTo(0);
           } else if (state is AddClinicError) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -492,15 +575,15 @@ class _AddClinicTabState extends State<_AddClinicTab> {
                         ? null
                         : () {
                             context.read<AddClinicCubit>().addClinic(
-                                  name: _nameController.text.trim(),
-                                  address: _addressController.text.trim(),
-                                  phoneNumber: _phoneController.text.trim(),
-                                  consultationPriceStr:
-                                      _priceController.text.trim(),
-                                  appointmentDuration:
-                                      _durationController.text.trim(),
-                                  nots: _notsController.text.trim(),
-                                );
+                              name: _nameController.text.trim(),
+                              address: _addressController.text.trim(),
+                              phoneNumber: _phoneController.text.trim(),
+                              consultationPriceStr: _priceController.text
+                                  .trim(),
+                              appointmentDuration: _durationController.text
+                                  .trim(),
+                              nots: _notsController.text.trim(),
+                            );
                           },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: ColorManager.primary,
@@ -514,11 +597,13 @@ class _AddClinicTabState extends State<_AddClinicTab> {
                             width: 24,
                             height: 24,
                             child: CircularProgressIndicator(
-                                color: Colors.white, strokeWidth: 2),
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
                           )
                         : Text(
                             'Save Clinic',
-                            style: GoogleFonts.lexend(
+                            style: GoogleFonts.cairo(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                               color: Colors.white,
@@ -540,7 +625,7 @@ class _AddClinicTabState extends State<_AddClinicTab> {
       padding: const EdgeInsets.only(bottom: 8.0, left: 4.0),
       child: Text(
         label,
-        style: GoogleFonts.lexend(
+        style: GoogleFonts.cairo(
           fontSize: 14,
           fontWeight: FontWeight.w500,
           color: const Color(0xFF475569),
@@ -571,11 +656,10 @@ class _AddClinicTabState extends State<_AddClinicTab> {
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
-        style:
-            GoogleFonts.lexend(fontSize: 15, color: const Color(0xFF1E293B)),
+        style: GoogleFonts.cairo(fontSize: 15, color: const Color(0xFF1E293B)),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: GoogleFonts.lexend(
+          hintStyle: GoogleFonts.cairo(
             fontSize: 15,
             color: const Color(0xFF94A3B8),
           ),

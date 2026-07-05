@@ -40,7 +40,7 @@ class PatientProfileCubit extends Cubit<PatientProfileState> {
           final raw = rawImage.toString();
           imageUrl = raw.startsWith('http')
               ? raw
-              : 'http://medicalsystem111.runasp.net$raw';
+              : 'http://clinicbook.runasp.net$raw';
           await sharedPrefController.saveImage(imageUrl);
         }
 
@@ -199,6 +199,23 @@ class PatientProfileCubit extends Cubit<PatientProfileState> {
       }
     } catch (e) {
       emit(PatientProfileError(e.toString()));
+    }
+  }
+
+  void changePassword(String currentPassword, String newPassword, String confirmNewPassword) async {
+    emit(PatientProfilePasswordChangeLoading());
+    try {
+      final success = await repository.changePatientPassword(currentPassword, newPassword, confirmNewPassword);
+      if (success) {
+        emit(PatientProfilePasswordChangeSuccess());
+        getProfileData();
+      } else {
+        emit(PatientProfilePasswordChangeError('Failed to change password'));
+        getProfileData();
+      }
+    } catch (e) {
+      emit(PatientProfilePasswordChangeError(e.toString()));
+      getProfileData();
     }
   }
 }

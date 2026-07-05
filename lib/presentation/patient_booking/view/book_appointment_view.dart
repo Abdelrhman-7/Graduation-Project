@@ -5,6 +5,7 @@ import 'package:graduationproject/data/models/schudule/cliniceSchedual.dart';
 import 'package:graduationproject/data/models/schudule/doctorModel.dart';
 import '../cubit/patient_booking_cubit.dart';
 import '../cubit/patient_booking_state.dart';
+import 'package:graduationproject/data/api/api_manager.dart';
 
 class BookAppointmentView extends StatefulWidget {
   final DoctorModel doctor;
@@ -62,30 +63,52 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
   void _submitBooking() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final result = await widget.cubit.bookPatientAppointment(
+    // Helper to parse minutes from any duration string format
+    int parseMinutes(String val) {
+      final cleaned = val.toLowerCase().trim();
+      if (cleaned.contains(':')) {
+        final parts = cleaned.split(':');
+        if (parts.length >= 2) {
+          final hours = int.tryParse(parts[0]) ?? 0;
+          final minutes = int.tryParse(parts[1]) ?? 0;
+          return (hours * 60) + minutes;
+        }
+      }
+      final regExp = RegExp(r'\d+');
+      final match = regExp.firstMatch(cleaned);
+      if (match != null) {
+        return int.tryParse(match.group(0)!) ?? 0;
+      }
+      return 0;
+    }
+
+    // Parse duration: prefer schedule duration if valid (>0), fallback to clinic duration
+    int durationMinutes = 30;
+    final rawSchedDur = widget.schedule['appointmentDuration'] ?? widget.schedule['AppointmentDuration'];
+    final schedDur = rawSchedDur != null ? parseMinutes(rawSchedDur.toString()) : 0;
+    if (schedDur > 0) {
+      durationMinutes = schedDur;
+    } else {
+      final clinicDur = parseMinutes(widget.clinic.appointmentDuration);
+      if (clinicDur > 0) {
+        durationMinutes = clinicDur;
+      }
+    }
+
+    await widget.cubit.bookPatientAppointment(
       scheduleId: widget.scheduleId,
       reasonForVisit: _reasonController.text.trim(),
       paymentMethod: _paymentMethod,
+      doctorId: widget.doctor.id,
+      clinicId: widget.clinic.id,
+      clinicName: widget.clinic.name,
+      doctorName: widget.doctor.fullName,
+      dayOfWeek: (widget.schedule['dayOfWeek'] ?? widget.schedule['day'])?.toString(),
+      startTime: widget.schedule['startTime']?.toString(),
+      endTime: widget.schedule['endTime']?.toString(),
+      appointmentDuration: durationMinutes.toString(),
+      price: double.tryParse(widget.clinic.consultationPrice.toString()),
     );
-
-    if (result) {
-      setState(() {
-        _isSuccess = true;
-      });
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Failed to book appointment. Please try again.',
-              style: GoogleFonts.lexend(),
-            ),
-            backgroundColor: const Color(0xFFEF4444),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    }
   }
 
   @override
@@ -104,7 +127,7 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
           centerTitle: true,
           title: Text(
             'Book Appointment',
-            style: GoogleFonts.lexend(
+            style: GoogleFonts.cairo(
               fontSize: s(18),
               fontWeight: FontWeight.w700,
               color: const Color(0xFF0F172A),
@@ -114,10 +137,14 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
         body: SafeArea(
           child: BlocConsumer<PatientBookingCubit, PatientBookingState>(
             listener: (context, state) {
-              if (state is PatientBookingError) {
+              if (state is PatientBookingBookingSuccess) {
+                setState(() => _isSuccess = true);
+                // Rating popup removed here
+                // الدفع مش فوري — ينتظر المريض قبول الدكتور أولاً
+              } else if (state is PatientBookingError) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(state.message, style: GoogleFonts.lexend()),
+                    content: Text(state.message, style: GoogleFonts.cairo()),
                     backgroundColor: const Color(0xFFEF4444),
                     behavior: SnackBarBehavior.floating,
                   ),
@@ -196,7 +223,7 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
               children: [
                 Text(
                   widget.doctor.fullName,
-                  style: GoogleFonts.lexend(
+                  style: GoogleFonts.cairo(
                     fontSize: s(16),
                     fontWeight: FontWeight.w700,
                     color: const Color(0xFF0F172A),
@@ -205,7 +232,7 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
                 SizedBox(height: s(4)),
                 Text(
                   widget.doctor.departmentName ?? 'Medical Specialist',
-                  style: GoogleFonts.lexend(
+                  style: GoogleFonts.cairo(
                     fontSize: s(13),
                     color: const Color(0xFF137FEC),
                     fontWeight: FontWeight.w600,
@@ -215,7 +242,7 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
                   SizedBox(height: s(4)),
                   Text(
                     'Age: ${widget.doctor.age}',
-                    style: GoogleFonts.lexend(
+                    style: GoogleFonts.cairo(
                       fontSize: s(12),
                       color: const Color(0xFF64748B),
                     ),
@@ -225,7 +252,7 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
                   SizedBox(height: s(6)),
                   Text(
                     widget.doctor.aboutMe!,
-                    style: GoogleFonts.lexend(
+                    style: GoogleFonts.cairo(
                       fontSize: s(12),
                       color: const Color(0xFF475569),
                     ),
@@ -244,18 +271,107 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
   Widget _buildClinicScheduleSummary() {
     final day = (widget.schedule['dayOfWeek'] ?? widget.schedule['day'] ?? 'Unknown Day').toString();
     final start = (widget.schedule['startTime'] ?? 'N/A').toString();
-    final end = (widget.schedule['endTime'] ?? 'N/A').toString();
     
-    // Parse duration
-    String duration = '30 minutes';
-    if (widget.schedule['appointmentDuration'] != null) {
-      final rawDur = widget.schedule['appointmentDuration'].toString();
-      duration = rawDur.contains(':') ? '${rawDur.split(":")[1]} minutes' : '$rawDur minutes';
-    } else if (widget.clinic.appointmentDuration.isNotEmpty) {
-      duration = widget.clinic.appointmentDuration;
+    // Helper to parse minutes from any duration string format
+    int parseMinutes(String val) {
+      final cleaned = val.toLowerCase().trim();
+      if (cleaned.contains(':')) {
+        final parts = cleaned.split(':');
+        if (parts.length >= 2) {
+          final hours = int.tryParse(parts[0]) ?? 0;
+          final minutes = int.tryParse(parts[1]) ?? 0;
+          return (hours * 60) + minutes;
+        }
+      }
+      final regExp = RegExp(r'\d+');
+      final match = regExp.firstMatch(cleaned);
+      if (match != null) {
+        return int.tryParse(match.group(0)!) ?? 0;
+      }
+      return 0;
+    }
+
+    // Check if endTime is provided by backend
+    final backendEndTime = widget.schedule['endTime'] ?? widget.schedule['EndTime'];
+    
+    // Parse duration: prefer schedule duration if valid (>0), fallback to clinic duration
+    int durationMinutes = 0;
+    final rawSchedDur = widget.schedule['appointmentDuration'] ?? widget.schedule['AppointmentDuration'];
+    final schedDur = rawSchedDur != null ? parseMinutes(rawSchedDur.toString()) : 0;
+    if (schedDur > 0) {
+      durationMinutes = schedDur;
+    } else {
+      final clinicDur = parseMinutes(widget.clinic.appointmentDuration);
+      if (clinicDur > 0) {
+        durationMinutes = clinicDur;
+      }
+    }
+
+    // Helper to calculate minutes from time string (e.g., "09:00:00" -> 540)
+    int? timeToMinutes(String time) {
+      try {
+        final cleanTime = time.trim().split(' ')[0];
+        final parts = cleanTime.split(':');
+        if (parts.isEmpty) return null;
+        int hour = int.tryParse(parts[0]) ?? 0;
+        int minute = parts.length > 1 ? (int.tryParse(parts[1]) ?? 0) : 0;
+        return hour * 60 + minute;
+      } catch (_) {
+        return null;
+      }
     }
     
-    final notes = (widget.schedule['notes'] ?? widget.schedule['nots'] ?? widget.clinic.nots ?? '').toString();
+    // Calculate End Time (Start Time + Duration)
+    String calculateEndTime(String startTime, int durationMins) {
+      try {
+        final startMins = timeToMinutes(startTime) ?? (9 * 60);
+        final totalMinutes = startMins + durationMins;
+        final endHour = (totalMinutes ~/ 60) % 24;
+        final endMinute = totalMinutes % 60;
+        final endHourStr = endHour.toString().padLeft(2, '0');
+        final endMinuteStr = endMinute.toString().padLeft(2, '0');
+        if (startTime.trim().split(' ')[0].split(':').length > 2) {
+          return '$endHourStr:$endMinuteStr:00';
+        }
+        return '$endHourStr:$endMinuteStr';
+      } catch (_) {
+        return startTime;
+      }
+    }
+
+    String end;
+    if (backendEndTime != null && backendEndTime.toString().isNotEmpty) {
+      end = backendEndTime.toString();
+      // If we have both start and end from backend but duration is still 0, calculate it
+      if (durationMinutes == 0) {
+        final startMins = timeToMinutes(start);
+        final endMins = timeToMinutes(end);
+        if (startMins != null && endMins != null) {
+          durationMinutes = endMins - startMins;
+          if (durationMinutes < 0) durationMinutes += 24 * 60; // Handle over-midnight
+        }
+      }
+    } else {
+      if (durationMinutes == 0) durationMinutes = 30; // ultimate fallback
+      end = calculateEndTime(start, durationMinutes);
+    }
+    
+    final duration = durationMinutes > 0 ? '$durationMinutes minutes' : 'N/A';
+
+    final displayStart = _formatTime(start);
+    final displayEnd = _formatTime(end);
+    
+    // Parse Notes
+    String notes = '';
+    final schedNotes = (widget.schedule['notes'] ?? widget.schedule['nots'] ?? '').toString().trim();
+    if (schedNotes.isNotEmpty && schedNotes != 'No notes added') {
+      notes = schedNotes;
+    } else {
+      final clinicNotes = (widget.clinic.nots).trim();
+      if (clinicNotes.isNotEmpty && clinicNotes != 'No notes added') {
+        notes = clinicNotes;
+      }
+    }
 
     return Container(
       padding: EdgeInsets.all(s(16)),
@@ -281,7 +397,7 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
               Expanded(
                 child: Text(
                   widget.clinic.name,
-                  style: GoogleFonts.lexend(
+                  style: GoogleFonts.cairo(
                     fontSize: s(16),
                     fontWeight: FontWeight.w700,
                     color: const Color(0xFF10B981),
@@ -299,7 +415,7 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
             child: Divider(height: 1, color: Color(0xFFF1F5F9)),
           ),
           _buildItemRow(Icons.calendar_today_rounded, 'Day: $day'),
-          _buildItemRow(Icons.access_time_rounded, 'Time Range: $start - $end'),
+          _buildItemRow(Icons.access_time_rounded, 'Time Range: $displayStart - $displayEnd'),
           _buildItemRow(Icons.hourglass_bottom_rounded, 'Duration: $duration'),
           if (notes.isNotEmpty) ...[
             _buildItemRow(Icons.info_outline_rounded, 'Notes: $notes'),
@@ -320,7 +436,7 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
           Expanded(
             child: Text(
               value,
-              style: GoogleFonts.lexend(
+              style: GoogleFonts.cairo(
                 fontSize: s(13),
                 fontWeight: FontWeight.w500,
                 color: textColor ?? const Color(0xFF475569),
@@ -352,7 +468,7 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
         children: [
           Text(
             'Reason for Visit',
-            style: GoogleFonts.lexend(
+            style: GoogleFonts.cairo(
               fontSize: s(14),
               fontWeight: FontWeight.w700,
               color: const Color(0xFF0F172A),
@@ -364,10 +480,10 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
             maxLines: 4,
             maxLength: 500,
             enabled: !isLoading,
-            style: GoogleFonts.lexend(fontSize: s(13), color: const Color(0xFF334155)),
+            style: GoogleFonts.cairo(fontSize: s(13), color: const Color(0xFF334155)),
             decoration: InputDecoration(
               hintText: 'e.g. headache, follow-up for diabetes',
-              hintStyle: GoogleFonts.lexend(color: const Color(0xFF94A3B8)),
+              hintStyle: GoogleFonts.cairo(color: const Color(0xFF94A3B8)),
               filled: true,
               fillColor: const Color(0xFFF8FAFC),
               border: OutlineInputBorder(
@@ -397,7 +513,7 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
           SizedBox(height: s(16)),
           Text(
             'Payment Method',
-            style: GoogleFonts.lexend(
+            style: GoogleFonts.cairo(
               fontSize: s(14),
               fontWeight: FontWeight.w700,
               color: const Color(0xFF0F172A),
@@ -408,7 +524,7 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
             children: [
               Expanded(
                 child: RadioListTile<String>(
-                  title: Text('Pay Online', style: GoogleFonts.lexend(fontSize: s(13), fontWeight: FontWeight.w600)),
+                  title: Text('Pay Online', style: GoogleFonts.cairo(fontSize: s(13), fontWeight: FontWeight.w600)),
                   value: 'Pay Online',
                   groupValue: _paymentMethod,
                   onChanged: isLoading
@@ -426,7 +542,7 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
               ),
               Expanded(
                 child: RadioListTile<String>(
-                  title: Text('Pay at Clinic', style: GoogleFonts.lexend(fontSize: s(13), fontWeight: FontWeight.w600)),
+                  title: Text('Pay at Clinic', style: GoogleFonts.cairo(fontSize: s(13), fontWeight: FontWeight.w600)),
                   value: 'Pay at Clinic',
                   groupValue: _paymentMethod,
                   onChanged: isLoading
@@ -465,7 +581,7 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
             ),
             child: Text(
               'Back to Schedules',
-              style: GoogleFonts.lexend(
+              style: GoogleFonts.cairo(
                 fontSize: s(14),
                 fontWeight: FontWeight.w700,
               ),
@@ -493,7 +609,7 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
                   )
                 : Text(
                     'Confirm Booking',
-                    style: GoogleFonts.lexend(
+                    style: GoogleFonts.cairo(
                       fontSize: s(14),
                       fontWeight: FontWeight.w700,
                     ),
@@ -506,8 +622,9 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
 
   Widget _buildSuccessView() {
     final day = (widget.schedule['dayOfWeek'] ?? widget.schedule['day'] ?? '').toString();
-    final start = (widget.schedule['startTime'] ?? '').toString();
-    final end = (widget.schedule['endTime'] ?? '').toString();
+    final start = _formatTime((widget.schedule['startTime'] ?? '').toString());
+    final end = _formatTime((widget.schedule['endTime'] ?? '').toString());
+    final isOnlinePayment = _paymentMethod == 'Pay Online';
 
     return Container(
       color: Colors.white,
@@ -531,8 +648,8 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
           ),
           SizedBox(height: s(20)),
           Text(
-            'Booking Confirmed!',
-            style: GoogleFonts.lexend(
+            'Booking Request Sent!',
+            style: GoogleFonts.cairo(
               fontSize: s(22),
               fontWeight: FontWeight.w800,
               color: const Color(0xFF0F172A),
@@ -540,15 +657,15 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
           ),
           SizedBox(height: s(8)),
           Text(
-            'Your appointment has been successfully scheduled.',
+            'Your appointment request has been sent to the doctor for approval.',
             textAlign: TextAlign.center,
-            style: GoogleFonts.lexend(
+            style: GoogleFonts.cairo(
               fontSize: s(14),
               color: const Color(0xFF64748B),
             ),
           ),
           SizedBox(height: s(24)),
-          
+
           // Summary card
           Container(
             padding: EdgeInsets.all(s(16)),
@@ -570,26 +687,59 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
               ],
             ),
           ),
-          SizedBox(height: s(32)),
-          
+          SizedBox(height: s(20)),
+
+          // ─── رسالة انتظار الدكتور إذا اختار Pay Online ───────────────
+          if (isOnlinePayment) ...[
+            Container(
+              padding: EdgeInsets.all(s(14)),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEFF6FF),
+                borderRadius: BorderRadius.circular(s(14)),
+                border: Border.all(color: const Color(0xFF93C5FD)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.info_outline_rounded,
+                      color: Color(0xFF2563EB), size: 22),
+                  SizedBox(width: s(10)),
+                  Expanded(
+                    child: Text(
+                      'Once the doctor approves your booking, you will receive a notification to complete your payment.',
+                      style: GoogleFonts.cairo(
+                        fontSize: s(13),
+                        color: const Color(0xFF1D4ED8),
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: s(10)),
+          ],
+
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () {
-                // Navigate back to Patient Home Dashboard View
                 Navigator.of(context).popUntil((route) => route.isFirst);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF137FEC),
-                foregroundColor: Colors.white,
+                backgroundColor: isOnlinePayment
+                    ? const Color(0xFFF1F5F9)
+                    : const Color(0xFF137FEC),
+                foregroundColor: isOnlinePayment
+                    ? const Color(0xFF475569)
+                    : Colors.white,
                 padding: EdgeInsets.symmetric(vertical: s(14)),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(s(12)),
                 ),
               ),
               child: Text(
-                'Go back to Home',
-                style: GoogleFonts.lexend(
+                isOnlinePayment ? 'Pay Later — Go to Home' : 'Go back to Home',
+                style: GoogleFonts.cairo(
                   fontSize: s(14),
                   fontWeight: FontWeight.w700,
                 ),
@@ -609,7 +759,7 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
         children: [
           Text(
             '$label: ',
-            style: GoogleFonts.lexend(
+            style: GoogleFonts.cairo(
               fontSize: s(13),
               fontWeight: FontWeight.w600,
               color: const Color(0xFF64748B),
@@ -619,7 +769,7 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
             child: Text(
               value,
               textAlign: TextAlign.end,
-              style: GoogleFonts.lexend(
+              style: GoogleFonts.cairo(
                 fontSize: s(13),
                 fontWeight: isBold ? FontWeight.w700 : FontWeight.w600,
                 color: textColor ?? const Color(0xFF0F172A),
@@ -629,5 +779,136 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
         ],
       ),
     );
+  }
+
+  void _showRatingDialog(BuildContext context, int doctorId) {
+    int rating = 0;
+    final commentController = TextEditingController();
+    bool isSubmitting = false;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(s(20))),
+              title: Text(
+                'Rate Doctor',
+                style: GoogleFonts.cairo(
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF0F172A),
+                ),
+                textAlign: TextAlign.center,
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'How was your experience with Dr. ${widget.doctor.fullName}?',
+                    style: GoogleFonts.cairo(
+                      fontSize: s(14),
+                      color: const Color(0xFF64748B),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: s(16)),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(5, (index) {
+                      return IconButton(
+                        icon: Icon(
+                          index < rating ? Icons.star_rounded : Icons.star_border_rounded,
+                          color: const Color(0xFFEAB308),
+                          size: s(32),
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            rating = index + 1;
+                          });
+                        },
+                      );
+                    }),
+                  ),
+                  SizedBox(height: s(16)),
+                  TextField(
+                    controller: commentController,
+                    maxLines: 3,
+                    decoration: InputDecoration(
+                      hintText: 'Add a comment (optional)...',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(s(12)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(
+                    'Skip',
+                    style: GoogleFonts.cairo(color: const Color(0xFF64748B)),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: (rating == 0 || isSubmitting)
+                      ? null
+                      : () async {
+                          setState(() => isSubmitting = true);
+                          final api = await ApiManager.create();
+                          final errorMessage = await api.addDoctorReview(
+                            doctorId: doctorId,
+                            rating: rating,
+                            comment: commentController.text,
+                          );
+                          if (context.mounted) {
+                            Navigator.pop(context); // Close dialog
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  errorMessage == null ? 'Review submitted!' : errorMessage,
+                                  style: GoogleFonts.cairo(),
+                                ),
+                                backgroundColor: errorMessage == null ? const Color(0xFF22C55E) : const Color(0xFFEF4444),
+                              ),
+                            );
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF137FEC),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(s(8))),
+                  ),
+                  child: isSubmitting
+                      ? SizedBox(
+                          width: s(16),
+                          height: s(16),
+                          child: const CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        )
+                      : Text('Submit', style: GoogleFonts.cairo(color: Colors.white)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  String _formatTime(String timeStr) {
+    try {
+      final cleanTime = timeStr.trim().split(' ')[0];
+      final parts = cleanTime.split(':');
+      if (parts.isEmpty) return timeStr;
+      int hour = int.tryParse(parts[0]) ?? 0;
+      int minute = parts.length > 1 ? (int.tryParse(parts[1]) ?? 0) : 0;
+      final amPm = hour >= 12 ? 'PM' : 'AM';
+      final displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
+      final displayHourStr = displayHour.toString().padLeft(2, '0');
+      final displayMinStr = minute.toString().padLeft(2, '0');
+      return '$displayHourStr:$displayMinStr $amPm';
+    } catch (_) {
+      return timeStr;
+    }
   }
 }

@@ -4,6 +4,7 @@ import '../../../../../core/resources/color_manager.dart';
 import '../widgets/doctor_profile_header.dart';
 import '../widgets/doctor_profile_credentials.dart';
 import '../widgets/doctor_profile_logout_button.dart';
+import '../widgets/doctor_profile_security.dart';
 import '../../clinic/my_clinics/view/doctor_clinics_view.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../../data/repository/repository.dart';
@@ -15,11 +16,15 @@ import '../../home/cubit/doctor_home_cubit.dart';
 class DoctorProfileViewBody extends StatelessWidget {
   final String doctorName;
   final String? imageUrl;
+  final int? age;
+  final int patientsCount;
 
   const DoctorProfileViewBody({
     super.key,
     required this.doctorName,
     this.imageUrl,
+    this.age,
+    this.patientsCount = 0,
   });
 
   @override
@@ -38,7 +43,7 @@ class DoctorProfileViewBody extends StatelessWidget {
               ),
               Text(
                 "Live Consultation",
-                style: GoogleFonts.lexend(
+                style: GoogleFonts.cairo(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: ColorManager.headlineText,
@@ -60,6 +65,8 @@ class DoctorProfileViewBody extends StatelessWidget {
                 DoctorProfileHeader(
                   name: doctorName,
                   imageUrl: imageUrl,
+                  age: age,
+                  patientsCount: patientsCount,
                   onEditTap: () {
                     Navigator.push(
                       context,
@@ -82,7 +89,7 @@ class DoctorProfileViewBody extends StatelessWidget {
                 const SizedBox(height: 32),
                 const DoctorProfileCredentials(),
                 const SizedBox(height: 24),
-                _buildMyClinicsButton(context),
+                const DoctorProfileSecurity(),
                 const SizedBox(height: 40),
                 const DoctorProfileLogoutButton(),
                 const SizedBox(height: 24),
@@ -93,43 +100,5 @@ class DoctorProfileViewBody extends StatelessWidget {
       ],
     );
   }
-
-  Widget _buildMyClinicsButton(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 56,
-      child: ElevatedButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const DoctorClinicsView()),
-          );
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: ColorManager.primary,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          elevation: 0,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.list_alt_rounded, color: Colors.white),
-            const SizedBox(width: 8),
-            Text(
-              'My Clinics',
-              style: GoogleFonts.lexend(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
 }
 

@@ -27,7 +27,7 @@ class PasswordRuleItem extends StatelessWidget {
           const SizedBox(width: AppSize.s8),
           Text(
             text,
-            style: GoogleFonts.lexend(
+            style: GoogleFonts.cairo(
               fontSize: 14,
               color: isMet ? ColorManager.bodyText : ColorManager.subtitleText,
             ),

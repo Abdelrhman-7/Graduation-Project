@@ -15,7 +15,7 @@ class DoctorProfileCredentials extends StatelessWidget {
           children: [
             Text(
               "Credentials",
-              style: GoogleFonts.lexend(
+              style: GoogleFonts.cairo(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: ColorManager.headlineText,
@@ -72,7 +72,7 @@ class DoctorProfileCredentials extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: GoogleFonts.lexend(
+                  style: GoogleFonts.cairo(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
                     color: ColorManager.headlineText,
@@ -80,7 +80,7 @@ class DoctorProfileCredentials extends StatelessWidget {
                 ),
                 Text(
                   subtitle,
-                  style: GoogleFonts.lexend(
+                  style: GoogleFonts.cairo(
                     fontSize: 13,
                     color: ColorManager.subtitleText,
                   ),

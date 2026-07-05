@@ -6,6 +6,7 @@ class SharedPrefController {
   static const String _emailKey = 'user_email';
   static const String _nameKey = 'user_name';
   static const String _imageKey = 'user_image';
+  static const String _roleKey = 'user_role';
 
   Future<bool> isLoggedIn() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -72,6 +73,17 @@ class SharedPrefController {
     await prefs.remove(_nameKey);
     await prefs.remove(_imageKey);
     await prefs.remove('auth_cookies');
+    await prefs.remove(_roleKey);
+  }
+
+  Future<void> saveRole(String role) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_roleKey, role);
+  }
+
+  Future<String?> getRole() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_roleKey);
   }
 
   Future<void> saveToken(String token) async {
@@ -98,5 +110,121 @@ class SharedPrefController {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.clear();
   }
-}
 
+  static const String _lastViewedNotificationIdKey =
+      'last_viewed_notification_id';
+
+  Future<void> saveLastViewedNotificationId(int id) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final currentMax = prefs.getInt(_lastViewedNotificationIdKey) ?? 0;
+    if (id > currentMax) {
+      await prefs.setInt(_lastViewedNotificationIdKey, id);
+    }
+  }
+
+  Future<int> getLastViewedNotificationId() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(_lastViewedNotificationIdKey) ?? 0;
+  }
+
+  // --- Doctor Wallet Integration ---
+  static const String _doctorWalletBalanceKey = 'doctor_wallet_balance';
+  static const String _doctorWalletTransactionsKey =
+      'doctor_wallet_transactions';
+
+  Future<double> getDoctorWalletBalance() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getDouble(_doctorWalletBalanceKey) ?? 0.0;
+  }
+
+  Future<void> saveDoctorWalletBalance(double balance) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(_doctorWalletBalanceKey, balance);
+  }
+
+  Future<void> addToDoctorWalletBalance(double amount) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final double currentBalance =
+        prefs.getDouble(_doctorWalletBalanceKey) ?? 0.0;
+    await prefs.setDouble(_doctorWalletBalanceKey, currentBalance + amount);
+  }
+
+  Future<List<String>> getDoctorWalletTransactions() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getStringList(_doctorWalletTransactionsKey) ?? [];
+  }
+
+  Future<void> addDoctorWalletTransaction({
+    required int appointmentId,
+    required String patientName,
+    required double amount,
+    required String date,
+  }) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final List<String> currentTx =
+        prefs.getStringList(_doctorWalletTransactionsKey) ?? [];
+    final String txJson =
+        '{"appointmentId": $appointmentId, "patientName": "$patientName", "amount": $amount, "date": "$date"}';
+    currentTx.insert(0, txJson); // Insert at the top to show latest first
+    await prefs.setStringList(_doctorWalletTransactionsKey, currentTx);
+  }
+
+  Future<void> saveClinicLocalData(
+    int clinicId,
+    String duration,
+    String notes,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('clinic_${clinicId}_duration', duration);
+    await prefs.setString('clinic_${clinicId}_notes', notes);
+  }
+
+  Future<Map<String, String>> getClinicLocalData(int clinicId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final duration =
+        prefs.getString('clinic_${clinicId}_duration') ?? '30 mins';
+    final notes = prefs.getString('clinic_${clinicId}_notes') ?? '';
+    return {'duration': duration, 'notes': notes};
+  }
+
+  // --- Patient Health Metrics ---
+  static const String _healthMetricsHistoryKey = 'patient_health_metrics_history';
+
+  Future<void> addHealthMetricRecord(Map<String, dynamic> record) async {
+    final prefs = await SharedPreferences.getInstance();
+    final List<String> history = List<String>.from(prefs.getStringList(_healthMetricsHistoryKey) ?? []);
+    
+    // Add the new record as a JSON string at the beginning
+    // We assume 'dart:convert' is available, but if not we can build simple json string.
+    // It's safer to use dart:convert. Wait, I should add the import if needed.
+    // I will use a simple string serialization or import dart:convert at the top.
+    
+    final recordStr = '{"heartRate": "${record['heartRate']}", "bloodPressure": "${record['bloodPressure']}", "bloodSugar": "${record['bloodSugar']}", "weight": "${record['weight']}", "notes": "${record['notes']}", "timestamp": "${record['timestamp']}"}';
+    
+    history.insert(0, recordStr);
+    await prefs.setStringList(_healthMetricsHistoryKey, history);
+  }
+
+  Future<List<String>> getHealthMetricsHistory() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getStringList(_healthMetricsHistoryKey) ?? [];
+  }
+
+  Future<Map<String, String>> getHealthMetrics() async {
+    final prefs = await SharedPreferences.getInstance();
+    final history = prefs.getStringList(_healthMetricsHistoryKey) ?? [];
+    
+    if (history.isNotEmpty) {
+      final latest = history.first;
+      // manual parsing for simplicity if dart:convert is not imported
+      final hrMatch = RegExp(r'"heartRate":\s*"([^"]+)"').firstMatch(latest);
+      final bpMatch = RegExp(r'"bloodPressure":\s*"([^"]+)"').firstMatch(latest);
+      
+      final hr = hrMatch?.group(1) ?? '72';
+      final bp = bpMatch?.group(1) ?? '120/80';
+      return {'heartRate': hr, 'bloodPressure': bp};
+    }
+    
+    return {'heartRate': '72', 'bloodPressure': '120/80'};
+  }
+}

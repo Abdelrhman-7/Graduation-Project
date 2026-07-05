@@ -88,7 +88,7 @@ class _PatientRegistrationStep2ViewBodyState
                       // Header
                       Text(
                         'Security & Identity',
-                        style: GoogleFonts.lexend(
+                        style: GoogleFonts.cairo(
                           fontSize: 28,
                           fontWeight: FontWeight.w700,
                           color: ColorManager.headlineText,
@@ -97,7 +97,7 @@ class _PatientRegistrationStep2ViewBodyState
                       const SizedBox(height: AppSize.s8),
                       Text(
                         'Create a secure password and confirm your identity details.',
-                        style: GoogleFonts.lexend(
+                        style: GoogleFonts.cairo(
                           fontSize: 16,
                           color: ColorManager.bodyText,
                           height: 1.5,
@@ -108,7 +108,7 @@ class _PatientRegistrationStep2ViewBodyState
                       // Gender Selection
                       Text(
                         'Gender',
-                        style: GoogleFonts.lexend(
+                        style: GoogleFonts.cairo(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                           color: ColorManager.headlineText,
@@ -163,7 +163,7 @@ class _PatientRegistrationStep2ViewBodyState
                                     const SizedBox(width: 6),
                                     Text(
                                       gender,
-                                      style: GoogleFonts.lexend(
+                                      style: GoogleFonts.cairo(
                                         fontSize: 15,
                                         fontWeight: FontWeight.w600,
                                         color: isSelected
@@ -257,7 +257,7 @@ class _PatientRegistrationStep2ViewBodyState
                           children: [
                             Text(
                               'Password requirements:',
-                              style: GoogleFonts.lexend(
+                              style: GoogleFonts.cairo(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
                                 color: ColorManager.primary,
@@ -281,7 +281,7 @@ class _PatientRegistrationStep2ViewBodyState
                                     const SizedBox(width: 6),
                                     Text(
                                       hint,
-                                      style: GoogleFonts.lexend(
+                                      style: GoogleFonts.cairo(
                                         fontSize: 12,
                                         color: ColorManager.bodyText,
                                       ),

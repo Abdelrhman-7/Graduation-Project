@@ -69,7 +69,7 @@ class _DoctorEditProfileViewState extends State<DoctorEditProfileView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Edit Profile', style: GoogleFonts.lexend()),
+        title: Text('Edit Profile', style: GoogleFonts.cairo()),
         backgroundColor: ColorManager.primary,
         foregroundColor: Colors.white,
       ),
@@ -100,7 +100,7 @@ class _DoctorEditProfileViewState extends State<DoctorEditProfileView> {
               setState(() {
                 _currentImageUrl = raw.startsWith('http')
                     ? raw
-                    : 'http://medicalsystem111.runasp.net$raw';
+                    : 'http://clinicbook.runasp.net$raw';
               });
             }
           }
@@ -158,34 +158,70 @@ class _DoctorEditProfileViewState extends State<DoctorEditProfileView> {
                 const SizedBox(height: 16),
                 _buildTextField(_aboutMeController, 'About Me', maxLines: 3),
                 const SizedBox(height: 32),
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      // Clean up dateOfBirth - strip time component if present
-                      final rawDob = _dobController.text.trim();
-                      final cleanDob = rawDob.contains('T') ? rawDob.split('T').first : rawDob;
-                      
-                      // Capitalize gender
-                      final rawGender = _genderController.text.trim();
-                      final cleanGender = rawGender.isEmpty ? '' : rawGender[0].toUpperCase() + rawGender.substring(1).toLowerCase();
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        final fullName = _nameController.text.trim();
+                        final phone = _phoneController.text.trim();
+                        final address = _addressController.text.trim();
+                        final rawGender = _genderController.text.trim();
+                        final rawDob = _dobController.text.trim();
+                        final aboutMe = _aboutMeController.text.trim();
 
-                      context.read<DoctorProfileCubit>().editProfile(
-                            fullName: _nameController.text.trim(),
-                            phoneNumber: _phoneController.text.trim(),
-                            address: _addressController.text.trim(),
-                            gender: cleanGender,
-                            dateOfBirth: cleanDob,
-                            aboutMe: _aboutMeController.text.trim(),
-                            imagePath: _imageFile?.path,
+                        if (fullName.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please enter your Full Name')),
                           );
-                    },
+                          return;
+                        }
+                        if (phone.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please enter your Phone Number')),
+                          );
+                          return;
+                        }
+                        if (address.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please enter your Address')),
+                          );
+                          return;
+                        }
+                        if (rawGender.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please enter your Gender')),
+                          );
+                          return;
+                        }
+                        if (rawDob.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please enter your Date of Birth')),
+                          );
+                          return;
+                        }
+
+                        // Clean up dateOfBirth - strip time component if present
+                        final cleanDob = rawDob.contains('T') ? rawDob.split('T').first : rawDob;
+                        
+                        // Capitalize gender
+                        final cleanGender = rawGender.isEmpty ? '' : rawGender[0].toUpperCase() + rawGender.substring(1).toLowerCase();
+
+                        context.read<DoctorProfileCubit>().editProfile(
+                              fullName: fullName,
+                              phoneNumber: phone,
+                              address: address,
+                              gender: cleanGender,
+                              dateOfBirth: cleanDob,
+                              aboutMe: aboutMe,
+                              imagePath: _imageFile?.path,
+                            );
+                      },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: ColorManager.primary,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: Text('Save Changes', style: GoogleFonts.lexend(color: Colors.white, fontSize: 16)),
+                    child: Text('Save Changes', style: GoogleFonts.cairo(color: Colors.white, fontSize: 16)),
                   ),
                 )
               ],

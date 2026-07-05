@@ -105,7 +105,7 @@ class DoctorProfileCubit extends Cubit<DoctorProfileState> {
               final raw = rawImage.toString();
               final fullUrl = raw.startsWith('http')
                   ? raw
-                  : 'http://medicalsystem111.runasp.net$raw';
+                  : 'http://clinicbook.runasp.net$raw';
               await sharedPrefController.saveImage(fullUrl);
               print('=== Saved new image after edit: $fullUrl ===');
             }
@@ -116,6 +116,35 @@ class DoctorProfileCubit extends Cubit<DoctorProfileState> {
         emit(DoctorProfileEditSuccess());
       } else {
         emit(DoctorProfileError('Failed to update profile'));
+      }
+    } catch (e) {
+      emit(DoctorProfileError(e.toString()));
+    }
+  }
+
+  void changePassword(String currentPassword, String newPassword, String confirmNewPassword) async {
+    emit(DoctorProfilePasswordChangeLoading());
+    try {
+      final success = await repository.changeDoctorPassword(currentPassword, newPassword, confirmNewPassword);
+      if (success) {
+        emit(DoctorProfilePasswordChangeSuccess());
+      } else {
+        emit(DoctorProfilePasswordChangeError('Failed to change password'));
+      }
+    } catch (e) {
+      emit(DoctorProfilePasswordChangeError(e.toString()));
+    }
+  }
+
+  void deleteAccount() async {
+    emit(DoctorProfileLoading());
+    try {
+      final success = await repository.deleteDoctorAccount();
+      if (success) {
+        await sharedPrefController.logout();
+        emit(LogoutSuccess());
+      } else {
+        emit(DoctorProfileError('Failed to delete account'));
       }
     } catch (e) {
       emit(DoctorProfileError(e.toString()));

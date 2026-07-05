@@ -9,41 +9,44 @@ class PatientScheduleSuccess extends PatientScheduleState {
 
   PatientScheduleSuccess(this.appointments);
 
-  /// Upcoming: مواعيد المستقبل (bookingDate >= today)
+  static String _statusOf(dynamic a) =>
+      (a['status'] ?? '').toString().toLowerCase();
+
+  /// Upcoming: pending + approved (not cancelled/rejected/completed)
   List<dynamic> get upcomingAppointments {
-    final now = DateTime.now();
     return appointments.where((a) {
-      try {
-        final dateStr = a['bookingDate'] ??
-            a['appointmentDate'] ??
-            a['date'] ??
-            a['scheduledDate'] ?? '';
-        if (dateStr.isEmpty) return true; // show if date unknown
-        final date = DateTime.tryParse(dateStr.toString());
-        return date != null && !date.isBefore(DateTime(now.year, now.month, now.day));
-      } catch (_) {
-        return true;
-      }
+      final status = _statusOf(a);
+      if (status.contains('cancel')) return false;
+      if (status.contains('reject')) return false;
+      if (status.contains('denied')) return false;
+      if (status.contains('complet')) return false;
+      return true; // pending, approved, accept, empty → upcoming
     }).toList();
   }
 
-  /// Past: مواعيد قديمة (bookingDate < today)
+  /// Past: cancelled, rejected, completed, or denied
   List<dynamic> get pastAppointments {
-    final now = DateTime.now();
     return appointments.where((a) {
-      try {
-        final dateStr = a['bookingDate'] ??
-            a['appointmentDate'] ??
-            a['date'] ??
-            a['scheduledDate'] ?? '';
-        if (dateStr.isEmpty) return false;
-        final date = DateTime.tryParse(dateStr.toString());
-        return date != null && date.isBefore(DateTime(now.year, now.month, now.day));
-      } catch (_) {
-        return false;
-      }
+      final status = _statusOf(a);
+      return status.contains('cancel') ||
+          status.contains('reject') ||
+          status.contains('denied') ||
+          status.contains('complet');
     }).toList();
   }
+}
+
+/// Emitted while a processing request is in-flight (shows loading on the specific card)
+class PatientScheduleProcessing extends PatientScheduleSuccess {
+  final int processingBookingId;
+  PatientScheduleProcessing(super.appointments, this.processingBookingId);
+}
+
+/// Emitted if processing fails
+class PatientScheduleProcessError extends PatientScheduleSuccess {
+  final String message;
+  PatientScheduleProcessError(this.message, List<dynamic> appointments)
+      : super(appointments);
 }
 
 class PatientScheduleError extends PatientScheduleState {

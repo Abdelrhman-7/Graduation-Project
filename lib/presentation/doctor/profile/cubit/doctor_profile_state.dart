@@ -19,3 +19,12 @@ class DoctorProfileLoaded extends DoctorProfileState {
 class DoctorProfileImageDeleted extends DoctorProfileState {}
 
 class LogoutSuccess extends DoctorProfileState {}
+
+class DoctorProfilePasswordChangeLoading extends DoctorProfileState {}
+
+class DoctorProfilePasswordChangeSuccess extends DoctorProfileState {}
+
+class DoctorProfilePasswordChangeError extends DoctorProfileState {
+  final String message;
+  DoctorProfilePasswordChangeError(this.message);
+}

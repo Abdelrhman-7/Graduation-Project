@@ -38,7 +38,7 @@ class RegistrationTermsFooter extends StatelessWidget {
           RichText(
             textAlign: TextAlign.center,
             text: TextSpan(
-              style: GoogleFonts.lexend(
+              style: GoogleFonts.cairo(
                 fontSize: 14,
                 color: ColorManager.subtitleText,
               ),
@@ -46,7 +46,7 @@ class RegistrationTermsFooter extends StatelessWidget {
                 const TextSpan(text: AppStrings.termsAgreeText),
                 TextSpan(
                   text: AppStrings.termsOfService,
-                  style: GoogleFonts.lexend(
+                  style: GoogleFonts.cairo(
                     fontSize: 14,
                     color: ColorManager.primary,
                     fontWeight: FontWeight.w500,
@@ -58,7 +58,7 @@ class RegistrationTermsFooter extends StatelessWidget {
                 const TextSpan(text: AppStrings.andText),
                 TextSpan(
                   text: AppStrings.privacyPolicy,
-                  style: GoogleFonts.lexend(
+                  style: GoogleFonts.cairo(
                     fontSize: 14,
                     color: ColorManager.primary,
                     fontWeight: FontWeight.w500,

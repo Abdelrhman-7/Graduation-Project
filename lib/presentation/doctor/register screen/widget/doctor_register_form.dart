@@ -25,10 +25,10 @@ class _DoctorRegisterFormState extends State<DoctorRegisterForm> {
   final _addressController = TextEditingController();
   final _aboutMeController = TextEditingController();
   final _passwordController = TextEditingController(
-    text: "Abdo88@#\$gmail.com",
+    text: '01008765502Abdo@',
   );
   final _confirmPasswordController = TextEditingController(
-    text: "Abdo88@#\$gmail.com",
+    text: '01008765502Abdo@',
   );
   final _dobController = TextEditingController();
 

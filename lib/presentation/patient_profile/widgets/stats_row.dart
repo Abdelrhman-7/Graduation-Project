@@ -82,7 +82,7 @@ class ProfileStatsRow extends StatelessWidget {
             SizedBox(height: s(12)),
             Text(
               value,
-              style: GoogleFonts.lexend(
+              style: GoogleFonts.cairo(
                 fontSize: s(20),
                 fontWeight: FontWeight.w700,
                 color: ColorManager.headlineText,
@@ -91,7 +91,7 @@ class ProfileStatsRow extends StatelessWidget {
             SizedBox(height: s(4)),
             Text(
               label,
-              style: GoogleFonts.lexend(
+              style: GoogleFonts.cairo(
                 fontSize: s(12),
                 fontWeight: FontWeight.w500,
                 color: ColorManager.subtitleText,

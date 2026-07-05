@@ -46,7 +46,7 @@ class _EditClinicDialogState extends State<EditClinicDialog> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       title: Text(
         "Edit Clinic",
-        style: GoogleFonts.lexend(fontWeight: FontWeight.bold),
+        style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
       ),
       content: SingleChildScrollView(
         child: Column(
@@ -87,7 +87,7 @@ class _EditClinicDialogState extends State<EditClinicDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text("Cancel", style: GoogleFonts.lexend(color: Colors.grey)),
+          child: Text("Cancel", style: GoogleFonts.cairo(color: Colors.grey)),
         ),
         ElevatedButton(
           onPressed: () {
@@ -95,8 +95,7 @@ class _EditClinicDialogState extends State<EditClinicDialog> {
                 _addressController.text.trim().isEmpty ||
                 _phoneController.text.trim().isEmpty ||
                 _priceController.text.trim().isEmpty ||
-                _durationController.text.trim().isEmpty ||
-                _notesController.text.trim().isEmpty) {
+                _durationController.text.trim().isEmpty) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Please fill in all fields.'),
@@ -135,7 +134,7 @@ class _EditClinicDialogState extends State<EditClinicDialog> {
               borderRadius: BorderRadius.circular(12),
             ),
           ),
-          child: Text("Save", style: GoogleFonts.lexend(color: Colors.white)),
+          child: Text("Save", style: GoogleFonts.cairo(color: Colors.white)),
         ),
       ],
     );

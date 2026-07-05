@@ -45,7 +45,7 @@ class ClinicListItem extends StatelessWidget {
                 Expanded(
                   child: Text(
                     clinic.name,
-                    style: GoogleFonts.lexend(
+                    style: GoogleFonts.cairo(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
                       color: const Color(0xFF1E293B),
@@ -102,7 +102,7 @@ class ClinicListItem extends StatelessWidget {
               const Divider(height: 16, color: Color(0xFFE2E8F0)),
               Text(
                 "Schedules / Working Hours:",
-                style: GoogleFonts.lexend(
+                style: GoogleFonts.cairo(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: const Color(0xFF475569),
@@ -125,7 +125,7 @@ class ClinicListItem extends StatelessWidget {
                       const SizedBox(width: 8),
                       Text(
                         "$day: $start - $end",
-                        style: GoogleFonts.lexend(
+                        style: GoogleFonts.cairo(
                           fontSize: 13,
                           color: const Color(0xFF475569),
                         ),
@@ -144,7 +144,7 @@ class ClinicListItem extends StatelessWidget {
               ),
               child: Text(
                 "${clinic.consultationPrice} EGP",
-                style: GoogleFonts.lexend(
+                style: GoogleFonts.cairo(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: ColorManager.primary,
@@ -172,7 +172,7 @@ class _InfoRow extends StatelessWidget {
         Expanded(
           child: Text(
             text,
-            style: GoogleFonts.lexend(
+            style: GoogleFonts.cairo(
               fontSize: 14,
               color: const Color(0xFF64748B),
             ),

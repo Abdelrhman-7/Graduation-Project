@@ -2,13 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/resources/string_manager.dart';
-import '../../chat/view/chat_view.dart';
-import '../../lab_results/view/lab_results_view.dart';
+import '../../patient_reviews/view/patient_reviews_view.dart';
 import '../../patient_profile/view/patient_profile_view.dart';
 import '../../patient_booking/view/patient_booking_view.dart';
 import '../widgets/patient_bottom_nav.dart';
+import '../widgets/patient_notifications_sheet.dart';
 import '../cubit/patient_home_dashboard_cubit.dart';
 import '../cubit/patient_home_dashboard_state.dart';
+import '../widgets/appointment_card.dart';
+import '../../../../core/resources/color_manager.dart';
+import '../../patient_appointment_details/view/patient_appointment_details_view.dart';
+import '../../patient_schedule/view/patient_schedule_view.dart';
+import '../../patient_emergency/view/patient_emergency_view.dart';
 
 class PatientHomeDashboardViewBody extends StatelessWidget {
   const PatientHomeDashboardViewBody({super.key});
@@ -40,6 +45,18 @@ class PatientHomeDashboardViewBody extends StatelessWidget {
             final imageUrl = state is PatientHomeDashboardSuccess
                 ? state.imageUrl
                 : null;
+            final unreadNotifications = state is PatientHomeDashboardSuccess
+                ? state.unreadNotifications
+                : 0;
+            final nextAppointment = state is PatientHomeDashboardSuccess
+                ? state.nextAppointment
+                : null;
+            final heartRate = state is PatientHomeDashboardSuccess
+                ? state.heartRate
+                : '72';
+            final bloodPressure = state is PatientHomeDashboardSuccess
+                ? state.bloodPressure
+                : '120/80';
 
             return Container(
               color: bg,
@@ -48,7 +65,12 @@ class PatientHomeDashboardViewBody extends StatelessWidget {
                   constraints: const BoxConstraints(maxWidth: 430),
                   child: Column(
                     children: [
-                      _TopBar(scale: scale, userName: userName, imageUrl: imageUrl),
+                      _TopBar(
+                        scale: scale,
+                        userName: userName,
+                        imageUrl: imageUrl,
+                        unreadNotifications: unreadNotifications,
+                      ),
                       Expanded(
                         child: SingleChildScrollView(
                           padding: EdgeInsets.fromLTRB(
@@ -60,14 +82,34 @@ class PatientHomeDashboardViewBody extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _TitleRow(
-                                scale: scale,
-                                title: AppStrings.nextAppointment,
-                                action: AppStrings.seeAll,
-                              ),
-                              SizedBox(height: s(12)),
-                              _NextAppointmentCard(scale: scale),
-                              SizedBox(height: s(31)),
+                              if (nextAppointment != null) ...[
+                                Text(
+                                  'Next Appointment',
+                                  style: _headingStyle(scale),
+                                ),
+                                SizedBox(height: s(16)),
+                                AppointmentCard(
+                                  doctorName: nextAppointment['doctorName'] ?? nextAppointment['doctor']?['fullName'] ?? 'Unknown Doctor',
+                                  specialty: nextAppointment['specialty'] ?? nextAppointment['doctor']?['specialty'] ?? 'Specialty',
+                                  dateTime: nextAppointment['bookingDate'] ?? nextAppointment['date'] ?? 'Upcoming',
+                                  imagePath: nextAppointment['doctor']?['imageUrl'] ?? nextAppointment['imageUrl'] ?? '',
+                                  bookingId: int.tryParse(nextAppointment['id']?.toString() ?? '0') ?? 0,
+                                  status: nextAppointment['status'],
+                                  isViewOnly: true,
+                                  onDetails: () {
+                                    final bookingId = int.tryParse(nextAppointment['id']?.toString() ?? '0') ?? 0;
+                                    if (bookingId > 0) {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => PatientAppointmentDetailsView(bookingId: bookingId),
+                                        ),
+                                      );
+                                    }
+                                  },
+                                ),
+                                SizedBox(height: s(31)),
+                              ],
                               Text(
                                 AppStrings.quickActions,
                                 style: _headingStyle(scale),
@@ -93,35 +135,43 @@ class PatientHomeDashboardViewBody extends StatelessWidget {
                                   ),
                                   _QuickAction(
                                     scale: scale,
-                                    icon: Icons.medical_services_outlined,
-                                    label: AppStrings.refill,
-                                    color: const Color(0xFFF97316),
-                                  ),
-                                  _QuickAction(
-                                    scale: scale,
-                                    icon: Icons.chat_bubble_outline,
-                                    label: AppStrings.chat,
-                                    color: const Color(0xFF22C55E),
+                                    icon: Icons.emergency,
+                                    label: 'Emergency',
+                                    color: Colors.red,
                                     onTap: () {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (_) => const ChatView(),
+                                          builder: (_) => const PatientEmergencyView(),
                                         ),
                                       );
                                     },
                                   ),
                                   _QuickAction(
                                     scale: scale,
-                                    icon: Icons.science_outlined,
-                                    label: AppStrings.labs,
-                                    color: const Color(0xFFA855F7),
+                                    icon: Icons.assignment_outlined,
+                                    label: 'Details',
+                                    color: const Color(0xFF22C55E),
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => const PatientScheduleView(),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  _QuickAction(
+                                    scale: scale,
+                                    icon: Icons.star_rate_rounded,
+                                    label: 'My Doctors',
+                                    color: const Color(0xFFEAB308), // Yellow for star/reviews
                                     onTap: () {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
                                           builder: (_) =>
-                                              const LabResultsView(),
+                                              const PatientReviewsView(),
                                         ),
                                       );
                                     },
@@ -154,7 +204,11 @@ class PatientHomeDashboardViewBody extends StatelessWidget {
                                 badgeColor: const Color(0xFF2563EB),
                               ),
                               SizedBox(height: s(16)),
-                              _StatsCard(scale: scale),
+                              _StatsCard(
+                                scale: scale,
+                                heartRate: heartRate,
+                                bloodPressure: bloodPressure,
+                              ),
                             ],
                           ),
                         ),
@@ -171,7 +225,7 @@ class PatientHomeDashboardViewBody extends StatelessWidget {
     );
   }
 
-  TextStyle _headingStyle(double s) => GoogleFonts.lexend(
+  TextStyle _headingStyle(double s) => GoogleFonts.cairo(
     fontSize: 18 * s,
     fontWeight: FontWeight.w700,
     color: const Color(0xFF0F172A),
@@ -180,10 +234,16 @@ class PatientHomeDashboardViewBody extends StatelessWidget {
 }
 
 class _TopBar extends StatelessWidget {
-  const _TopBar({required this.scale, required this.userName, this.imageUrl});
+  const _TopBar({
+    required this.scale,
+    required this.userName,
+    this.imageUrl,
+    this.unreadNotifications = 0,
+  });
   final double scale;
   final String userName;
   final String? imageUrl;
+  final int unreadNotifications;
 
   @override
   Widget build(BuildContext context) {
@@ -214,9 +274,9 @@ class _TopBar extends StatelessWidget {
                 context,
                 MaterialPageRoute(builder: (_) => const PatientProfileView()),
               ).then((_) {
-                // لما يرجع من الـ Profile، نعيد تحميل البيانات
+                // لما يرجع من الـ Profile، نعيد تحميل البيانات بدون عرض شاشة التحميل
                 if (context.mounted) {
-                  context.read<PatientHomeDashboardCubit>().getDashboardData();
+                  context.read<PatientHomeDashboardCubit>().getDashboardData(silent: true);
                 }
               });
             },
@@ -260,7 +320,7 @@ class _TopBar extends StatelessWidget {
               children: [
                 Text(
                   AppStrings.goodMorning,
-                  style: GoogleFonts.lexend(
+                  style: GoogleFonts.cairo(
                     fontSize: 12 * scale,
                     fontWeight: FontWeight.w500,
                     color: const Color(0xFF64748B),
@@ -270,7 +330,7 @@ class _TopBar extends StatelessWidget {
                 ),
                 Text(
                   userName,
-                  style: GoogleFonts.lexend(
+                  style: GoogleFonts.cairo(
                     fontSize: 19 * scale,
                     fontWeight: FontWeight.w700,
                     color: const Color(0xFF1D1B20),
@@ -284,7 +344,14 @@ class _TopBar extends StatelessWidget {
             ),
           ),
           const Spacer(),
-          Container(
+          GestureDetector(
+            onTap: () async {
+              await showPatientNotificationsSheet(context);
+              if (context.mounted) {
+                context.read<PatientHomeDashboardCubit>().getDashboardData(silent: true);
+              }
+            },
+            child: Container(
             width: 40 * scale,
             height: 40 * scale,
             decoration: const BoxDecoration(
@@ -295,13 +362,16 @@ class _TopBar extends StatelessWidget {
               alignment: Alignment.center,
               children: [
                 Icon(
-                  Icons.notifications_none_rounded,
+                  unreadNotifications > 0
+                      ? Icons.notifications_active_rounded
+                      : Icons.notifications_none_rounded,
                   size: 22 * scale,
                   color: const Color(0xFF0F172A),
                 ),
+                if (unreadNotifications > 0)
                 Positioned(
-                  right: 10 * scale,
-                  top: 10 * scale,
+                  right: 8 * scale,
+                  top: 8 * scale,
                   child: Container(
                     width: 8 * scale,
                     height: 8 * scale,
@@ -314,44 +384,6 @@ class _TopBar extends StatelessWidget {
               ],
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TitleRow extends StatelessWidget {
-  const _TitleRow({
-    required this.scale,
-    required this.title,
-    required this.action,
-  });
-  final double scale;
-  final String title;
-  final String action;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 4 * scale),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            title,
-            style: GoogleFonts.lexend(
-              fontSize: 18 * scale,
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFF0F172A),
-            ),
-          ),
-          Text(
-            action,
-            style: GoogleFonts.lexend(
-              fontSize: 14 * scale,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF137FEC),
-            ),
           ),
         ],
       ),
@@ -359,139 +391,6 @@ class _TitleRow extends StatelessWidget {
   }
 }
 
-class _NextAppointmentCard extends StatelessWidget {
-  const _NextAppointmentCard({required this.scale});
-  final double scale;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(20 * scale),
-      decoration: BoxDecoration(
-        color: const Color(0xFF137FEC),
-        borderRadius: BorderRadius.circular(16 * scale),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 80 * scale,
-            height: 80 * scale,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12 * scale),
-              border: Border.all(
-                color: const Color(0x33FFFFFF),
-                width: 2 * scale,
-              ),
-              image: const DecorationImage(
-                image: NetworkImage(
-                  'https://i.pravatar.cc/300?u=doctor',
-                ),
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-          SizedBox(width: 16 * scale),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 9 * scale,
-                        vertical: 3 * scale,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0x33FFFFFF),
-                        borderRadius: BorderRadius.circular(4 * scale),
-                        border: Border.all(color: const Color(0x1AFFFFFF)),
-                      ),
-                      child: Text(
-                        AppStrings.tomorrow,
-                        style: GoogleFonts.lexend(
-                          fontSize: 12 * scale,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 8 * scale),
-                    Text(
-                      '10:00 AM',
-                      style: GoogleFonts.lexend(
-                        fontSize: 14 * scale,
-                        fontWeight: FontWeight.w500,
-                        color: const Color(0xE6FFFFFF),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 4 * scale),
-                Text(
-                  'Dr. Emily Chen',
-                  style: GoogleFonts.lexend(
-                    fontSize: 20 * scale,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                ),
-                Text(
-                  'Cardiologist',
-                  style: GoogleFonts.lexend(
-                    fontSize: 14 * scale,
-                    fontWeight: FontWeight.w400,
-                    color: const Color(0xFFE7EDF3),
-                  ),
-                ),
-                SizedBox(height: 16 * scale),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        height: 36 * scale,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8 * scale),
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          AppStrings.checkIn,
-                          style: GoogleFonts.lexend(
-                            fontSize: 14 * scale,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF137FEC),
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 12 * scale),
-                    Container(
-                      width: 36 * scale,
-                      height: 36 * scale,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF2563EB),
-                        borderRadius: BorderRadius.circular(8 * scale),
-                        border: Border.all(color: const Color(0x1AFFFFFF)),
-                      ),
-                      child: Icon(
-                        Icons.videocam_outlined,
-                        color: Colors.white,
-                        size: 18 * scale,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class _QuickAction extends StatelessWidget {
   const _QuickAction({
@@ -535,7 +434,7 @@ class _QuickAction extends StatelessWidget {
             SizedBox(height: 8 * scale),
             Text(
               label,
-              style: GoogleFonts.lexend(
+              style: GoogleFonts.cairo(
                 fontSize: 12 * scale,
                 fontWeight: FontWeight.w500,
                 color: const Color(0xFF334155),
@@ -608,7 +507,7 @@ class _MedicationTile extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: GoogleFonts.lexend(
+                      style: GoogleFonts.cairo(
                         fontSize: 16 * scale,
                         fontWeight: FontWeight.w700,
                         color: const Color(0xFF0F172A),
@@ -626,7 +525,7 @@ class _MedicationTile extends StatelessWidget {
                       ),
                       child: Text(
                         badge,
-                        style: GoogleFonts.lexend(
+                        style: GoogleFonts.cairo(
                           fontSize: 10 * scale,
                           fontWeight: FontWeight.w700,
                           color: badgeColor,
@@ -638,7 +537,7 @@ class _MedicationTile extends StatelessWidget {
                 ),
                 Text(
                   subtitle,
-                  style: GoogleFonts.lexend(
+                  style: GoogleFonts.cairo(
                     fontSize: 14 * scale,
                     fontWeight: FontWeight.w400,
                     color: const Color(0xFF64748B),
@@ -659,17 +558,20 @@ class _MedicationTile extends StatelessWidget {
 }
 
 class _StatsCard extends StatelessWidget {
-  const _StatsCard({required this.scale});
+  const _StatsCard({
+    required this.scale,
+    required this.heartRate,
+    required this.bloodPressure,
+  });
   final double scale;
+  final String heartRate;
+  final String bloodPressure;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const LabResultsView()),
-        );
+        // Stats tapped
       },
       child: Container(
         width: double.infinity,
@@ -693,7 +595,7 @@ class _StatsCard extends StatelessWidget {
               icon: Icons.favorite_border,
               iconBg: const Color(0xFFFEE2E2),
               label: AppStrings.heartRate,
-              value: '72',
+              value: heartRate,
               suffix: AppStrings.bpm,
             ),
             Padding(
@@ -709,8 +611,9 @@ class _StatsCard extends StatelessWidget {
               icon: Icons.bloodtype_outlined,
               iconBg: const Color(0xFFE7EDF3),
               iconColor: const Color(0xFF3B82F6),
-              label: AppStrings.bloodType,
-              value: 'O+',
+              label: 'Blood Pressure',
+              value: bloodPressure,
+              suffix: 'mmHg',
             ),
           ],
         ),
@@ -752,41 +655,49 @@ class _StatItem extends StatelessWidget {
             child: Icon(icon, size: 21 * scale, color: iconColor),
           ),
           SizedBox(width: 12 * scale),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                label,
-                style: GoogleFonts.lexend(
-                  fontSize: 12 * scale,
-                  fontWeight: FontWeight.w500,
-                  color: const Color(0xFF64748B),
-                ),
-              ),
-              Row(
-                children: [
-                  Text(
-                    value,
-                    style: GoogleFonts.lexend(
-                      fontSize: 16 * scale,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF0F172A),
-                    ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  label,
+                  style: GoogleFonts.cairo(
+                    fontSize: 12 * scale,
+                    fontWeight: FontWeight.w500,
+                    color: const Color(0xFF64748B),
                   ),
-                  if (suffix.isNotEmpty) ...[
-                    SizedBox(width: 2 * scale),
-                    Text(
-                      suffix,
-                      style: GoogleFonts.lexend(
-                        fontSize: 12 * scale,
-                        color: const Color(0xFF64748B),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Row(
+                    children: [
+                      Text(
+                        value,
+                        style: GoogleFonts.cairo(
+                          fontSize: 16 * scale,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF0F172A),
+                        ),
                       ),
-                    ),
-                  ],
-                ],
-              ),
-            ],
+                      if (suffix.isNotEmpty) ...[
+                        SizedBox(width: 2 * scale),
+                        Text(
+                          suffix,
+                          style: GoogleFonts.cairo(
+                            fontSize: 12 * scale,
+                            color: const Color(0xFF64748B),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),

@@ -29,7 +29,9 @@ class LoginCubit extends Cubit<LoginState> {
           await _prefController.saveToken(token);
         }
         // Bind the role on the server for this session
-        await _apiService.chooseRole(role);
+        final String activeRole = request.email.trim().toLowerCase() == 'admin@gmail.com' ? 'Admin' : role;
+        await _prefController.saveRole(activeRole);
+        await _apiService.chooseRole(activeRole);
         emit(LoginSuccess(response));
       } else {
         emit(LoginError(response.message ?? 'Login failed'));

@@ -45,8 +45,9 @@ class _ClinicSchedulesViewState extends State<ClinicSchedulesView> {
   @override
   void initState() {
     super.initState();
-    if (widget.clinic.id != null) {
-      widget.cubit.fetchClinicSchedules(widget.clinic.id!, widget.doctor.id);
+    final clinicId = widget.clinic.id;
+    if (clinicId != null && clinicId > 0) {
+      widget.cubit.fetchClinicSchedules(clinicId, widget.doctor.id);
     }
   }
 
@@ -79,7 +80,7 @@ class _ClinicSchedulesViewState extends State<ClinicSchedulesView> {
           centerTitle: true,
           title: Text(
             'Schedule List',
-            style: GoogleFonts.lexend(
+            style: GoogleFonts.cairo(
               fontSize: s(18),
               fontWeight: FontWeight.w700,
               color: const Color(0xFF0F172A),
@@ -94,7 +95,7 @@ class _ClinicSchedulesViewState extends State<ClinicSchedulesView> {
                   icon: Icon(Icons.local_hospital_rounded, size: s(16), color: const Color(0xFF475569)),
                   label: Text(
                     'Back to Clinics',
-                    style: GoogleFonts.lexend(
+                    style: GoogleFonts.cairo(
                       fontSize: s(12),
                       fontWeight: FontWeight.w700,
                       color: const Color(0xFF475569),
@@ -151,6 +152,9 @@ class _ClinicSchedulesViewState extends State<ClinicSchedulesView> {
                         },
                       );
                     }
+                    if (widget.clinic.id == null || widget.clinic.id == 0) {
+                      return _buildErrorState('Invalid clinic. Please go back and try again.');
+                    }
                     return const SizedBox.shrink();
                   },
                 ),
@@ -183,7 +187,7 @@ class _ClinicSchedulesViewState extends State<ClinicSchedulesView> {
                       value: _selectedDay,
                       isExpanded: true,
                       icon: const Icon(Icons.keyboard_arrow_down_rounded),
-                      style: GoogleFonts.lexend(
+                      style: GoogleFonts.cairo(
                         fontSize: s(13),
                         color: const Color(0xFF334155),
                         fontWeight: FontWeight.w500,
@@ -217,7 +221,7 @@ class _ClinicSchedulesViewState extends State<ClinicSchedulesView> {
                   ),
                   padding: EdgeInsets.symmetric(horizontal: s(14), vertical: s(12)),
                 ),
-                child: Text('Reset', style: GoogleFonts.lexend(fontSize: s(13), fontWeight: FontWeight.w600)),
+                child: Text('Reset', style: GoogleFonts.cairo(fontSize: s(13), fontWeight: FontWeight.w600)),
               ),
             ],
           ),
@@ -227,7 +231,7 @@ class _ClinicSchedulesViewState extends State<ClinicSchedulesView> {
             children: [
               Text(
                 'Sort by:',
-                style: GoogleFonts.lexend(
+                style: GoogleFonts.cairo(
                   fontSize: s(13),
                   fontWeight: FontWeight.w600,
                   color: const Color(0xFF64748B),
@@ -236,7 +240,7 @@ class _ClinicSchedulesViewState extends State<ClinicSchedulesView> {
               ChoiceChip(
                 label: Text(
                   'Day of Week',
-                  style: GoogleFonts.lexend(
+                  style: GoogleFonts.cairo(
                     fontSize: s(12),
                     fontWeight: FontWeight.w600,
                     color: _isSortedByDay ? Colors.white : const Color(0xFF475569),
@@ -265,19 +269,87 @@ class _ClinicSchedulesViewState extends State<ClinicSchedulesView> {
   Widget _buildScheduleCard(dynamic sched) {
     final day = (sched['dayOfWeek'] ?? sched['day'] ?? 'Unknown Day').toString();
     final start = (sched['startTime'] ?? 'N/A').toString();
-    final end = (sched['endTime'] ?? 'N/A').toString();
     
-    // Parse duration
-    String duration = '30 minutes';
-    if (sched['appointmentDuration'] != null) {
-      final rawDur = sched['appointmentDuration'].toString();
-      duration = rawDur.contains(':') ? '${rawDur.split(":")[1]} minutes' : '$rawDur minutes';
-    } else if (widget.clinic.appointmentDuration.isNotEmpty) {
-      duration = widget.clinic.appointmentDuration;
+    // Helper to parse minutes from any duration string format
+    int parseMinutes(String val) {
+      final cleaned = val.toLowerCase().trim();
+      if (cleaned.contains(':')) {
+        final parts = cleaned.split(':');
+        if (parts.length >= 2) {
+          final hours = int.tryParse(parts[0]) ?? 0;
+          final minutes = int.tryParse(parts[1]) ?? 0;
+          return (hours * 60) + minutes;
+        }
+      }
+      final regExp = RegExp(r'\d+');
+      final match = regExp.firstMatch(cleaned);
+      if (match != null) {
+        return int.tryParse(match.group(0)!) ?? 0;
+      }
+      return 0;
     }
+
+    // Parse duration: prefer schedule duration if valid (>0), fallback to clinic duration
+    int durationMinutes = 30;
+    final rawSchedDur = sched['appointmentDuration'] ?? sched['AppointmentDuration'];
+    final schedDur = rawSchedDur != null ? parseMinutes(rawSchedDur.toString()) : 0;
+    if (schedDur > 0) {
+      durationMinutes = schedDur;
+    } else {
+      final clinicDur = parseMinutes(widget.clinic.appointmentDuration);
+      if (clinicDur > 0) {
+        durationMinutes = clinicDur;
+      }
+    }
+    final duration = '$durationMinutes minutes';
     
-    final notes = (sched['notes'] ?? sched['nots'] ?? widget.clinic.nots ?? '').toString();
-    final scheduleId = sched['id'] is int ? sched['id'] as int : int.tryParse(sched['id']?.toString() ?? '') ?? 0;
+    // Calculate End Time (Start Time + Duration)
+    String calculateEndTime(String startTime, int durationMins) {
+      try {
+        final cleanTime = startTime.trim().split(' ')[0];
+        final parts = cleanTime.split(':');
+        if (parts.isEmpty) return startTime;
+        
+        int hour = int.tryParse(parts[0]) ?? 9;
+        int minute = parts.length > 1 ? (int.tryParse(parts[1]) ?? 0) : 0;
+        
+        final totalMinutes = hour * 60 + minute + durationMins;
+        final endHour = (totalMinutes ~/ 60) % 24;
+        final endMinute = totalMinutes % 60;
+        
+        final endHourStr = endHour.toString().padLeft(2, '0');
+        final endMinuteStr = endMinute.toString().padLeft(2, '0');
+        
+        if (parts.length > 2) {
+          return '$endHourStr:$endMinuteStr:00';
+        }
+        return '$endHourStr:$endMinuteStr';
+      } catch (_) {
+        return startTime;
+      }
+    }
+
+    final end = calculateEndTime(start, durationMinutes);
+    
+    // Parse Notes
+    String notes = '';
+    final schedNotes = (sched['notes'] ?? sched['nots'] ?? '').toString().trim();
+    if (schedNotes.isNotEmpty && schedNotes != 'No notes added') {
+      notes = schedNotes;
+    } else {
+      final clinicNotes = (widget.clinic.nots).trim();
+      if (clinicNotes.isNotEmpty && clinicNotes != 'No notes added') {
+        notes = clinicNotes;
+      }
+    }
+
+    final scheduleId = sched['scheduleId'] is int
+        ? sched['scheduleId'] as int
+        : sched['id'] is int
+            ? sched['id'] as int
+            : int.tryParse(sched['scheduleId']?.toString() ?? '') ??
+                int.tryParse(sched['id']?.toString() ?? '') ??
+                0;
 
     return Container(
       margin: EdgeInsets.only(bottom: s(16)),
@@ -304,7 +376,7 @@ class _ClinicSchedulesViewState extends State<ClinicSchedulesView> {
                 SizedBox(width: s(10)),
                 Text(
                   day,
-                  style: GoogleFonts.lexend(
+                  style: GoogleFonts.cairo(
                     fontSize: s(16),
                     fontWeight: FontWeight.w700,
                     color: const Color(0xFF0F172A),
@@ -333,7 +405,7 @@ class _ClinicSchedulesViewState extends State<ClinicSchedulesView> {
                     Expanded(
                       child: Text(
                         notes,
-                        style: GoogleFonts.lexend(
+                        style: GoogleFonts.cairo(
                           fontSize: s(12),
                           fontStyle: FontStyle.italic,
                           color: const Color(0xFF475569),
@@ -368,7 +440,7 @@ class _ClinicSchedulesViewState extends State<ClinicSchedulesView> {
                 icon: Icon(Icons.check_circle_outline_rounded, size: s(16), color: Colors.white),
                 label: Text(
                   'Book Appointment',
-                  style: GoogleFonts.lexend(
+                  style: GoogleFonts.cairo(
                     fontSize: s(14),
                     fontWeight: FontWeight.w700,
                     color: Colors.white,
@@ -400,7 +472,7 @@ class _ClinicSchedulesViewState extends State<ClinicSchedulesView> {
           SizedBox(width: s(8)),
           Text(
             value,
-            style: GoogleFonts.lexend(
+            style: GoogleFonts.cairo(
               fontSize: s(13),
               fontWeight: FontWeight.w500,
               color: const Color(0xFF475569),
@@ -423,7 +495,7 @@ class _ClinicSchedulesViewState extends State<ClinicSchedulesView> {
           SizedBox(height: s(16)),
           Text(
             'Loading schedules...',
-            style: GoogleFonts.lexend(
+            style: GoogleFonts.cairo(
               fontSize: s(14),
               fontWeight: FontWeight.w500,
               color: const Color(0xFF64748B),
@@ -445,7 +517,7 @@ class _ClinicSchedulesViewState extends State<ClinicSchedulesView> {
             SizedBox(height: s(16)),
             Text(
               'Failed to load schedules',
-              style: GoogleFonts.lexend(
+              style: GoogleFonts.cairo(
                 fontSize: s(18),
                 fontWeight: FontWeight.w700,
                 color: const Color(0xFF0F172A),
@@ -455,13 +527,14 @@ class _ClinicSchedulesViewState extends State<ClinicSchedulesView> {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: GoogleFonts.lexend(fontSize: s(14), color: const Color(0xFF64748B)),
+              style: GoogleFonts.cairo(fontSize: s(14), color: const Color(0xFF64748B)),
             ),
             SizedBox(height: s(24)),
             ElevatedButton(
               onPressed: () {
-                if (widget.clinic.id != null) {
-                  widget.cubit.fetchClinicSchedules(widget.clinic.id!, widget.doctor.id);
+                final clinicId = widget.clinic.id;
+                if (clinicId != null && clinicId > 0) {
+                  widget.cubit.fetchClinicSchedules(clinicId, widget.doctor.id);
                 }
               },
               style: ElevatedButton.styleFrom(
@@ -487,7 +560,7 @@ class _ClinicSchedulesViewState extends State<ClinicSchedulesView> {
             SizedBox(height: s(16)),
             Text(
               'No schedules found',
-              style: GoogleFonts.lexend(
+              style: GoogleFonts.cairo(
                 fontSize: s(18),
                 fontWeight: FontWeight.w700,
                 color: const Color(0xFF0F172A),
@@ -497,7 +570,7 @@ class _ClinicSchedulesViewState extends State<ClinicSchedulesView> {
             Text(
               'There are no working hours specified for this day/clinic.',
               textAlign: TextAlign.center,
-              style: GoogleFonts.lexend(fontSize: s(14), color: const Color(0xFF64748B)),
+              style: GoogleFonts.cairo(fontSize: s(14), color: const Color(0xFF64748B)),
             ),
           ],
         ),

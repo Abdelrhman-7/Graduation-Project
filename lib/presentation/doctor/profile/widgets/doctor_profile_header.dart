@@ -1,18 +1,63 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../../core/resources/color_manager.dart';
+import '../../../../../data/api/api_manager.dart';
 
-class DoctorProfileHeader extends StatelessWidget {
+class DoctorProfileHeader extends StatefulWidget {
   final String name;
   final String? imageUrl;
+  final int? age;
+  final int patientsCount;
   final VoidCallback? onEditTap;
 
   const DoctorProfileHeader({
     super.key,
     required this.name,
     this.imageUrl,
+    this.age,
+    this.patientsCount = 0,
     this.onEditTap,
   });
+
+  @override
+  State<DoctorProfileHeader> createState() => _DoctorProfileHeaderState();
+}
+
+class _DoctorProfileHeaderState extends State<DoctorProfileHeader> {
+  String averageRating = "0.0";
+  String reviewCount = "0";
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchRating();
+  }
+
+  Future<void> _fetchRating() async {
+    try {
+      final api = await ApiManager.create();
+      final reviews = await api.getDoctorAllReviews();
+      if (reviews.isNotEmpty && mounted) {
+        double total = 0;
+        int count = 0;
+        for (var review in reviews) {
+          final rating = (review['rating'] as num?)?.toDouble() ?? 0.0;
+          if (rating > 0) {
+            total += rating;
+            count++;
+          }
+        }
+        if (count > 0) {
+          setState(() {
+            averageRating = (total / count).toStringAsFixed(1);
+            reviewCount = count.toString();
+          });
+        }
+      }
+    } catch (e) {
+      print('Error fetching rating: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,10 +70,10 @@ class DoctorProfileHeader extends StatelessWidget {
               height: 120,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: imageUrl == null ? const Color(0xFFF0F0F0) : null,
-                image: imageUrl != null
+                color: widget.imageUrl == null ? const Color(0xFFF0F0F0) : null,
+                image: widget.imageUrl != null
                     ? DecorationImage(
-                        image: NetworkImage(imageUrl!),
+                        image: NetworkImage(widget.imageUrl!),
                         fit: BoxFit.cover,
                       )
                     : null,
@@ -41,7 +86,7 @@ class DoctorProfileHeader extends StatelessWidget {
                   ),
                 ],
               ),
-              child: imageUrl == null
+              child: widget.imageUrl == null
                   ? const Icon(
                       Icons.person_rounded,
                       size: 60,
@@ -70,8 +115,8 @@ class DoctorProfileHeader extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              name,
-              style: GoogleFonts.lexend(
+              widget.name,
+              style: GoogleFonts.cairo(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: ColorManager.headlineText,
@@ -79,7 +124,7 @@ class DoctorProfileHeader extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             GestureDetector(
-              onTap: onEditTap,
+              onTap: widget.onEditTap,
               child: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
@@ -98,7 +143,7 @@ class DoctorProfileHeader extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           "Cardiologist • MD, FACC",
-          style: GoogleFonts.lexend(
+          style: GoogleFonts.cairo(
             fontSize: 14,
             fontWeight: FontWeight.w500,
             color: ColorManager.primary,
@@ -108,9 +153,9 @@ class DoctorProfileHeader extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            _buildStatItem("Experience", "12 years"),
-            _buildStatItem("Patients", "4.8k+"),
-            _buildStatItem("Rating", "4.9/5"),
+            _buildStatItem("Age", widget.age != null ? "${widget.age} years" : "N/A"),
+            _buildStatItem("Patients", "${widget.patientsCount}"),
+            _buildStatItem("Rating", "$averageRating/5 ($reviewCount)"),
           ],
         ),
       ],
@@ -128,7 +173,7 @@ class DoctorProfileHeader extends StatelessWidget {
         children: [
           Text(
             label,
-            style: GoogleFonts.lexend(
+            style: GoogleFonts.cairo(
               fontSize: 12,
               color: ColorManager.subtitleText,
               fontWeight: FontWeight.w400,
@@ -137,7 +182,7 @@ class DoctorProfileHeader extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             value,
-            style: GoogleFonts.lexend(
+            style: GoogleFonts.cairo(
               fontSize: 14,
               fontWeight: FontWeight.w700,
               color: ColorManager.headlineText,

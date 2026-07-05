@@ -47,3 +47,12 @@ class LogoutSuccess extends PatientProfileState {}
 class PatientProfileEditSuccess extends PatientProfileState {}
 
 class PatientProfileImageDeleted extends PatientProfileState {}
+
+class PatientProfilePasswordChangeLoading extends PatientProfileState {}
+
+class PatientProfilePasswordChangeSuccess extends PatientProfileState {}
+
+class PatientProfilePasswordChangeError extends PatientProfileState {
+  final String message;
+  PatientProfilePasswordChangeError(this.message);
+}

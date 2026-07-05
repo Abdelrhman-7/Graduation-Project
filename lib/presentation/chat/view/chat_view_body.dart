@@ -5,7 +5,16 @@ import '../../../core/resources/values_manager.dart';
 import '../../../core/resources/theme_manager.dart';
 
 class ChatViewBody extends StatelessWidget {
-  const ChatViewBody({super.key});
+  final String? doctorName;
+  final String? doctorSpecialty;
+  final String? doctorImageUrl;
+
+  const ChatViewBody({
+    super.key,
+    this.doctorName,
+    this.doctorSpecialty,
+    this.doctorImageUrl,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -21,6 +30,13 @@ class ChatViewBody extends StatelessWidget {
   }
 
   Widget _buildTopBar(BuildContext context) {
+    final displayName = (doctorName != null && doctorName!.isNotEmpty)
+        ? doctorName!
+        : AppStrings.drSarahJohnson;
+    final displaySpecialty = (doctorSpecialty != null && doctorSpecialty!.isNotEmpty)
+        ? doctorSpecialty!
+        : AppStrings.cardiologistOnline;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(AppPadding.p16, AppPadding.p48, AppPadding.p16, AppPadding.p16),
       decoration: BoxDecoration(
@@ -47,11 +63,17 @@ class ChatViewBody extends StatelessWidget {
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(AppSize.s80),
-                  child: Image.asset(
-                    'assets/images/chat/sarah_johnson.png',
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => const Icon(Icons.person),
-                  ),
+                  child: (doctorImageUrl != null && doctorImageUrl!.isNotEmpty)
+                      ? Image.network(
+                          doctorImageUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => const Icon(Icons.person),
+                        )
+                      : Image.asset(
+                          'assets/images/chat/sarah_johnson.png',
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => const Icon(Icons.person),
+                        ),
                 ),
               ),
               Positioned(
@@ -75,12 +97,16 @@ class ChatViewBody extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  AppStrings.drSarahJohnson,
+                  displayName,
                   style: ThemeManager.getDoctorNameStyle(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 Text(
-                  AppStrings.cardiologistOnline,
+                  displaySpecialty,
                   style: ThemeManager.getDoctorStatusStyle(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
@@ -362,7 +388,8 @@ class ChatViewBody extends StatelessWidget {
                         child: Padding(
                           padding: EdgeInsets.symmetric(vertical: 12),
                           child: TextField(
-                            maxLines: null,
+                            maxLines: 5,
+                            minLines: 1,
                             decoration: InputDecoration(
                               hintText: AppStrings.typeAMessage,
                               border: InputBorder.none,

@@ -52,7 +52,7 @@ class PremiumCareCard extends StatelessWidget {
                   children: [
                     Text(
                       AppStrings.premiumCare,
-                      style: GoogleFonts.lexend(
+                      style: GoogleFonts.cairo(
                         fontSize: s(18),
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
@@ -60,7 +60,7 @@ class PremiumCareCard extends StatelessWidget {
                     ),
                     Text(
                       AppStrings.schedulePhysical,
-                      style: GoogleFonts.lexend(
+                      style: GoogleFonts.cairo(
                         fontSize: s(13),
                         fontWeight: FontWeight.w400,
                         color: Colors.white70,
@@ -97,7 +97,7 @@ class PremiumCareCard extends StatelessWidget {
           SizedBox(width: s(8)),
           Text(
             text,
-            style: GoogleFonts.lexend(
+            style: GoogleFonts.cairo(
               fontSize: s(12),
               fontWeight: FontWeight.w500,
               color: Colors.white,

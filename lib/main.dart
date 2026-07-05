@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'core/resources/theme_manager.dart';
 import 'presentation/auth_choice/view/auth_choice_view.dart';
 import 'presentation/patient_home_dashboard/view/patient_home_dashboard_view.dart';
+import 'presentation/doctor/home/view/doctor_home_view.dart';
+import 'presentation/admin/admin_home_view.dart';
 import 'data/api/api_manager.dart';
 import 'data/repository/repository.dart';
 import 'presentation/login/cubit/login_cubit.dart';
@@ -13,10 +15,12 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final prefController = SharedPrefController();
   final bool isLoggedIn = await prefController.isLoggedIn();
+  final String? role = await prefController.getRole();
   final apiManager = await ApiManager.create();
 
   runApp(MyApp(
     isLoggedIn: isLoggedIn,
+    role: role,
     prefController: prefController,
     apiManager: apiManager,
   ));
@@ -24,12 +28,14 @@ void main() async {
 
 class MyApp extends StatelessWidget {
   final bool isLoggedIn;
+  final String? role;
   final SharedPrefController prefController;
   final ApiManager apiManager;
 
   const MyApp({
     super.key,
     required this.isLoggedIn,
+    this.role,
     required this.prefController,
     required this.apiManager,
   });
@@ -62,7 +68,11 @@ class MyApp extends StatelessWidget {
           title: 'Graduation Project',
           theme: ThemeManager.getApplicationTheme(),
           home: isLoggedIn
-              ? const PatientHomeDashboardView()
+              ? (role == 'Admin'
+                  ? const AdminHomeView()
+                  : (role == 'Doctor'
+                      ? const DoctorHomeView()
+                      : const PatientHomeDashboardView()))
               : const AuthChoiceView(),
         ),
       ),

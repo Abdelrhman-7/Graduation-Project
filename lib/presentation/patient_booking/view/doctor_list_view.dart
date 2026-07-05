@@ -5,6 +5,8 @@ import 'package:graduationproject/data/models/schudule/doctorModel.dart';
 import '../cubit/patient_booking_cubit.dart';
 import '../cubit/patient_booking_state.dart';
 import 'doctor_profile_view.dart';
+import '../../widgets/rate_doctor_sheet.dart';
+import '../../../../data/api/api_manager.dart';
 
 class DoctorListView extends StatefulWidget {
   const DoctorListView({super.key});
@@ -81,6 +83,14 @@ class _DoctorListViewState extends State<DoctorListView> {
                   } else if (state is PatientBookingError) {
                     return _buildErrorState(context, state.message, s);
                   } else if (state is PatientBookingDoctorsSuccess) {
+                    if (state.doctors.isEmpty) {
+                      return _buildErrorState(
+                        context,
+                        'No doctors available. Please log in as a patient.',
+                        s,
+                      );
+                    }
+
                     var doctors = state.doctors.where((doctor) {
                       final nameMatch = doctor.fullName
                           .toLowerCase()
@@ -110,7 +120,12 @@ class _DoctorListViewState extends State<DoctorListView> {
                       physics: const BouncingScrollPhysics(),
                       itemCount: doctors.length,
                       itemBuilder: (context, index) {
-                        return _buildDoctorCard(doctors[index], scale, s);
+                        return _DoctorCardWithRating(
+                          doctor: doctors[index],
+                          scale: scale,
+                          s: s,
+                          avatarUrl: _getDoctorAvatar(doctors[index]),
+                        );
                       },
                     );
                   }
@@ -154,7 +169,7 @@ class _DoctorListViewState extends State<DoctorListView> {
           SizedBox(width: s(16)),
           Text(
             'Doctor List',
-            style: GoogleFonts.lexend(
+            style: GoogleFonts.cairo(
               fontSize: s(22),
               fontWeight: FontWeight.w700,
               color: const Color(0xFF0F172A),
@@ -191,13 +206,13 @@ class _DoctorListViewState extends State<DoctorListView> {
                   _searchQuery = value;
                 });
               },
-              style: GoogleFonts.lexend(
+              style: GoogleFonts.cairo(
                 fontSize: s(14),
                 color: const Color(0xFF0F172A),
               ),
               decoration: InputDecoration(
                 hintText: 'Search doctors...',
-                hintStyle: GoogleFonts.lexend(
+                hintStyle: GoogleFonts.cairo(
                   fontSize: s(14),
                   color: const Color(0xFF94A3B8),
                 ),
@@ -246,7 +261,7 @@ class _DoctorListViewState extends State<DoctorListView> {
                       value: _selectedDepartment,
                       isExpanded: true,
                       icon: const Icon(Icons.keyboard_arrow_down_rounded),
-                      style: GoogleFonts.lexend(
+                      style: GoogleFonts.cairo(
                         fontSize: s(13),
                         color: const Color(0xFF334155),
                         fontWeight: FontWeight.w500,
@@ -276,7 +291,7 @@ class _DoctorListViewState extends State<DoctorListView> {
                 icon: Icon(Icons.refresh_rounded, size: s(16)),
                 label: Text(
                   'Reset',
-                  style: GoogleFonts.lexend(
+                  style: GoogleFonts.cairo(
                     fontSize: s(12),
                     fontWeight: FontWeight.w600,
                   ),
@@ -299,7 +314,7 @@ class _DoctorListViewState extends State<DoctorListView> {
             children: [
               Text(
                 'Sort by:',
-                style: GoogleFonts.lexend(
+                style: GoogleFonts.cairo(
                   fontSize: s(13),
                   fontWeight: FontWeight.w600,
                   color: const Color(0xFF64748B),
@@ -308,7 +323,7 @@ class _DoctorListViewState extends State<DoctorListView> {
               ChoiceChip(
                 label: Text(
                   'Name',
-                  style: GoogleFonts.lexend(
+                  style: GoogleFonts.cairo(
                     fontSize: s(12),
                     fontWeight: FontWeight.w600,
                     color: _isSortedByName ? Colors.white : const Color(0xFF475569),
@@ -334,169 +349,6 @@ class _DoctorListViewState extends State<DoctorListView> {
     );
   }
 
-  Widget _buildDoctorCard(
-    DoctorModel doctor,
-    double scale,
-    double Function(double) s,
-  ) {
-    final doctorAvatar = _getDoctorAvatar(doctor);
-
-    return Container(
-      margin: EdgeInsets.only(bottom: s(16)),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(s(20)),
-        border: Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A000000),
-            blurRadius: 15,
-            offset: Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: EdgeInsets.all(s(16)),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                // Avatar
-                Container(
-                  padding: EdgeInsets.all(s(2)),
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Color(0xFF137FEC), Color(0xFF06B6D4)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    shape: BoxShape.circle,
-                  ),
-                  child: CircleAvatar(
-                    radius: s(30),
-                    backgroundImage: NetworkImage(doctorAvatar),
-                    backgroundColor: const Color(0xFFEFF6FF),
-                  ),
-                ),
-                SizedBox(width: s(16)),
-                // Info
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        doctor.fullName,
-                        style: GoogleFonts.lexend(
-                          fontSize: s(16),
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF0F172A),
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      SizedBox(height: s(4)),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.medical_services_outlined,
-                            size: s(14),
-                            color: const Color(0xFF137FEC),
-                          ),
-                          SizedBox(width: s(4)),
-                          Text(
-                            doctor.departmentName ?? 'General Specialist',
-                            style: GoogleFonts.lexend(
-                              fontSize: s(13),
-                              color: const Color(0xFF137FEC),
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: s(6)),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.person_outline_rounded,
-                            size: s(14),
-                            color: const Color(0xFF64748B),
-                          ),
-                          SizedBox(width: s(4)),
-                          Text(
-                            doctor.gender ?? 'Not Specified',
-                            style: GoogleFonts.lexend(
-                              fontSize: s(12),
-                              color: const Color(0xFF64748B),
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          SizedBox(width: s(12)),
-                          Icon(
-                            Icons.cake_outlined,
-                            size: s(14),
-                            color: const Color(0xFF64748B),
-                          ),
-                          SizedBox(width: s(4)),
-                          Text(
-                            doctor.age != null ? 'Age: ${doctor.age}' : 'Age: N/A',
-                            style: GoogleFonts.lexend(
-                              fontSize: s(12),
-                              color: const Color(0xFF64748B),
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: s(16)),
-            const Divider(height: 1, color: Color(0xFFF1F5F9)),
-            SizedBox(height: s(12)),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  final cubit = context.read<PatientBookingCubit>();
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => DoctorProfileView(
-                        doctorId: doctor.id,
-                        cubit: cubit,
-                        scale: scale,
-                      ),
-                    ),
-                  );
-                },
-                icon: Icon(Icons.visibility_rounded, size: s(16), color: Colors.white),
-                label: Text(
-                  'View Profile',
-                  style: GoogleFonts.lexend(
-                    fontSize: s(14),
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF137FEC),
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  padding: EdgeInsets.symmetric(vertical: s(12)),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(s(12)),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildLoadingState(double Function(double) s) {
     return Center(
       child: Column(
@@ -509,7 +361,7 @@ class _DoctorListViewState extends State<DoctorListView> {
           SizedBox(height: s(16)),
           Text(
             'Fetching doctors...',
-            style: GoogleFonts.lexend(
+            style: GoogleFonts.cairo(
               fontSize: s(14),
               fontWeight: FontWeight.w500,
               color: const Color(0xFF64748B),
@@ -546,7 +398,7 @@ class _DoctorListViewState extends State<DoctorListView> {
             SizedBox(height: s(16)),
             Text(
               'Failed to load doctors',
-              style: GoogleFonts.lexend(
+              style: GoogleFonts.cairo(
                 fontSize: s(18),
                 fontWeight: FontWeight.w700,
                 color: const Color(0xFF0F172A),
@@ -556,7 +408,7 @@ class _DoctorListViewState extends State<DoctorListView> {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: GoogleFonts.lexend(
+              style: GoogleFonts.cairo(
                 fontSize: s(14),
                 color: const Color(0xFF64748B),
               ),
@@ -608,7 +460,7 @@ class _DoctorListViewState extends State<DoctorListView> {
             SizedBox(height: s(16)),
             Text(
               'No doctors found',
-              style: GoogleFonts.lexend(
+              style: GoogleFonts.cairo(
                 fontSize: s(18),
                 fontWeight: FontWeight.w700,
                 color: const Color(0xFF0F172A),
@@ -618,9 +470,306 @@ class _DoctorListViewState extends State<DoctorListView> {
             Text(
               'Try adjusting your search query or department.',
               textAlign: TextAlign.center,
-              style: GoogleFonts.lexend(
+              style: GoogleFonts.cairo(
                 fontSize: s(14),
                 color: const Color(0xFF64748B),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DoctorCardWithRating extends StatefulWidget {
+  final DoctorModel doctor;
+  final double scale;
+  final double Function(double) s;
+  final String avatarUrl;
+
+  const _DoctorCardWithRating({
+    required this.doctor,
+    required this.scale,
+    required this.s,
+    required this.avatarUrl,
+  });
+
+  @override
+  State<_DoctorCardWithRating> createState() => _DoctorCardWithRatingState();
+}
+
+class _DoctorCardWithRatingState extends State<_DoctorCardWithRating> {
+  String _averageRating = "0.0";
+  String _reviewCount = "0";
+  bool _isLoadingRating = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchRating();
+  }
+
+  Future<void> _fetchRating() async {
+    try {
+      final api = await ApiManager.create();
+      final reviews = await api.getPatientDoctorReviews(widget.doctor.id);
+      if (reviews.isNotEmpty && mounted) {
+        double total = 0;
+        int count = 0;
+        for (var review in reviews) {
+          final rating = (review['rating'] as num?)?.toDouble() ?? 0.0;
+          if (rating > 0) {
+            total += rating;
+            count++;
+          }
+        }
+        if (count > 0 && mounted) {
+          setState(() {
+            _averageRating = (total / count).toStringAsFixed(1);
+            _reviewCount = count.toString();
+          });
+        }
+      }
+    } catch (e) {
+      print('Error fetching rating: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingRating = false;
+        });
+      }
+    }
+  }
+
+  void _showRateDoctorSheet(BuildContext context) {
+    RateDoctorSheet.show(
+      context,
+      widget.doctor.id,
+      onReviewSubmitted: _fetchRating,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = widget.s;
+    final doctor = widget.doctor;
+
+    return Container(
+      margin: EdgeInsets.only(bottom: s(16)),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(s(20)),
+        border: Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A000000),
+            blurRadius: 15,
+            offset: Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(s(16)),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                // Avatar
+                Container(
+                  padding: EdgeInsets.all(s(2)),
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Color(0xFF137FEC), Color(0xFF06B6D4)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    shape: BoxShape.circle,
+                  ),
+                  child: CircleAvatar(
+                    radius: s(30),
+                    backgroundImage: NetworkImage(widget.avatarUrl),
+                    backgroundColor: const Color(0xFFEFF6FF),
+                  ),
+                ),
+                SizedBox(width: s(16)),
+                // Info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        doctor.fullName,
+                        style: GoogleFonts.cairo(
+                          fontSize: s(16),
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF0F172A),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      SizedBox(height: s(4)),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.medical_services_outlined,
+                            size: s(14),
+                            color: const Color(0xFF137FEC),
+                          ),
+                          SizedBox(width: s(4)),
+                          Text(
+                            doctor.departmentName ?? 'General Specialist',
+                            style: GoogleFonts.cairo(
+                              fontSize: s(13),
+                              color: const Color(0xFF137FEC),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: s(6)),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.person_outline_rounded,
+                            size: s(14),
+                            color: const Color(0xFF64748B),
+                          ),
+                          SizedBox(width: s(4)),
+                          Text(
+                            doctor.gender ?? 'Not Specified',
+                            style: GoogleFonts.cairo(
+                              fontSize: s(12),
+                              color: const Color(0xFF64748B),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          SizedBox(width: s(12)),
+                          Icon(
+                            Icons.cake_outlined,
+                            size: s(14),
+                            color: const Color(0xFF64748B),
+                          ),
+                          SizedBox(width: s(4)),
+                          Text(
+                            doctor.age != null ? 'Age: ${doctor.age}' : 'Age: N/A',
+                            style: GoogleFonts.cairo(
+                              fontSize: s(12),
+                              color: const Color(0xFF64748B),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: s(6)),
+                      // Rating & Rate Button Row
+                      if (!_isLoadingRating)
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.star_rounded,
+                              size: s(16),
+                              color: const Color(0xFFEAB308),
+                            ),
+                            SizedBox(width: s(4)),
+                            Text(
+                              _reviewCount == "0" ? 'Unrated' : '$_averageRating/5',
+                              style: GoogleFonts.cairo(
+                                fontSize: s(12),
+                                color: const Color(0xFF0F172A),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            if (_reviewCount != "0") ...[
+                              SizedBox(width: s(4)),
+                              Text(
+                                '($_reviewCount)',
+                                style: GoogleFonts.cairo(
+                                  fontSize: s(12),
+                                  color: const Color(0xFF64748B),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                            const Spacer(),
+                            InkWell(
+                              onTap: () => _showRateDoctorSheet(context),
+                              borderRadius: BorderRadius.circular(s(16)),
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: s(8),
+                                  vertical: s(4),
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFEF9C3),
+                                  borderRadius: BorderRadius.circular(s(16)),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.star_rate_rounded,
+                                      size: s(14),
+                                      color: const Color(0xFFEAB308),
+                                    ),
+                                    SizedBox(width: s(4)),
+                                    Text(
+                                      'Rate',
+                                      style: GoogleFonts.cairo(
+                                        fontSize: s(12),
+                                        fontWeight: FontWeight.w600,
+                                        color: const Color(0xFF334155),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: s(16)),
+            const Divider(height: 1, color: Color(0xFFF1F5F9)),
+            SizedBox(height: s(12)),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  final cubit = context.read<PatientBookingCubit>();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => DoctorProfileView(
+                        doctorId: doctor.id,
+                        cubit: cubit,
+                        scale: widget.scale,
+                        initialDoctor: doctor,
+                      ),
+                    ),
+                  );
+                },
+                icon: Icon(Icons.visibility_rounded, size: s(16), color: Colors.white),
+                label: Text(
+                  'View Profile',
+                  style: GoogleFonts.cairo(
+                    fontSize: s(14),
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF137FEC),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: EdgeInsets.symmetric(vertical: s(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(s(12)),
+                  ),
+                ),
               ),
             ),
           ],
