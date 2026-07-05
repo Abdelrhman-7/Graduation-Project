@@ -723,7 +723,13 @@ class ApiManager {
 
       // 2. Send token to backend as multipart/form-data
       final formData = FormData.fromMap({
-        'stripeToken': stripeToken,
+        'StripeToken': stripeToken,
+        'stripeToken': stripeToken, // Keep this just in case backend expects lowercase
+        'CardNumber': cardNumber.replaceAll(' ', ''),
+        'CVV': cvv,
+        'ExpiryMonth': int.tryParse(expiryMonth) ?? 1,
+        'ExpiryYear': int.tryParse(expiryYear) ?? DateTime.now().year,
+        'CardHolderName': cardHolderName,
       });
 
       final response = await _dio.post(

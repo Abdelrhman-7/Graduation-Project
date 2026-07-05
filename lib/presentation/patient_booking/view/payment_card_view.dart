@@ -281,40 +281,7 @@ class _PaymentCardViewState extends State<PaymentCardView>
                     // ─── Pay Button ────────────────────────────
                     _buildPayButton(isProcessing),
 
-                    // ─── Error Message Container (if payment failed) ───
-                    if (state is PatientPaymentError) ...[
-                      const SizedBox(height: 12),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFEF4444),
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0x1F000000),
-                              blurRadius: 4,
-                              offset: Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.error_outline_rounded, color: Colors.white, size: 20),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                state.message,
-                                style: GoogleFonts.cairo(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+
                     const SizedBox(height: 20),
 
                     // ─── Security Note ─────────────────────────

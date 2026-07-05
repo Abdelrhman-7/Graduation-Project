@@ -162,7 +162,7 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
     };
     final targetDay = days[dayName.toLowerCase().trim()] ?? DateTime.sunday;
     int difference = targetDay - now.weekday;
-    if (difference <= 0) {
+    if (difference < 0) {
       difference += 7;
     }
     return now.add(Duration(days: difference));
@@ -267,6 +267,7 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
     bool slotFound = false;
 
     // البحث عن أقرب موعد متاح (بحد أقصى 52 أسبوعاً)
+    final now = DateTime.now();
     for (int week = 0; week < 52; week++) {
       dateStr = '${targetDate.year}-${targetDate.month.toString().padLeft(2, '0')}-${targetDate.day.toString().padLeft(2, '0')}';
 
@@ -339,8 +340,19 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
         });
 
         if (!isSlotTaken) {
-          slotFound = true;
-          break;
+          // التحقق من أن الوقت لم يمر بعد إذا كان الحجز في نفس اليوم
+          bool isSlotPassedToday = false;
+          if (targetDate.year == now.year && targetDate.month == now.month && targetDate.day == now.day) {
+            int nowMinutes = now.hour * 60 + now.minute;
+            if (currentSlotMinutes <= nowMinutes) {
+              isSlotPassedToday = true;
+            }
+          }
+
+          if (!isSlotPassedToday) {
+            slotFound = true;
+            break;
+          }
         }
 
         // لو محجوز، نؤخر الميعاد بالـ duration (مثلاً 15 دقيقة) لبداية ميعاد الكشف التالي

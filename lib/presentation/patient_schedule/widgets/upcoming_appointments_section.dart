@@ -60,7 +60,7 @@ class UpcomingAppointmentsSection extends StatelessWidget {
             final status = (appt['status'] ?? '').toString().toLowerCase();
             final specialtyDisplay = status.contains('pending')
                 ? 'Waiting for doctor approval'
-                : status.contains('approved') || status.contains('accept')
+                : status.contains('approved') || status.contains('accept') || status.contains('confirm') || status.contains('paid')
                 ? 'Confirmed appointment'
                 : specialty.toString();
             final date =
@@ -117,14 +117,16 @@ class UpcomingAppointmentsSection extends StatelessWidget {
             final isConfirmed =
                 rawStatus.contains('confirm') ||
                 rawStatus.contains('accept') ||
-                rawStatus.contains('approv');
+                rawStatus.contains('approv') ||
+                rawStatus.contains('paid');
             final rawPayStatus = (appt['paymentStatus'] ?? appt['PaymentStatus'] ?? '')
                 .toString()
                 .toLowerCase();
             final isPaid =
                 rawPayStatus.contains('paid') ||
                 rawPayStatus.contains('complet') ||
-                rawPayStatus.contains('success');
+                rawPayStatus.contains('success') ||
+                rawStatus.contains('paid');
             final paymentMethod = (appt['paymentMethod'] ?? appt['PaymentMethod'] ?? '').toString().toLowerCase();
             final isPayable = isConfirmed && !isPaid;
             // ────────────────────────────────────────────────────────────────
@@ -191,8 +193,9 @@ class UpcomingAppointmentsSection extends StatelessWidget {
                           ),
                         ),
                       ).then((_) {
-                        // Refresh after payment to update card status
-                        cubit.fetchAppointments();
+                        if (context.mounted) {
+                          context.read<PatientScheduleCubit>().fetchAppointments();
+                        }
                       });
                     }
                   : null,
