@@ -90,118 +90,68 @@ class PatientHomeDashboardViewBody extends StatelessWidget {
                                   style: _headingStyle(scale),
                                 ),
                                 SizedBox(height: s(16)),
-<<<<<<< Updated upstream
-                                AppointmentCard(
-                                  doctorName: nextAppointment['doctorName'] ?? nextAppointment['doctor']?['fullName'] ?? 'Unknown Doctor',
-                                  specialty: nextAppointment['specialty'] ?? nextAppointment['doctor']?['specialty'] ?? 'Specialty',
-                                  dateTime: nextAppointment['bookingDate'] ?? nextAppointment['date'] ?? 'Upcoming',
-                                  imagePath: () {
-                                    final img = nextAppointment['doctorImageUrl'] ?? nextAppointment['doctor']?['imageUrl'] ?? nextAppointment['imageUrl'] ?? '';
-                                    if (img.toString().trim().isEmpty) return '';
-                                    if (img.toString().startsWith('http')) return img.toString();
-                                    return 'http://clinicbook.runasp.net${img.toString().startsWith('/') ? '' : '/'}$img';
-                                  }(),
-                                  bookingId: int.tryParse(nextAppointment['id']?.toString() ?? '0') ?? 0,
-                                  status: nextAppointment['status'],
-                                  isViewOnly: true,
-                                  onDetails: () {
-                                    final bookingId = int.tryParse(nextAppointment['id']?.toString() ?? '0') ?? 0;
-                                    if (bookingId > 0) {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) => PatientAppointmentDetailsView(bookingId: bookingId),
-                                        ),
-                                      );
-                                    }
-=======
                                 Builder(
                                   builder: (context) {
+                                    String resolveImageUrl(dynamic src) {
+                                      if (src == null) return '';
+                                      final s = src.toString().trim();
+                                      if (s.isEmpty) return '';
+                                      if (s.startsWith('http')) return s;
+                                      return 'http://clinicbook.runasp.net${s.startsWith('/') ? '' : '/'}$s';
+                                    }
+
                                     final doctor = DoctorModel(
-                                      id:
-                                          int.tryParse(
-                                            (nextAppointment['doctorId'] ??
-                                                    (nextAppointment['doctor']
-                                                            is Map
-                                                        ? nextAppointment['doctor']['id']
-                                                        : null) ??
-                                                    0)
-                                                .toString(),
-                                          ) ??
-                                          0,
-                                      fullName:
-                                          nextAppointment['doctorName'] ??
+                                      id: int.tryParse((nextAppointment['doctorId'] ??
+                                              (nextAppointment['doctor'] is Map
+                                                  ? nextAppointment['doctor']['id']
+                                                  : null) ??
+                                              0).toString()) ?? 0,
+                                      fullName: nextAppointment['doctorName'] ??
                                           (nextAppointment['doctor'] is Map
                                               ? nextAppointment['doctor']['fullName']
                                               : null) ??
                                           'Unknown Doctor',
-                                      imageUrl:
-                                          nextAppointment['doctorImageUrl']
-                                              ?.toString() ??
+                                      imageUrl: resolveImageUrl(
+                                          nextAppointment['doctorImageUrl'] ??
                                           (nextAppointment['doctor'] is Map
-                                              ? (nextAppointment['doctor']['imageUrl']
-                                                        ?.toString() ??
-                                                    nextAppointment['doctor']['profileImageUrl']
-                                                        ?.toString() ??
-                                                    nextAppointment['doctor']['displayImageUrl']
-                                                        ?.toString())
+                                              ? (nextAppointment['doctor']['imageUrl'] ??
+                                                 nextAppointment['doctor']['profileImageUrl'] ??
+                                                 nextAppointment['doctor']['displayImageUrl'])
                                               : null) ??
-                                          nextAppointment['imageUrl']
-                                              ?.toString() ??
-                                          nextAppointment['profileImageUrl']
-                                              ?.toString() ??
-                                          nextAppointment['displayImageUrl']
-                                              ?.toString(),
+                                          nextAppointment['imageUrl'] ??
+                                          nextAppointment['profileImageUrl'] ??
+                                          nextAppointment['displayImageUrl']),
                                     );
 
                                     return AppointmentCard(
                                       doctorName: doctor.fullName,
-                                      specialty:
-                                          nextAppointment['specialty'] ??
+                                      specialty: nextAppointment['specialty'] ??
                                           (nextAppointment['doctor'] is Map
                                               ? nextAppointment['doctor']['specialty']
                                               : null) ??
                                           'Specialty',
-                                      dateTime:
-                                          nextAppointment['bookingDate'] ??
+                                      dateTime: nextAppointment['bookingDate'] ??
                                           nextAppointment['date'] ??
                                           'Upcoming',
-
                                       imagePath: AvatarHelper.getDoctorAvatar(
                                         doctorId: doctor.id,
                                         imageUrl: doctor.imageUrl,
                                       ),
-
-                                      bookingId:
-                                          int.tryParse(
-                                            nextAppointment['id']?.toString() ??
-                                                '0',
-                                          ) ??
-                                          0,
+                                      bookingId: int.tryParse(nextAppointment['id']?.toString() ?? '0') ?? 0,
                                       status: nextAppointment['status'],
                                       isViewOnly: true,
                                       onDetails: () {
-                                        final bookingId =
-                                            int.tryParse(
-                                              nextAppointment['id']
-                                                      ?.toString() ??
-                                                  '0',
-                                            ) ??
-                                            0;
+                                        final bookingId = int.tryParse(nextAppointment['id']?.toString() ?? '0') ?? 0;
                                         if (bookingId > 0) {
                                           Navigator.push(
                                             context,
                                             MaterialPageRoute(
-                                              builder: (_) =>
-                                                  PatientAppointmentDetailsView(
-                                                    bookingId: bookingId,
-                                                  ),
+                                              builder: (_) => PatientAppointmentDetailsView(bookingId: bookingId),
                                             ),
                                           );
                                         }
                                       },
                                     );
->>>>>>> Stashed changes
                                   },
                                 ),
                                 SizedBox(height: s(31)),

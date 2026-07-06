@@ -87,7 +87,6 @@ class PastAppointmentsSection extends StatelessWidget {
             final doctorIdStr = appt['doctorId'] ?? appt['doctor']?['id'];
             final int parsedDoctorId = doctorIdStr != null ? (doctorIdStr is int ? doctorIdStr : int.tryParse(doctorIdStr.toString()) ?? 0) : 0;
 
-<<<<<<< Updated upstream
             // Helper: resolve relative backend image URL to full URL
             String resolveImageUrl(dynamic src) {
               if (src == null) return '';
@@ -97,7 +96,7 @@ class PastAppointmentsSection extends StatelessWidget {
               return 'http://clinicbook.runasp.net${s.startsWith('/') ? '' : '/'}$s';
             }
 
-            final doctorImageUrl = resolveImageUrl(
+            final rawImageUrl = resolveImageUrl(
                 appt['doctorImageUrl'] ??
                 appt['DoctorImageUrl'] ??
                 appt['doctor']?['imageUrl'] ??
@@ -112,19 +111,12 @@ class PastAppointmentsSection extends StatelessWidget {
                 appt['schedule']?['doctor']?['imageUrl'] ??
                 appt['schedule']?['doctor']?['profileImageUrl'] ??
                 appt['schedule']?['doctor']?['displayImageUrl'],
-=======
-            final rawImageUrl =
-                appt['doctorImageUrl']?.toString() ??
-                appt['doctor']?['imageUrl']?.toString() ??
-                appt['doctor']?['profileImageUrl']?.toString() ??
-                appt['doctor']?['displayImageUrl']?.toString() ??
-                '';
+            );
             
             final doctor = DoctorModel(
               id: parsedDoctorId,
               fullName: doctorName.toString(),
               imageUrl: rawImageUrl,
->>>>>>> Stashed changes
             );
 
             return PastVisitItem(

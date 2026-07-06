@@ -259,19 +259,6 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
 
     // 1. حساب تاريخ وساعة الحجز بدقة
     DateTime targetDate = _getNextDayOfWeek(dayOfWeek ?? 'Sunday');
-<<<<<<< Updated upstream
-    final now = DateTime.now();
-    int startMinutes = _parseTimeToMinutes(startTime ?? '09:00');
-    
-    // التحقق من أن الوقت لم يمر بعد إذا كان الحجز في نفس اليوم
-    if (targetDate.year == now.year &&
-        targetDate.month == now.month &&
-        targetDate.day == now.day) {
-      int nowMinutes = now.hour * 60 + now.minute;
-      if (startMinutes <= nowMinutes) {
-        targetDate = targetDate.add(const Duration(days: 7));
-      }
-=======
     int startMinutes = _parseTimeToMinutes(startTime ?? '09:00');
     int endMinutes = _parseTimeToMinutes(endTime ?? '17:00');
     int durationMinutes = _parseDurationToMinutes(appointmentDuration);
@@ -296,7 +283,6 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
 
     int currentSlotMinutes = startMinutes;
     String dateStr = '';
-    String slotTimeStr = '';
     bool slotFound = false;
 
     // البحث عن أقرب موعد متاح (بحد أقصى 52 أسبوعاً)
@@ -346,7 +332,6 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
         final slotEndStr = _formatMinutesToTime(
           currentSlotMinutes + durationMinutes,
         );
-        slotTimeStr = '$slotStartStr - $slotEndStr';
 
         // هل هذا التوقيت محجوز لمريض آخر؟
         final isSlotTaken = activeBookings.any((b) {
@@ -407,13 +392,12 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
       // لو اليوم ممتلئ تماماً، ننتقل للأسبوع التالي
       targetDate = targetDate.add(const Duration(days: 7));
       currentSlotMinutes = startMinutes;
->>>>>>> Stashed changes
     }
     
-    final dateStr = '${targetDate.year}-${targetDate.month.toString().padLeft(2, '0')}-${targetDate.day.toString().padLeft(2, '0')}';
+    final selectedDateStr = '${targetDate.year}-${targetDate.month.toString().padLeft(2, '0')}-${targetDate.day.toString().padLeft(2, '0')}';
     
     // حفظ التوقيت كما تم اختياره بالضبط
-    final slotTimeStr = startTime ?? '10:00 AM';
+    final selectedTimeStr = startTime ?? '10:00 AM';
 
     final pendingBooking = BookingModel(
       id: DateTime.now().millisecondsSinceEpoch,
@@ -421,10 +405,7 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
       patientEmail: email,
       doctorName: doctorName,
       doctorImageUrl: doctorImageUrl,
-<<<<<<< Updated upstream
       patientImageUrl: patientImg,
-=======
->>>>>>> Stashed changes
       reasonForVisit: reasonForVisit,
       clinicName: clinicName,
       dayOfWeek: dayOfWeek,
@@ -435,8 +416,8 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
       scheduleId: scheduleId,
       clinicId: clinicId,
       doctorId: doctorId,
-      date: dateStr,
-      time: slotTimeStr,
+      date: selectedDateStr,
+      time: selectedTimeStr,
       createdAt: DateTime.now().toIso8601String(),
       price: price,
     );

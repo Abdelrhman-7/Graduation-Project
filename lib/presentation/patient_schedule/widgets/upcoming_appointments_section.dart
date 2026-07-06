@@ -104,8 +104,6 @@ class UpcomingAppointmentsSection extends StatelessWidget {
                 ? appt['id'] as int
                 : int.tryParse(appt['id']?.toString() ?? '') ?? 0;
 
-<<<<<<< Updated upstream
-            // Helper: resolve relative backend image URL to full URL
             String resolveImageUrl(dynamic src) {
               if (src == null) return '';
               final s = src.toString().trim();
@@ -115,40 +113,31 @@ class UpcomingAppointmentsSection extends StatelessWidget {
             }
 
             final doctorImageUrl = resolveImageUrl(
-                appt['doctorImageUrl'] ??
-                appt['DoctorImageUrl'] ??
-                appt['doctor']?['imageUrl'] ??
-                appt['doctor']?['ImageUrl'] ??
-                appt['doctor']?['profileImageUrl'] ??
-                appt['doctor']?['ProfileImageUrl'] ??
-                appt['doctor']?['displayImageUrl'] ??
-                appt['doctor']?['DisplayImageUrl'] ??
-                appt['doctor']?['image'] ??
-                appt['doctor']?['photo'] ??
-                appt['doctor']?['photoUrl'] ??
-                // Also check inside schedule.doctor
-                appt['schedule']?['doctor']?['imageUrl'] ??
-                appt['schedule']?['doctor']?['profileImageUrl'] ??
-                appt['schedule']?['doctor']?['displayImageUrl'],
+              appt['doctorImageUrl'] ??
+                  appt['DoctorImageUrl'] ??
+                  appt['doctor']?['imageUrl'] ??
+                  appt['doctor']?['ImageUrl'] ??
+                  appt['doctor']?['profileImageUrl'] ??
+                  appt['doctor']?['ProfileImageUrl'] ??
+                  appt['doctor']?['displayImageUrl'] ??
+                  appt['doctor']?['DisplayImageUrl'] ??
+                  appt['doctor']?['image'] ??
+                  appt['doctor']?['photo'] ??
+                  appt['doctor']?['photoUrl'] ??
+                  // Also check inside schedule.doctor
+                  appt['schedule']?['doctor']?['imageUrl'] ??
+                  appt['schedule']?['doctor']?['profileImageUrl'] ??
+                  appt['schedule']?['doctor']?['displayImageUrl'],
             );
-=======
             final doctorId = appt['doctorId'] is int
                 ? appt['doctorId'] as int
                 : int.tryParse(appt['doctorId']?.toString() ?? '') ?? 0;
-            final doctorImageUrl =
-                appt['doctorImageUrl']?.toString() ??
-                appt['doctor']?['imageUrl']?.toString() ??
-                appt['doctor']?['profileImageUrl']?.toString() ??
-                appt['doctor']?['displayImageUrl']?.toString() ??
-                '';
->>>>>>> Stashed changes
 
             final doctor = DoctorModel(
               id: doctorId,
               fullName: doctorName.toString(),
               imageUrl: doctorImageUrl,
             );
-
             // Format date nicely if possible
             String displayDate = date.toString();
             if (date.toString().isNotEmpty) {
