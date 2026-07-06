@@ -275,7 +275,9 @@ class _DoctorProfileViewState extends State<DoctorProfileView> {
                                   scale: widget.scale,
                                 ),
                               ),
-                            );
+                            ).then((_) {
+                              widget.cubit.restoreDoctorDetails(doctor);
+                            });
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.transparent,

@@ -80,6 +80,21 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
     }
   }
 
+  /// يستعيد بيانات الطبيب عند الرجوع من DoctorClinicsView إلى DoctorProfileView
+  void restoreDoctorDetails(DoctorModel doctor) {
+    emit(PatientBookingDoctorDetailsSuccess(doctor));
+  }
+
+  /// يستعيد قائمة العيادات عند الرجوع من ClinicSchedulesView إلى DoctorClinicsView
+  void restoreClinics(List<ClinicModel> clinics) {
+    emit(PatientBookingClinicsSuccess(clinics));
+  }
+
+  /// يستعيد قائمة المواعيد عند الرجوع من BookAppointmentView إلى ClinicSchedulesView
+  void restoreSchedules(List<dynamic> schedules) {
+    emit(PatientBookingSchedulesSuccess(schedules));
+  }
+
   /// جلب تفاصيل طبيب معين
   Future<void> fetchDoctorDetails(
     int doctorId, {

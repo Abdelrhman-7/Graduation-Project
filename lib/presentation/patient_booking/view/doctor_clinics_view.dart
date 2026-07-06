@@ -28,6 +28,8 @@ class _DoctorClinicsViewState extends State<DoctorClinicsView> {
   String _searchQuery = '';
   bool _isSortedByName = false;
 
+  List<ClinicModel> _cachedClinics = [];
+
   double s(double v) => v * widget.scale;
 
   @override
@@ -40,6 +42,14 @@ class _DoctorClinicsViewState extends State<DoctorClinicsView> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _restoreClinicsState() {
+    if (_cachedClinics.isNotEmpty) {
+      widget.cubit.restoreClinics(_cachedClinics);
+    } else {
+      widget.cubit.fetchDoctorClinics(widget.doctor.id);
+    }
   }
 
   void _resetFilters() {
@@ -111,6 +121,12 @@ class _DoctorClinicsViewState extends State<DoctorClinicsView> {
                     } else if (state is PatientBookingError) {
                       return _buildErrorState(state.message);
                     } else if (state is PatientBookingClinicsSuccess) {
+                      if (_cachedClinics.isEmpty || _cachedClinics.length != state.clinics.length) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (mounted) setState(() => _cachedClinics = state.clinics);
+                        });
+                      }
+
                       var clinics = state.clinics.where((c) {
                         return c.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
                             c.address.toLowerCase().contains(_searchQuery.toLowerCase());
@@ -326,7 +342,7 @@ class _DoctorClinicsViewState extends State<DoctorClinicsView> {
                         scale: widget.scale,
                       ),
                     ),
-                  );
+                  ).then((_) => _restoreClinicsState());
                 },
                 icon: Icon(Icons.event_note_rounded, size: s(16), color: Colors.white),
                 label: Text(
