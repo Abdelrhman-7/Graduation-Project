@@ -90,6 +90,26 @@ class PatientHomeDashboardCubit extends Cubit<PatientHomeDashboardState> {
       dynamic nextAppt;
       try {
         final appointments = await _repository.getPatientAppointments();
+        
+        // Inject doctor images into appointments
+        try {
+          final doctors = await _repository.getPatientDoctors();
+          for (var appt in appointments) {
+            if (appt is Map) {
+              final docIdStr = appt['doctorId'] ?? appt['doctor']?['id'];
+              final docId = docIdStr != null ? (docIdStr is int ? docIdStr : int.tryParse(docIdStr.toString()) ?? 0) : 0;
+              if (docId != 0) {
+                try {
+                  final doc = doctors.firstWhere((d) => d.id == docId);
+                  if (doc.imageUrl != null && doc.imageUrl!.isNotEmpty) {
+                    appt['doctorImageUrl'] = doc.imageUrl;
+                  }
+                } catch (_) {}
+              }
+            }
+          }
+        } catch (_) {}
+
         final upcoming = appointments.where((a) {
           final status = ((a is Map ? a['status'] : (a as dynamic).status) ?? '').toString().toLowerCase();
           if (status.contains('cancel')) return false;

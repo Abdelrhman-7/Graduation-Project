@@ -27,7 +27,7 @@ class DoctorProfileView extends StatefulWidget {
 
 class _DoctorProfileViewState extends State<DoctorProfileView> {
   double s(double v) => v * widget.scale;
-  
+
   String _averageRating = "0.0";
   String _reviewCount = "0";
   List<dynamic> _reviewsList = [];
@@ -96,7 +96,11 @@ class _DoctorProfileViewState extends State<DoctorProfileView> {
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: const Color(0xFF0F172A), size: s(24)),
+            icon: Icon(
+              Icons.arrow_back,
+              color: const Color(0xFF0F172A),
+              size: s(24),
+            ),
             onPressed: () {
               widget.cubit.restoreDoctorsList();
               Navigator.pop(context);
@@ -125,7 +129,10 @@ class _DoctorProfileViewState extends State<DoctorProfileView> {
 
                 return SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
-                  padding: EdgeInsets.symmetric(horizontal: s(16), vertical: s(8)),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: s(16),
+                    vertical: s(8),
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -138,7 +145,10 @@ class _DoctorProfileViewState extends State<DoctorProfileView> {
                               padding: EdgeInsets.all(s(4)),
                               decoration: const BoxDecoration(
                                 gradient: LinearGradient(
-                                  colors: [Color(0xFF137FEC), Color(0xFF06B6D4)],
+                                  colors: [
+                                    Color(0xFF137FEC),
+                                    Color(0xFF06B6D4),
+                                  ],
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                 ),
@@ -156,7 +166,10 @@ class _DoctorProfileViewState extends State<DoctorProfileView> {
                               decoration: BoxDecoration(
                                 color: const Color(0xFF22C55E),
                                 shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white, width: 2.5),
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: 2.5,
+                                ),
                               ),
                             ),
                           ],
@@ -212,7 +225,10 @@ class _DoctorProfileViewState extends State<DoctorProfileView> {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(s(20)),
-                          border: Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
+                          border: Border.all(
+                            color: const Color(0xFFF1F5F9),
+                            width: 1.5,
+                          ),
                           boxShadow: const [
                             BoxShadow(
                               color: Color(0x0A000000),
@@ -224,23 +240,48 @@ class _DoctorProfileViewState extends State<DoctorProfileView> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildInfoRow(Icons.email_outlined, 'Email', doctor.email ?? 'N/A'),
+                            _buildInfoRow(
+                              Icons.email_outlined,
+                              'Email',
+                              doctor.email ?? 'N/A',
+                            ),
                             _buildDivider(),
-                            _buildInfoRow(Icons.phone_outlined, 'Phone Number', doctor.phoneNumber ?? 'N/A'),
+                            _buildInfoRow(
+                              Icons.phone_outlined,
+                              'Phone Number',
+                              doctor.phoneNumber ?? 'N/A',
+                            ),
                             _buildDivider(),
-                            _buildInfoRow(Icons.person_outline_rounded, 'Gender', doctor.gender ?? 'N/A'),
+                            _buildInfoRow(
+                              Icons.person_outline_rounded,
+                              'Gender',
+                              doctor.gender ?? 'N/A',
+                            ),
                             _buildDivider(),
-                            _buildInfoRow(Icons.cake_outlined, 'Age', doctor.age?.toString() ?? 'N/A'),
+                            _buildInfoRow(
+                              Icons.cake_outlined,
+                              'Age',
+                              doctor.age?.toString() ?? 'N/A',
+                            ),
                             _buildDivider(),
-                            _buildInfoRow(Icons.medical_services_outlined, 'Department', doctor.departmentName ?? 'General Department'),
+                            _buildInfoRow(
+                              Icons.medical_services_outlined,
+                              'Department',
+                              doctor.departmentName ?? 'General Department',
+                            ),
                             _buildDivider(),
                             _buildInfoRow(
                               Icons.description_outlined,
                               'Department Description',
-                              doctor.departmentDescription ?? 'Provides professional medical consulting and healthcare treatment.',
+                              doctor.departmentDescription ??
+                                  'Provides professional medical consulting and healthcare treatment.',
                             ),
                             _buildDivider(),
-                            _buildInfoRow(Icons.info_outline_rounded, 'About Me', doctor.aboutMe ?? 'No introduction provided yet.'),
+                            _buildInfoRow(
+                              Icons.info_outline_rounded,
+                              'About Me',
+                              doctor.aboutMe ?? 'No introduction provided yet.',
+                            ),
                           ],
                         ),
                       ),
@@ -317,16 +358,22 @@ class _DoctorProfileViewState extends State<DoctorProfileView> {
                         ),
                         SizedBox(height: s(12)),
                         ..._reviewsList.map((review) {
-                          final rating = (review['rating'] as num?)?.toDouble() ?? 0.0;
+                          final rating =
+                              (review['rating'] as num?)?.toDouble() ?? 0.0;
                           final comment = (review['comment'] ?? '').toString();
-                          final patientName = (review['patientName'] ?? 'Anonymous Patient').toString();
+                          final patientName =
+                              (review['patientName'] ?? 'Anonymous Patient')
+                                  .toString();
                           return Container(
                             margin: EdgeInsets.only(bottom: s(12)),
                             padding: EdgeInsets.all(s(16)),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(s(16)),
-                              border: Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
+                              border: Border.all(
+                                color: const Color(0xFFF1F5F9),
+                                width: 1.5,
+                              ),
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -336,7 +383,11 @@ class _DoctorProfileViewState extends State<DoctorProfileView> {
                                     CircleAvatar(
                                       radius: s(16),
                                       backgroundColor: const Color(0xFFEFF6FF),
-                                      child: Icon(Icons.person, color: const Color(0xFF137FEC), size: s(18)),
+                                      child: Icon(
+                                        Icons.person,
+                                        color: const Color(0xFF137FEC),
+                                        size: s(18),
+                                      ),
                                     ),
                                     SizedBox(width: s(8)),
                                     Expanded(
@@ -351,7 +402,11 @@ class _DoctorProfileViewState extends State<DoctorProfileView> {
                                     ),
                                     Row(
                                       children: [
-                                        Icon(Icons.star_rounded, color: const Color(0xFFEAB308), size: s(16)),
+                                        Icon(
+                                          Icons.star_rounded,
+                                          color: const Color(0xFFEAB308),
+                                          size: s(16),
+                                        ),
                                         SizedBox(width: s(4)),
                                         Text(
                                           rating.toStringAsFixed(1),
@@ -467,7 +522,11 @@ class _DoctorProfileViewState extends State<DoctorProfileView> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline_rounded, color: const Color(0xFFEF4444), size: s(48)),
+            Icon(
+              Icons.error_outline_rounded,
+              color: const Color(0xFFEF4444),
+              size: s(48),
+            ),
             SizedBox(height: s(16)),
             Text(
               'Failed to load details',
@@ -481,7 +540,10 @@ class _DoctorProfileViewState extends State<DoctorProfileView> {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: GoogleFonts.cairo(fontSize: s(14), color: const Color(0xFF64748B)),
+              style: GoogleFonts.cairo(
+                fontSize: s(14),
+                color: const Color(0xFF64748B),
+              ),
             ),
             SizedBox(height: s(24)),
             ElevatedButton(
@@ -494,7 +556,10 @@ class _DoctorProfileViewState extends State<DoctorProfileView> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF137FEC),
                 foregroundColor: Colors.white,
-                padding: EdgeInsets.symmetric(horizontal: s(24), vertical: s(12)),
+                padding: EdgeInsets.symmetric(
+                  horizontal: s(24),
+                  vertical: s(12),
+                ),
               ),
               child: const Text('Retry'),
             ),

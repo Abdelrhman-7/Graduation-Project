@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:graduationproject/core/utils/avatar_helper.dart';
+import '../../../../data/models/schudule/doctorModel.dart';
 import '../../../../core/resources/color_manager.dart';
 import '../../../../core/resources/string_manager.dart';
 import '../../patient_home_dashboard/widgets/appointment_card.dart';
@@ -40,17 +42,37 @@ class UpcomingAppointmentsSection extends StatelessWidget {
         else
           ...appointments.map((appt) {
             String rawDocName = (appt['doctorName'] ?? '').toString();
-            if (rawDocName == 'Doctor' || rawDocName.isEmpty) rawDocName = (appt['DoctorName'] ?? '').toString();
-            if (rawDocName == 'Doctor' || rawDocName.isEmpty) rawDocName = (appt['doctorFullName'] ?? '').toString();
-            if (rawDocName == 'Doctor' || rawDocName.isEmpty) rawDocName = (appt['DoctorFullName'] ?? '').toString();
-            if (rawDocName == 'Doctor' || rawDocName.isEmpty) rawDocName = (appt['doctor']?['fullName'] ?? '').toString();
-            if (rawDocName == 'Doctor' || rawDocName.isEmpty) rawDocName = (appt['doctor']?['name'] ?? '').toString();
-            if (rawDocName == 'Doctor' || rawDocName.isEmpty) rawDocName = (appt['doctor']?['userName'] ?? '').toString();
-            if (rawDocName == 'Doctor' || rawDocName.isEmpty) rawDocName = (appt['doctor']?['UserName'] ?? '').toString();
-            if (rawDocName == 'Doctor' || rawDocName.isEmpty) rawDocName = (appt['userName'] ?? '').toString();
-            if (rawDocName == 'Doctor' || rawDocName.isEmpty) rawDocName = (appt['UserName'] ?? '').toString();
-            
-            final doctorName = (rawDocName == 'Doctor' || rawDocName.isEmpty) ? 'Unknown Doctor' : rawDocName;
+            if (rawDocName == 'Doctor' || rawDocName.isEmpty) {
+              rawDocName = (appt['DoctorName'] ?? '').toString();
+            }
+            if (rawDocName == 'Doctor' || rawDocName.isEmpty) {
+              rawDocName = (appt['doctorFullName'] ?? '').toString();
+            }
+            if (rawDocName == 'Doctor' || rawDocName.isEmpty) {
+              rawDocName = (appt['DoctorFullName'] ?? '').toString();
+            }
+            if (rawDocName == 'Doctor' || rawDocName.isEmpty) {
+              rawDocName = (appt['doctor']?['fullName'] ?? '').toString();
+            }
+            if (rawDocName == 'Doctor' || rawDocName.isEmpty) {
+              rawDocName = (appt['doctor']?['name'] ?? '').toString();
+            }
+            if (rawDocName == 'Doctor' || rawDocName.isEmpty) {
+              rawDocName = (appt['doctor']?['userName'] ?? '').toString();
+            }
+            if (rawDocName == 'Doctor' || rawDocName.isEmpty) {
+              rawDocName = (appt['doctor']?['UserName'] ?? '').toString();
+            }
+            if (rawDocName == 'Doctor' || rawDocName.isEmpty) {
+              rawDocName = (appt['userName'] ?? '').toString();
+            }
+            if (rawDocName == 'Doctor' || rawDocName.isEmpty) {
+              rawDocName = (appt['UserName'] ?? '').toString();
+            }
+
+            final doctorName = (rawDocName == 'Doctor' || rawDocName.isEmpty)
+                ? 'Unknown Doctor'
+                : rawDocName;
             final specialty =
                 appt['specialty'] ??
                 appt['doctor']?['specialty'] ??
@@ -60,7 +82,10 @@ class UpcomingAppointmentsSection extends StatelessWidget {
             final status = (appt['status'] ?? '').toString().toLowerCase();
             final specialtyDisplay = status.contains('pending')
                 ? 'Waiting for doctor approval'
-                : status.contains('approved') || status.contains('accept') || status.contains('confirm') || status.contains('paid')
+                : status.contains('approved') ||
+                      status.contains('accept') ||
+                      status.contains('confirm') ||
+                      status.contains('paid')
                 ? 'Confirmed appointment'
                 : specialty.toString();
             final date =
@@ -79,6 +104,7 @@ class UpcomingAppointmentsSection extends StatelessWidget {
                 ? appt['id'] as int
                 : int.tryParse(appt['id']?.toString() ?? '') ?? 0;
 
+<<<<<<< Updated upstream
             // Helper: resolve relative backend image URL to full URL
             String resolveImageUrl(dynamic src) {
               if (src == null) return '';
@@ -105,6 +131,23 @@ class UpcomingAppointmentsSection extends StatelessWidget {
                 appt['schedule']?['doctor']?['profileImageUrl'] ??
                 appt['schedule']?['doctor']?['displayImageUrl'],
             );
+=======
+            final doctorId = appt['doctorId'] is int
+                ? appt['doctorId'] as int
+                : int.tryParse(appt['doctorId']?.toString() ?? '') ?? 0;
+            final doctorImageUrl =
+                appt['doctorImageUrl']?.toString() ??
+                appt['doctor']?['imageUrl']?.toString() ??
+                appt['doctor']?['profileImageUrl']?.toString() ??
+                appt['doctor']?['displayImageUrl']?.toString() ??
+                '';
+>>>>>>> Stashed changes
+
+            final doctor = DoctorModel(
+              id: doctorId,
+              fullName: doctorName.toString(),
+              imageUrl: doctorImageUrl,
+            );
 
             // Format date nicely if possible
             String displayDate = date.toString();
@@ -113,8 +156,18 @@ class UpcomingAppointmentsSection extends StatelessWidget {
                 final parsedDate = DateTime.tryParse(date.toString());
                 if (parsedDate != null) {
                   final months = [
-                    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+                    'Jan',
+                    'Feb',
+                    'Mar',
+                    'Apr',
+                    'May',
+                    'Jun',
+                    'Jul',
+                    'Aug',
+                    'Sep',
+                    'Oct',
+                    'Nov',
+                    'Dec',
                   ];
                   displayDate =
                       '${months[parsedDate.month - 1]} ${parsedDate.day}, ${parsedDate.year}';
@@ -124,9 +177,12 @@ class UpcomingAppointmentsSection extends StatelessWidget {
               // No date from API — derive from dayOfWeek in timeSlot (e.g. "Sunday 09:00 - 09:30")
               final timeSlotStr = timeSlot.toString().trim();
               final dayNames = {
-                'monday': DateTime.monday, 'tuesday': DateTime.tuesday,
-                'wednesday': DateTime.wednesday, 'thursday': DateTime.thursday,
-                'friday': DateTime.friday, 'saturday': DateTime.saturday,
+                'monday': DateTime.monday,
+                'tuesday': DateTime.tuesday,
+                'wednesday': DateTime.wednesday,
+                'thursday': DateTime.thursday,
+                'friday': DateTime.friday,
+                'saturday': DateTime.saturday,
                 'sunday': DateTime.sunday,
               };
               String? foundDay;
@@ -143,10 +199,21 @@ class UpcomingAppointmentsSection extends StatelessWidget {
                 if (diff < 0) diff += 7;
                 final nextOccurrence = now.add(Duration(days: diff));
                 final months = [
-                  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+                  'Jan',
+                  'Feb',
+                  'Mar',
+                  'Apr',
+                  'May',
+                  'Jun',
+                  'Jul',
+                  'Aug',
+                  'Sep',
+                  'Oct',
+                  'Nov',
+                  'Dec',
                 ];
-                displayDate = '${months[nextOccurrence.month - 1]} ${nextOccurrence.day}, ${nextOccurrence.year}';
+                displayDate =
+                    '${months[nextOccurrence.month - 1]} ${nextOccurrence.day}, ${nextOccurrence.year}';
               }
             }
 
@@ -164,15 +231,18 @@ class UpcomingAppointmentsSection extends StatelessWidget {
                 rawStatus.contains('confirm') ||
                 rawStatus.contains('accept') ||
                 rawStatus.contains('approv');
-            final rawPayStatus = (appt['paymentStatus'] ?? appt['PaymentStatus'] ?? '')
-                .toString()
-                .toLowerCase();
+            final rawPayStatus =
+                (appt['paymentStatus'] ?? appt['PaymentStatus'] ?? '')
+                    .toString()
+                    .toLowerCase();
             final isPaid =
                 rawPayStatus.contains('paid') ||
                 rawPayStatus.contains('complet') ||
                 rawPayStatus.contains('success') ||
                 rawStatus == 'paid';
-            final paymentMethod = (appt['paymentMethod'] ?? appt['PaymentMethod'] ?? '').toString().toLowerCase();
+            (appt['paymentMethod'] ?? appt['PaymentMethod'] ?? '')
+                .toString()
+                .toLowerCase();
             final isPayable = isConfirmed && !isPaid;
             // ────────────────────────────────────────────────────────────────
 
@@ -216,7 +286,10 @@ class UpcomingAppointmentsSection extends StatelessWidget {
               specialty: specialtyDisplay,
               dateTime: displayDate,
               timeSlot: timeSlot.toString(),
-              imagePath: doctorImageUrl,
+              imagePath: AvatarHelper.getDoctorAvatar(
+                doctorId: doctor.id,
+                imageUrl: doctor.imageUrl,
+              ),
               bookingId: bookingId,
               isCancelling: isCancelling,
               isPayable: isPayable,
@@ -239,7 +312,9 @@ class UpcomingAppointmentsSection extends StatelessWidget {
                         ),
                       ).then((_) {
                         if (context.mounted) {
-                          context.read<PatientScheduleCubit>().fetchAppointments();
+                          context
+                              .read<PatientScheduleCubit>()
+                              .fetchAppointments();
                         }
                       });
                     }

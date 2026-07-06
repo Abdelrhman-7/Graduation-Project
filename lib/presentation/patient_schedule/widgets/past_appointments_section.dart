@@ -5,6 +5,8 @@ import '../../../../core/resources/string_manager.dart';
 import '../../patient_home_dashboard/widgets/past_visit_item.dart';
 import '../../patient_appointment_details/view/patient_appointment_details_view.dart';
 import '../../widgets/rate_doctor_sheet.dart';
+import '../../../../core/utils/avatar_helper.dart';
+import '../../../../data/models/schudule/doctorModel.dart';
 
 class PastAppointmentsSection extends StatelessWidget {
   final List<dynamic> appointments;
@@ -82,9 +84,10 @@ class PastAppointmentsSection extends StatelessWidget {
               statusLabel = 'Denied';
             }
 
-            final doctorId = appt['doctorId'] ?? appt['doctor']?['id'];
-            final int parsedDoctorId = doctorId != null ? (doctorId is int ? doctorId : int.tryParse(doctorId.toString()) ?? 0) : 0;
+            final doctorIdStr = appt['doctorId'] ?? appt['doctor']?['id'];
+            final int parsedDoctorId = doctorIdStr != null ? (doctorIdStr is int ? doctorIdStr : int.tryParse(doctorIdStr.toString()) ?? 0) : 0;
 
+<<<<<<< Updated upstream
             // Helper: resolve relative backend image URL to full URL
             String resolveImageUrl(dynamic src) {
               if (src == null) return '';
@@ -109,13 +112,29 @@ class PastAppointmentsSection extends StatelessWidget {
                 appt['schedule']?['doctor']?['imageUrl'] ??
                 appt['schedule']?['doctor']?['profileImageUrl'] ??
                 appt['schedule']?['doctor']?['displayImageUrl'],
+=======
+            final rawImageUrl =
+                appt['doctorImageUrl']?.toString() ??
+                appt['doctor']?['imageUrl']?.toString() ??
+                appt['doctor']?['profileImageUrl']?.toString() ??
+                appt['doctor']?['displayImageUrl']?.toString() ??
+                '';
+            
+            final doctor = DoctorModel(
+              id: parsedDoctorId,
+              fullName: doctorName.toString(),
+              imageUrl: rawImageUrl,
+>>>>>>> Stashed changes
             );
 
             return PastVisitItem(
               doctorName: doctorName.toString(),
               specialty: specialty.toString(),
               date: displayDate,
-              imagePath: doctorImageUrl,
+              imagePath: AvatarHelper.getDoctorAvatar(
+                doctorId: doctor.id,
+                imageUrl: doctor.imageUrl,
+              ),
               statusLabel: statusLabel,
               onRate: (parsedDoctorId > 0 && !status.contains('cancel') && !status.contains('reject') && !status.contains('denied'))
                   ? () {

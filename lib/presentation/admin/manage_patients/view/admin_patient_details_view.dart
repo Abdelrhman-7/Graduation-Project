@@ -9,10 +9,12 @@ import 'reset_patient_password_dialog.dart';
 class AdminPatientDetailsView extends StatefulWidget {
   final Map<String, dynamic> patient;
 
-  const AdminPatientDetailsView({Key? key, required this.patient}) : super(key: key);
+  const AdminPatientDetailsView({Key? key, required this.patient})
+    : super(key: key);
 
   @override
-  State<AdminPatientDetailsView> createState() => _AdminPatientDetailsViewState();
+  State<AdminPatientDetailsView> createState() =>
+      _AdminPatientDetailsViewState();
 }
 
 class _AdminPatientDetailsViewState extends State<AdminPatientDetailsView> {
@@ -28,7 +30,9 @@ class _AdminPatientDetailsViewState extends State<AdminPatientDetailsView> {
   Future<void> _loadSavedLockStatus() async {
     final patientId = widget.patient['id'] ?? widget.patient['Id'];
     if (patientId == null) return;
-    final saved = await _sharedPrefController.getPatientLockStatus(patientId.toString());
+    final saved = await _sharedPrefController.getPatientLockStatus(
+      patientId.toString(),
+    );
     if (mounted) {
       setState(() {
         _savedLockStatus = saved;
@@ -53,7 +57,10 @@ class _AdminPatientDetailsViewState extends State<AdminPatientDetailsView> {
       listener: (context, state) {
         if (state is ManagePatientsOperationSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message), backgroundColor: Colors.green),
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: Colors.green,
+            ),
           );
         } else if (state is ManagePatientsOperationError) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -69,27 +76,41 @@ class _AdminPatientDetailsViewState extends State<AdminPatientDetailsView> {
         }
 
         final patientId = currentPatient['id'] ?? currentPatient['Id'];
-        final name = currentPatient['fullName'] ?? currentPatient['FullName'] ?? 'Unknown Name';
-        final email = currentPatient['appUserEmail'] ?? currentPatient['email'] ?? 'No Email';
-        final phone = currentPatient['phoneNumber'] ?? currentPatient['PhoneNumber'] ?? 'N/A';
-        final address = currentPatient['address'] ?? currentPatient['Address'] ?? 'N/A';
-        final gender = currentPatient['gender'] ?? currentPatient['Gender'] ?? 'N/A';
-        final dob = currentPatient['dateOfBirth'] ?? currentPatient['DateOfBirth'] ?? 'N/A';
+        final name =
+            currentPatient['fullName'] ??
+            currentPatient['FullName'] ??
+            'Unknown Name';
+        final email =
+            currentPatient['appUserEmail'] ??
+            currentPatient['email'] ??
+            'No Email';
+        final phone =
+            currentPatient['phoneNumber'] ??
+            currentPatient['PhoneNumber'] ??
+            'N/A';
+        final address =
+            currentPatient['address'] ?? currentPatient['Address'] ?? 'N/A';
+        final gender =
+            currentPatient['gender'] ?? currentPatient['Gender'] ?? 'N/A';
+        final dob =
+            currentPatient['dateOfBirth'] ??
+            currentPatient['DateOfBirth'] ??
+            'N/A';
 
         // حساب الحالة من الـ API
-        final lockoutEndVal = currentPatient['lockoutEnd'] ?? currentPatient['LockoutEnd'];
-        final isLockedFromApi = lockoutEndVal != null &&
+        final lockoutEndVal =
+            currentPatient['lockoutEnd'] ?? currentPatient['LockoutEnd'];
+        final isLockedFromApi =
+            lockoutEndVal != null &&
             DateTime.tryParse(lockoutEndVal.toString()) != null &&
             DateTime.parse(lockoutEndVal.toString()).isAfter(DateTime.now());
 
         // استخدام الحالة المحفوظة إذا موجودة، وإلا استخدام حالة الـ API
         final isLocked = _savedLockStatus ?? isLockedFromApi;
-        final lockStatus = isLocked ? 'Locked' : 'Unlocked';
+        final lockStatus = isLocked ? 'UnLocked' : 'locked';
 
         return Scaffold(
-          appBar: AppBar(
-            title: const Text('Patient Profile'),
-          ),
+          appBar: AppBar(title: const Text('Patient Profile')),
           body: SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -98,19 +119,28 @@ class _AdminPatientDetailsViewState extends State<AdminPatientDetailsView> {
                 CircleAvatar(
                   radius: 50,
                   backgroundImage: currentPatient['imageUrl'] != null
-                      ? NetworkImage('http://clinicbook.runasp.net${currentPatient['imageUrl']}')
+                      ? NetworkImage(
+                          'http://clinicbook.runasp.net${currentPatient['imageUrl']}',
+                        )
                       : null,
-                  child: currentPatient['imageUrl'] == null ? const Icon(Icons.person, size: 50) : null,
+                  child: currentPatient['imageUrl'] == null
+                      ? const Icon(Icons.person, size: 50)
+                      : null,
                 ),
                 const SizedBox(height: 16),
                 Text(
                   name,
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 32),
                 Card(
                   elevation: 2,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Column(
@@ -123,10 +153,18 @@ class _AdminPatientDetailsViewState extends State<AdminPatientDetailsView> {
                         const Divider(),
                         _buildDetailRow(Icons.person_outline, 'Gender', gender),
                         const Divider(),
-                        _buildDetailRow(Icons.calendar_today, 'Date of Birth', dob.toString().split('T').first),
+                        _buildDetailRow(
+                          Icons.calendar_today,
+                          'Date of Birth',
+                          dob.toString().split('T').first,
+                        ),
                         const Divider(),
-                        _buildDetailRow(Icons.security, 'Lockout Status', lockStatus,
-                            valueColor: isLocked ? Colors.red : Colors.green),
+                        _buildDetailRow(
+                          Icons.security,
+                          'Lockout Status',
+                          lockStatus,
+                          valueColor: isLocked ? Colors.red : Colors.green,
+                        ),
                       ],
                     ),
                   ),
@@ -139,9 +177,14 @@ class _AdminPatientDetailsViewState extends State<AdminPatientDetailsView> {
                   children: [
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF6C757D), // Back to list - Gray
+                        backgroundColor: const Color(
+                          0xFF6C757D,
+                        ), // Back to list - Gray
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                       ),
                       onPressed: () {
                         Navigator.pop(context);
@@ -151,9 +194,14 @@ class _AdminPatientDetailsViewState extends State<AdminPatientDetailsView> {
                     ),
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFFC107), // Edit - Yellow
+                        backgroundColor: const Color(
+                          0xFFFFC107,
+                        ), // Edit - Yellow
                         foregroundColor: Colors.black87,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                       ),
                       onPressed: () {
                         Navigator.push(
@@ -161,7 +209,9 @@ class _AdminPatientDetailsViewState extends State<AdminPatientDetailsView> {
                           MaterialPageRoute(
                             builder: (_) => BlocProvider.value(
                               value: context.read<ManagePatientsCubit>(),
-                              child: AdminEditPatientView(patient: currentPatient),
+                              child: AdminEditPatientView(
+                                patient: currentPatient,
+                              ),
                             ),
                           ),
                         );
@@ -171,32 +221,51 @@ class _AdminPatientDetailsViewState extends State<AdminPatientDetailsView> {
                     ),
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: isLocked ? const Color(0xFF28A745) : const Color(0xFFFD7E14), // Unlock(Green) / Lock(Orange)
+                        backgroundColor: isLocked
+                            ? const Color(0xFF28A745)
+                            : const Color(
+                                0xFFFD7E14,
+                              ), // Unlock(Green) / Lock(Orange)
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                       ),
                       onPressed: () {
                         final newLockStatus = !isLocked;
                         // حفظ الحالة الجديدة في SharedPreferences
                         _saveLockStatus(patientId.toString(), newLockStatus);
                         // إرسال الطلب للـ API
-                        context.read<ManagePatientsCubit>().togglePatientLock(patientId);
+                        context.read<ManagePatientsCubit>().togglePatientLock(
+                          patientId,
+                        );
                       },
-                      icon: Icon(isLocked ? Icons.lock_open : Icons.lock, size: 16),
+                      icon: Icon(
+                        isLocked ? Icons.lock_open : Icons.lock,
+                        size: 16,
+                      ),
                       label: Text(isLocked ? 'Unlock' : 'Lock'),
                     ),
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF343A40), // Reset Password - Dark Gray
+                        backgroundColor: const Color(
+                          0xFF343A40,
+                        ), // Reset Password - Dark Gray
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                       ),
                       onPressed: () {
                         showDialog(
                           context: context,
                           builder: (_) => BlocProvider.value(
                             value: context.read<ManagePatientsCubit>(),
-                            child: ResetPatientPasswordDialog(patientId: patientId),
+                            child: ResetPatientPasswordDialog(
+                              patientId: patientId,
+                            ),
                           ),
                         );
                       },
@@ -205,26 +274,43 @@ class _AdminPatientDetailsViewState extends State<AdminPatientDetailsView> {
                     ),
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFDC3545), // Delete - Red
+                        backgroundColor: const Color(
+                          0xFFDC3545,
+                        ), // Delete - Red
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                       ),
                       onPressed: () {
                         showDialog(
                           context: context,
                           builder: (ctx) => AlertDialog(
                             title: const Text('Delete Account'),
-                            content: const Text('Are you sure you want to delete this patient account?'),
+                            content: const Text(
+                              'Are you sure you want to delete this patient account?',
+                            ),
                             actions: [
-                              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx),
+                                child: const Text('Cancel'),
+                              ),
                               ElevatedButton(
-                                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red,
+                                ),
                                 onPressed: () {
                                   Navigator.pop(ctx);
-                                  context.read<ManagePatientsCubit>().deletePatient(patientId);
+                                  context
+                                      .read<ManagePatientsCubit>()
+                                      .deletePatient(patientId);
                                   Navigator.pop(context); // Go back to list
                                 },
-                                child: const Text('Delete', style: TextStyle(color: Colors.white)),
+                                child: const Text(
+                                  'Delete',
+                                  style: TextStyle(color: Colors.white),
+                                ),
                               ),
                             ],
                           ),
@@ -244,7 +330,12 @@ class _AdminPatientDetailsViewState extends State<AdminPatientDetailsView> {
     );
   }
 
-  Widget _buildDetailRow(IconData icon, String label, String value, {Color? valueColor}) {
+  Widget _buildDetailRow(
+    IconData icon,
+    String label,
+    String value, {
+    Color? valueColor,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -256,7 +347,10 @@ class _AdminPatientDetailsViewState extends State<AdminPatientDetailsView> {
             width: 120,
             child: Text(
               label,
-              style: TextStyle(fontWeight: FontWeight.w600, color: Colors.grey[800]),
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[800],
+              ),
             ),
           ),
           Expanded(

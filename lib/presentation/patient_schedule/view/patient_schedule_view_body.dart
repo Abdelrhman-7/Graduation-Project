@@ -4,7 +4,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:graduationproject/data/repository/repository.dart';
 import '../../patient_home_dashboard/widgets/patient_bottom_nav.dart';
 import '../cubit/patient_schedule_cubit.dart';
-import '../cubit/patient_schedule_state.dart';
 import '../widgets/patient_schedule_header.dart';
 import '../widgets/patient_schedule_tabs.dart';
 import '../widgets/upcoming_appointments_section.dart';

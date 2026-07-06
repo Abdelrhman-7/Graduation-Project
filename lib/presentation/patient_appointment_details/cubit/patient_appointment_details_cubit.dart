@@ -34,6 +34,20 @@ class PatientAppointmentDetailsCubit extends Cubit<PatientAppointmentDetailsStat
             initialData != null) {
           merged['time'] ??= initialData['timeSlot'] ?? initialData['time'];
         }
+        
+        // Inject doctor image
+        try {
+          final doctors = await repository.getPatientDoctors();
+          final docIdStr = merged['doctorId'] ?? merged['doctor']?['id'];
+          final docId = docIdStr != null ? (docIdStr is int ? docIdStr : int.tryParse(docIdStr.toString()) ?? 0) : 0;
+          if (docId != 0) {
+            final doc = doctors.firstWhere((d) => d.id == docId);
+            if (doc.imageUrl != null && doc.imageUrl!.isNotEmpty) {
+              merged['doctorImageUrl'] = doc.imageUrl;
+            }
+          }
+        } catch (_) {}
+
         emit(PatientAppointmentDetailsLoaded(details: merged));
       } else if (initialData != null) {
         // Keep showing initial data on API error

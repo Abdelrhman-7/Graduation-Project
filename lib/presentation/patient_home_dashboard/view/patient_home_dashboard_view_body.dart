@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../../data/models/schudule/doctorModel.dart';
+import '../../../../core/utils/avatar_helper.dart';
 import '../../../../core/resources/string_manager.dart';
 import '../../patient_reviews/view/patient_reviews_view.dart';
 import '../../patient_profile/view/patient_profile_view.dart';
@@ -13,6 +15,7 @@ import '../widgets/appointment_card.dart';
 import '../../patient_appointment_details/view/patient_appointment_details_view.dart';
 import '../../patient_schedule/view/patient_schedule_view.dart';
 import '../../patient_emergency/view/patient_emergency_view.dart';
+import '../../../../core/utils/avatar_helper.dart';
 
 class PatientHomeDashboardViewBody extends StatelessWidget {
   const PatientHomeDashboardViewBody({super.key});
@@ -87,6 +90,7 @@ class PatientHomeDashboardViewBody extends StatelessWidget {
                                   style: _headingStyle(scale),
                                 ),
                                 SizedBox(height: s(16)),
+<<<<<<< Updated upstream
                                 AppointmentCard(
                                   doctorName: nextAppointment['doctorName'] ?? nextAppointment['doctor']?['fullName'] ?? 'Unknown Doctor',
                                   specialty: nextAppointment['specialty'] ?? nextAppointment['doctor']?['specialty'] ?? 'Specialty',
@@ -110,6 +114,94 @@ class PatientHomeDashboardViewBody extends StatelessWidget {
                                         ),
                                       );
                                     }
+=======
+                                Builder(
+                                  builder: (context) {
+                                    final doctor = DoctorModel(
+                                      id:
+                                          int.tryParse(
+                                            (nextAppointment['doctorId'] ??
+                                                    (nextAppointment['doctor']
+                                                            is Map
+                                                        ? nextAppointment['doctor']['id']
+                                                        : null) ??
+                                                    0)
+                                                .toString(),
+                                          ) ??
+                                          0,
+                                      fullName:
+                                          nextAppointment['doctorName'] ??
+                                          (nextAppointment['doctor'] is Map
+                                              ? nextAppointment['doctor']['fullName']
+                                              : null) ??
+                                          'Unknown Doctor',
+                                      imageUrl:
+                                          nextAppointment['doctorImageUrl']
+                                              ?.toString() ??
+                                          (nextAppointment['doctor'] is Map
+                                              ? (nextAppointment['doctor']['imageUrl']
+                                                        ?.toString() ??
+                                                    nextAppointment['doctor']['profileImageUrl']
+                                                        ?.toString() ??
+                                                    nextAppointment['doctor']['displayImageUrl']
+                                                        ?.toString())
+                                              : null) ??
+                                          nextAppointment['imageUrl']
+                                              ?.toString() ??
+                                          nextAppointment['profileImageUrl']
+                                              ?.toString() ??
+                                          nextAppointment['displayImageUrl']
+                                              ?.toString(),
+                                    );
+
+                                    return AppointmentCard(
+                                      doctorName: doctor.fullName,
+                                      specialty:
+                                          nextAppointment['specialty'] ??
+                                          (nextAppointment['doctor'] is Map
+                                              ? nextAppointment['doctor']['specialty']
+                                              : null) ??
+                                          'Specialty',
+                                      dateTime:
+                                          nextAppointment['bookingDate'] ??
+                                          nextAppointment['date'] ??
+                                          'Upcoming',
+
+                                      imagePath: AvatarHelper.getDoctorAvatar(
+                                        doctorId: doctor.id,
+                                        imageUrl: doctor.imageUrl,
+                                      ),
+
+                                      bookingId:
+                                          int.tryParse(
+                                            nextAppointment['id']?.toString() ??
+                                                '0',
+                                          ) ??
+                                          0,
+                                      status: nextAppointment['status'],
+                                      isViewOnly: true,
+                                      onDetails: () {
+                                        final bookingId =
+                                            int.tryParse(
+                                              nextAppointment['id']
+                                                      ?.toString() ??
+                                                  '0',
+                                            ) ??
+                                            0;
+                                        if (bookingId > 0) {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) =>
+                                                  PatientAppointmentDetailsView(
+                                                    bookingId: bookingId,
+                                                  ),
+                                            ),
+                                          );
+                                        }
+                                      },
+                                    );
+>>>>>>> Stashed changes
                                   },
                                 ),
                                 SizedBox(height: s(31)),
@@ -132,7 +224,8 @@ class PatientHomeDashboardViewBody extends StatelessWidget {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (_) => const PatientBookingView(),
+                                          builder: (_) =>
+                                              const PatientBookingView(),
                                         ),
                                       );
                                     },
@@ -146,7 +239,8 @@ class PatientHomeDashboardViewBody extends StatelessWidget {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (_) => const PatientEmergencyView(),
+                                          builder: (_) =>
+                                              const PatientEmergencyView(),
                                         ),
                                       );
                                     },
@@ -160,7 +254,8 @@ class PatientHomeDashboardViewBody extends StatelessWidget {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (_) => const PatientScheduleView(),
+                                          builder: (_) =>
+                                              const PatientScheduleView(),
                                         ),
                                       );
                                     },
@@ -169,7 +264,9 @@ class PatientHomeDashboardViewBody extends StatelessWidget {
                                     scale: scale,
                                     icon: Icons.star_rate_rounded,
                                     label: 'My Doctors',
-                                    color: const Color(0xFFEAB308), // Yellow for star/reviews
+                                    color: const Color(
+                                      0xFFEAB308,
+                                    ), // Yellow for star/reviews
                                     onTap: () {
                                       Navigator.push(
                                         context,
@@ -280,7 +377,9 @@ class _TopBar extends StatelessWidget {
               ).then((_) {
                 // لما يرجع من الـ Profile، نعيد تحميل البيانات بدون عرض شاشة التحميل
                 if (context.mounted) {
-                  context.read<PatientHomeDashboardCubit>().getDashboardData(silent: true);
+                  context.read<PatientHomeDashboardCubit>().getDashboardData(
+                    silent: true,
+                  );
                 }
               });
             },
@@ -352,49 +451,50 @@ class _TopBar extends StatelessWidget {
             onTap: () async {
               await showPatientNotificationsSheet(context);
               if (context.mounted) {
-                context.read<PatientHomeDashboardCubit>().getDashboardData(silent: true);
+                context.read<PatientHomeDashboardCubit>().getDashboardData(
+                  silent: true,
+                );
               }
             },
             child: Container(
-            width: 40 * scale,
-            height: 40 * scale,
-            decoration: const BoxDecoration(
-              color: Color(0xFFF8FAFC),
-              shape: BoxShape.circle,
-            ),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Icon(
-                  unreadNotifications > 0
-                      ? Icons.notifications_active_rounded
-                      : Icons.notifications_none_rounded,
-                  size: 22 * scale,
-                  color: const Color(0xFF0F172A),
-                ),
-                if (unreadNotifications > 0)
-                Positioned(
-                  right: 8 * scale,
-                  top: 8 * scale,
-                  child: Container(
-                    width: 8 * scale,
-                    height: 8 * scale,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFEF4444),
-                      shape: BoxShape.circle,
-                    ),
+              width: 40 * scale,
+              height: 40 * scale,
+              decoration: const BoxDecoration(
+                color: Color(0xFFF8FAFC),
+                shape: BoxShape.circle,
+              ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Icon(
+                    unreadNotifications > 0
+                        ? Icons.notifications_active_rounded
+                        : Icons.notifications_none_rounded,
+                    size: 22 * scale,
+                    color: const Color(0xFF0F172A),
                   ),
-                ),
-              ],
+                  if (unreadNotifications > 0)
+                    Positioned(
+                      right: 8 * scale,
+                      top: 8 * scale,
+                      child: Container(
+                        width: 8 * scale,
+                        height: 8 * scale,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFEF4444),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
-          ),
           ),
         ],
       ),
     );
   }
 }
-
 
 class _QuickAction extends StatelessWidget {
   const _QuickAction({

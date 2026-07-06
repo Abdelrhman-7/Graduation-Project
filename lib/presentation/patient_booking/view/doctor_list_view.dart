@@ -7,6 +7,7 @@ import '../cubit/patient_booking_state.dart';
 import 'doctor_profile_view.dart';
 import '../../widgets/rate_doctor_sheet.dart';
 import '../../../../data/api/api_manager.dart';
+import '../../../../core/utils/avatar_helper.dart';
 
 class DoctorListView extends StatefulWidget {
   const DoctorListView({super.key});
@@ -20,17 +21,6 @@ class _DoctorListViewState extends State<DoctorListView> {
   String _searchQuery = '';
   String _selectedDepartment = 'All Departments';
   bool _isSortedByName = false;
-
-  final List<String> _departments = [
-    'All Departments',
-    'Orthopedics',
-    'Neurology',
-    'Cardiology',
-    'Pediatrics',
-    'Dermatology',
-    'Ophthalmology',
-    'Dentistry',
-  ];
 
   @override
   void dispose() {
@@ -47,21 +37,11 @@ class _DoctorListViewState extends State<DoctorListView> {
     });
   }
 
-  // Deterministic fallback avatars
-  final List<String> _avatarPool = const [
-    'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=250',
-    'https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=250',
-    'https://images.unsplash.com/photo-1594824813573-246434de83fb?auto=format&fit=crop&q=80&w=250',
-    'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=250',
-    'https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&q=80&w=250',
-  ];
-
   String _getDoctorAvatar(DoctorModel doctor) {
-    if (doctor.imageUrl != null && doctor.imageUrl!.isNotEmpty) {
-      return doctor.imageUrl!;
-    }
-    final index = doctor.id % _avatarPool.length;
-    return _avatarPool[index];
+    return AvatarHelper.getDoctorAvatar(
+      doctorId: doctor.id,
+      imageUrl: doctor.imageUrl,
+    );
   }
 
   @override
@@ -74,7 +54,11 @@ class _DoctorListViewState extends State<DoctorListView> {
         return Column(
           children: [
             _buildHeader(context, s),
-            _buildFilters(s),
+            BlocBuilder<PatientBookingCubit, PatientBookingState>(
+              builder: (context, state) {
+                return _buildFilters(s);
+              },
+            ),
             Expanded(
               child: BlocBuilder<PatientBookingCubit, PatientBookingState>(
                 builder: (context, state) {
@@ -92,14 +76,15 @@ class _DoctorListViewState extends State<DoctorListView> {
                     }
 
                     var doctors = state.doctors.where((doctor) {
-                      final nameMatch = doctor.fullName
-                          .toLowerCase()
-                          .contains(_searchQuery.toLowerCase());
-                      
-                      final deptMatch = _selectedDepartment == 'All Departments' ||
-                          (doctor.departmentName ?? '')
-                              .toLowerCase()
-                              .contains(_selectedDepartment.toLowerCase());
+                      final nameMatch = doctor.fullName.toLowerCase().contains(
+                        _searchQuery.toLowerCase(),
+                      );
+
+                      final deptMatch =
+                          _selectedDepartment == 'All Departments' ||
+                          (doctor.departmentName ?? '').toLowerCase().contains(
+                            _selectedDepartment.toLowerCase(),
+                          );
 
                       return nameMatch && deptMatch;
                     }).toList();
@@ -181,6 +166,21 @@ class _DoctorListViewState extends State<DoctorListView> {
   }
 
   Widget _buildFilters(double Function(double) s) {
+    // Generate dynamic departments from doctors
+    final doctors = context.read<PatientBookingCubit>().doctors;
+    final Set<String> deptSet = {'All Departments'};
+    for (final doc in doctors) {
+      if (doc.departmentName != null && doc.departmentName!.trim().isNotEmpty) {
+        deptSet.add(doc.departmentName!.trim());
+      }
+    }
+    final dynamicDepartments = deptSet.toList();
+
+    // Ensure selected department is valid to avoid DropdownButton crash
+    if (!dynamicDepartments.contains(_selectedDepartment)) {
+      _selectedDepartment = 'All Departments';
+    }
+
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: s(16), vertical: s(8)),
       child: Column(
@@ -273,11 +273,12 @@ class _DoctorListViewState extends State<DoctorListView> {
                           });
                         }
                       },
-                      items: _departments
-                          .map<DropdownMenuItem<String>>((String value) {
+                      items: dynamicDepartments.map<DropdownMenuItem<String>>((
+                        String value,
+                      ) {
                         return DropdownMenuItem<String>(
                           value: value,
-                          child: Text(value),
+                          child: Text(value, overflow: TextOverflow.ellipsis),
                         );
                       }).toList(),
                     ),
@@ -302,7 +303,10 @@ class _DoctorListViewState extends State<DoctorListView> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(s(10)),
                   ),
-                  padding: EdgeInsets.symmetric(horizontal: s(12), vertical: s(12)),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: s(12),
+                    vertical: s(12),
+                  ),
                 ),
               ),
             ],
@@ -326,7 +330,9 @@ class _DoctorListViewState extends State<DoctorListView> {
                   style: GoogleFonts.cairo(
                     fontSize: s(12),
                     fontWeight: FontWeight.w600,
-                    color: _isSortedByName ? Colors.white : const Color(0xFF475569),
+                    color: _isSortedByName
+                        ? Colors.white
+                        : const Color(0xFF475569),
                   ),
                 ),
                 selected: _isSortedByName,
@@ -588,8 +594,17 @@ class _DoctorCardWithRatingState extends State<_DoctorCardWithRating> {
                   ),
                   child: CircleAvatar(
                     radius: s(30),
-                    backgroundImage: NetworkImage(widget.avatarUrl),
+                    backgroundImage: widget.avatarUrl.isNotEmpty
+                        ? NetworkImage(widget.avatarUrl)
+                        : null,
                     backgroundColor: const Color(0xFFEFF6FF),
+                    child: widget.avatarUrl.isEmpty
+                        ? Icon(
+                            Icons.person,
+                            color: const Color(0xFF137FEC),
+                            size: s(30),
+                          )
+                        : null,
                   ),
                 ),
                 SizedBox(width: s(16)),
@@ -652,7 +667,9 @@ class _DoctorCardWithRatingState extends State<_DoctorCardWithRating> {
                           ),
                           SizedBox(width: s(4)),
                           Text(
-                            doctor.age != null ? 'Age: ${doctor.age}' : 'Age: N/A',
+                            doctor.age != null
+                                ? 'Age: ${doctor.age}'
+                                : 'Age: N/A',
                             style: GoogleFonts.cairo(
                               fontSize: s(12),
                               color: const Color(0xFF64748B),
@@ -673,7 +690,9 @@ class _DoctorCardWithRatingState extends State<_DoctorCardWithRating> {
                             ),
                             SizedBox(width: s(4)),
                             Text(
-                              _reviewCount == "0" ? 'Unrated' : '$_averageRating/5',
+                              _reviewCount == "0"
+                                  ? 'Unrated'
+                                  : '$_averageRating/5',
                               style: GoogleFonts.cairo(
                                 fontSize: s(12),
                                 color: const Color(0xFF0F172A),
@@ -752,7 +771,11 @@ class _DoctorCardWithRatingState extends State<_DoctorCardWithRating> {
                     ),
                   );
                 },
-                icon: Icon(Icons.visibility_rounded, size: s(16), color: Colors.white),
+                icon: Icon(
+                  Icons.visibility_rounded,
+                  size: s(16),
+                  color: Colors.white,
+                ),
                 label: Text(
                   'View Profile',
                   style: GoogleFonts.cairo(
