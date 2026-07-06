@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../../core/resources/color_manager.dart';
 import '../../../../../core/resources/string_manager.dart';
+import '../view/doctor_appointment_details_view.dart';
 
 class UpNextCard extends StatelessWidget {
   final double scale;
@@ -110,25 +111,23 @@ class UpNextCard extends StatelessWidget {
                         ],
                       ),
                     ),
-                    Container(
-                      padding: EdgeInsets.all(s(8)),
-                      decoration: BoxDecoration(
-                        color: ColorManager.primary.withOpacity(0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.videocam_rounded,
-                        color: ColorManager.primary,
-                        size: s(24),
-                      ),
-                    ),
+                    // Removed the video camera icon container as requested
                   ],
                 ),
                 SizedBox(height: s(20)),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => DoctorAppointmentDetailsView(
+                            appointment: appointment,
+                          ),
+                        ),
+                      );
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: ColorManager.primary,
                       foregroundColor: Colors.white,
@@ -139,7 +138,7 @@ class UpNextCard extends StatelessWidget {
                       elevation: 0,
                     ),
                     child: Text(
-                      AppStrings.startVideoVisit,
+                      'View',
                       style: GoogleFonts.cairo(
                         fontSize: s(16),
                         fontWeight: FontWeight.w700,

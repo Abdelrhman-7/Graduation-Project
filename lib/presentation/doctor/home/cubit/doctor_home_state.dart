@@ -28,6 +28,7 @@ class DoctorHomeSuccess extends DoctorHomeState {
   // Added Notification Fields
   final List<DoctorNotificationModel> notifications;
   final int? processingNotificationId;
+  final int unreadNotifications;
 
   DoctorHomeSuccess({
     required this.doctorName,
@@ -46,6 +47,7 @@ class DoctorHomeSuccess extends DoctorHomeState {
     this.processingAction,
     this.notifications = const [],
     this.processingNotificationId,
+    this.unreadNotifications = 0,
   });
 
   DoctorHomeSuccess copyWith({
@@ -67,6 +69,7 @@ class DoctorHomeSuccess extends DoctorHomeState {
     List<DoctorNotificationModel>? notifications,
     int? processingNotificationId,
     bool clearProcessingNotificationId = false,
+    int? unreadNotifications,
   }) {
     return DoctorHomeSuccess(
       doctorName: doctorName ?? this.doctorName,
@@ -85,6 +88,7 @@ class DoctorHomeSuccess extends DoctorHomeState {
       processingAction: clearProcessingBookingId ? null : (processingAction ?? this.processingAction),
       notifications: notifications ?? this.notifications,
       processingNotificationId: clearProcessingNotificationId ? null : (processingNotificationId ?? this.processingNotificationId),
+      unreadNotifications: unreadNotifications ?? this.unreadNotifications,
     );
   }
 }

@@ -466,6 +466,7 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
     required String expiryMonth,
     required String expiryYear,
     required String cvv,
+    String? doctorName,
   }) async {
     emit(PatientPaymentProcessing());
     try {
@@ -481,12 +482,13 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
       final message = result['message']?.toString() ?? '';
       if (success) {
         final patientName = await _prefs.getName() ?? 'Patient';
-        await _prefs.addToDoctorWalletBalance(amount);
+        await _prefs.addToDoctorWalletBalance(amount, doctorName: doctorName);
         await _prefs.addDoctorWalletTransaction(
           appointmentId: appointmentId,
           patientName: patientName,
           amount: amount,
           date: DateTime.now().toIso8601String(),
+          doctorName: doctorName,
         );
         emit(PatientPaymentSuccess(message.isNotEmpty ? message : 'Payment completed successfully!'));
       } else {

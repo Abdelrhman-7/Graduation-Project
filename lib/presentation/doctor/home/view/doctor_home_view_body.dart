@@ -67,9 +67,11 @@ class _DoctorHomeViewBodyState extends State<DoctorHomeViewBody> {
                                     imageUrl: state.imageUrl,
                                     specialty: state.specialty,
                                     pendingNotifications:
-                                        state.notifications.length,
-                                    onNotificationsTap: () =>
-                                        showDoctorNotificationsSheet(context),
+                                        state.unreadNotifications,
+                                    onNotificationsTap: () {
+                                      context.read<DoctorHomeCubit>().markDoctorNotificationsRead();
+                                      showDoctorNotificationsSheet(context);
+                                    },
                                   ),
                                   UpNextCard(
                                     scale: scale,

@@ -209,6 +209,7 @@ class _PaymentCardViewState extends State<PaymentCardView>
       expiryMonth: month,
       expiryYear: year,
       cvv: _cvvController.text.trim(),
+      doctorName: widget.doctorName,
     );
   }
 

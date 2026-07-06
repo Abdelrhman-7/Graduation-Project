@@ -8,7 +8,7 @@ import 'reset_password_dialog.dart';
 class AdminDoctorDetailsView extends StatelessWidget {
   final Map<String, dynamic> doctor;
 
-  const AdminDoctorDetailsView({Key? key, required this.doctor}) : super(key: key);
+  const AdminDoctorDetailsView({super.key, required this.doctor});
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +18,10 @@ class AdminDoctorDetailsView extends StatelessWidget {
       listener: (context, state) {
         if (state is ManageDoctorsOperationSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message), backgroundColor: Colors.green),
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: Colors.green,
+            ),
           );
         } else if (state is ManageDoctorsOperationError) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -34,25 +37,43 @@ class AdminDoctorDetailsView extends StatelessWidget {
         }
 
         final doctorId = currentDoctor['id'] ?? currentDoctor['Id'];
-        final name = currentDoctor['fullName'] ?? currentDoctor['FullName'] ?? 'Unknown Name';
-        final email = currentDoctor['appUserEmail'] ?? currentDoctor['email'] ?? 'No Email';
-        final department = currentDoctor['departmentName'] ?? currentDoctor['Department'] ?? 'General';
-        final phone = currentDoctor['phoneNumber'] ?? currentDoctor['PhoneNumber'] ?? 'N/A';
-        final address = currentDoctor['address'] ?? currentDoctor['Address'] ?? 'N/A';
-        final gender = currentDoctor['gender'] ?? currentDoctor['Gender'] ?? 'N/A';
-        final dob = currentDoctor['dateOfBirth'] ?? currentDoctor['DateOfBirth'] ?? 'N/A';
-        final about = currentDoctor['aboutMe'] ?? currentDoctor['AboutMe'] ?? 'N/A';
-        
-        final lockoutEndVal = currentDoctor['lockoutEnd'] ?? currentDoctor['LockoutEnd'];
-        final isLocked = lockoutEndVal != null &&
+        final name =
+            currentDoctor['fullName'] ??
+            currentDoctor['FullName'] ??
+            'Unknown Name';
+        final email =
+            currentDoctor['appUserEmail'] ??
+            currentDoctor['email'] ??
+            'No Email';
+        final department =
+            currentDoctor['departmentName'] ??
+            currentDoctor['Department'] ??
+            'General';
+        final phone =
+            currentDoctor['phoneNumber'] ??
+            currentDoctor['PhoneNumber'] ??
+            'N/A';
+        final address =
+            currentDoctor['address'] ?? currentDoctor['Address'] ?? 'N/A';
+        final gender =
+            currentDoctor['gender'] ?? currentDoctor['Gender'] ?? 'N/A';
+        final dob =
+            currentDoctor['dateOfBirth'] ??
+            currentDoctor['DateOfBirth'] ??
+            'N/A';
+        final about =
+            currentDoctor['aboutMe'] ?? currentDoctor['AboutMe'] ?? 'N/A';
+
+        final lockoutEndVal =
+            currentDoctor['lockoutEnd'] ?? currentDoctor['LockoutEnd'];
+        final isLocked =
+            lockoutEndVal != null &&
             DateTime.tryParse(lockoutEndVal.toString()) != null &&
             DateTime.parse(lockoutEndVal.toString()).isAfter(DateTime.now());
         final lockStatus = isLocked ? 'Locked' : 'Unlocked';
 
         return Scaffold(
-          appBar: AppBar(
-            title: const Text('Doctor Profile'),
-          ),
+          appBar: AppBar(title: const Text('Doctor Profile')),
           body: SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -61,19 +82,28 @@ class AdminDoctorDetailsView extends StatelessWidget {
                 CircleAvatar(
                   radius: 50,
                   backgroundImage: currentDoctor['imageUrl'] != null
-                      ? NetworkImage('http://clinicbook.runasp.net${currentDoctor['imageUrl']}')
+                      ? NetworkImage(
+                          'http://clinicbook.runasp.net${currentDoctor['imageUrl']}',
+                        )
                       : null,
-                  child: currentDoctor['imageUrl'] == null ? const Icon(Icons.person, size: 50) : null,
+                  child: currentDoctor['imageUrl'] == null
+                      ? const Icon(Icons.person, size: 50)
+                      : null,
                 ),
                 const SizedBox(height: 16),
                 Text(
                   name,
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 32),
                 Card(
                   elevation: 2,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Column(
@@ -86,14 +116,26 @@ class AdminDoctorDetailsView extends StatelessWidget {
                         const Divider(),
                         _buildDetailRow(Icons.person_outline, 'Gender', gender),
                         const Divider(),
-                        _buildDetailRow(Icons.calendar_today, 'Date of Birth', dob.toString().split('T').first),
+                        _buildDetailRow(
+                          Icons.calendar_today,
+                          'Date of Birth',
+                          dob.toString().split('T').first,
+                        ),
                         const Divider(),
-                        _buildDetailRow(Icons.local_hospital, 'Department', department),
+                        _buildDetailRow(
+                          Icons.local_hospital,
+                          'Department',
+                          department,
+                        ),
                         const Divider(),
                         _buildDetailRow(Icons.info_outline, 'About Me', about),
                         const Divider(),
-                        _buildDetailRow(Icons.security, 'Lockout Status', lockStatus, 
-                            valueColor: isLocked ? Colors.red : Colors.green),
+                        _buildDetailRow(
+                          Icons.security,
+                          'Lockout Status',
+                          lockStatus,
+                          valueColor: isLocked ? Colors.red : Colors.green,
+                        ),
                       ],
                     ),
                   ),
@@ -106,9 +148,14 @@ class AdminDoctorDetailsView extends StatelessWidget {
                   children: [
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF6C757D), // Back to list - Gray
+                        backgroundColor: const Color(
+                          0xFF6C757D,
+                        ), // Back to list - Gray
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                       ),
                       onPressed: () {
                         Navigator.pop(context);
@@ -118,9 +165,14 @@ class AdminDoctorDetailsView extends StatelessWidget {
                     ),
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFFC107), // Edit - Yellow
+                        backgroundColor: const Color(
+                          0xFFFFC107,
+                        ), // Edit - Yellow
                         foregroundColor: Colors.black87,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                       ),
                       onPressed: () {
                         Navigator.push(
@@ -138,21 +190,38 @@ class AdminDoctorDetailsView extends StatelessWidget {
                     ),
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: isLocked ? const Color(0xFF28A745) : const Color(0xFFFD7E14), // Unlock(Green) / Lock(Orange)
+                        backgroundColor: isLocked
+                            ? const Color(0xFF28A745)
+                            : const Color(
+                                0xFFFD7E14,
+                              ), // Unlock(Green) / Lock(Orange)
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                       ),
                       onPressed: () {
-                        context.read<ManageDoctorsCubit>().toggleDoctorLock(doctorId);
+                        context.read<ManageDoctorsCubit>().toggleDoctorLock(
+                          doctorId,
+                        );
                       },
-                      icon: Icon(isLocked ? Icons.lock_open : Icons.lock, size: 16),
+                      icon: Icon(
+                        isLocked ? Icons.lock_open : Icons.lock,
+                        size: 16,
+                      ),
                       label: Text(isLocked ? 'Unlock' : 'Lock'),
                     ),
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF343A40), // Reset Password - Dark Gray
+                        backgroundColor: const Color(
+                          0xFF343A40,
+                        ), // Reset Password - Dark Gray
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                       ),
                       onPressed: () {
                         showDialog(
@@ -168,26 +237,43 @@ class AdminDoctorDetailsView extends StatelessWidget {
                     ),
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFDC3545), // Delete - Red
+                        backgroundColor: const Color(
+                          0xFFDC3545,
+                        ), // Delete - Red
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                       ),
                       onPressed: () {
                         showDialog(
                           context: context,
                           builder: (ctx) => AlertDialog(
                             title: const Text('Delete Account'),
-                            content: const Text('Are you sure you want to delete this doctor account?'),
+                            content: const Text(
+                              'Are you sure you want to delete this doctor account?',
+                            ),
                             actions: [
-                              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx),
+                                child: const Text('Cancel'),
+                              ),
                               ElevatedButton(
-                                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red,
+                                ),
                                 onPressed: () {
                                   Navigator.pop(ctx);
-                                  context.read<ManageDoctorsCubit>().deleteDoctor(doctorId);
+                                  context
+                                      .read<ManageDoctorsCubit>()
+                                      .deleteDoctor(doctorId);
                                   Navigator.pop(context); // Go back to list
                                 },
-                                child: const Text('Delete', style: TextStyle(color: Colors.white)),
+                                child: const Text(
+                                  'Delete',
+                                  style: TextStyle(color: Colors.white),
+                                ),
                               ),
                             ],
                           ),
@@ -207,7 +293,12 @@ class AdminDoctorDetailsView extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailRow(IconData icon, String label, String value, {Color? valueColor}) {
+  Widget _buildDetailRow(
+    IconData icon,
+    String label,
+    String value, {
+    Color? valueColor,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -219,7 +310,10 @@ class AdminDoctorDetailsView extends StatelessWidget {
             width: 120,
             child: Text(
               label,
-              style: TextStyle(fontWeight: FontWeight.w600, color: Colors.grey[800]),
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[800],
+              ),
             ),
           ),
           Expanded(

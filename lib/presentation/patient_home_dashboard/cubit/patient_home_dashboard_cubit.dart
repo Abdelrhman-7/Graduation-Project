@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:graduationproject/data/models/booking/booking_model.dart';
 import 'package:graduationproject/data/repository/repository.dart';
 import 'package:graduationproject/data/repository/shared_pref_controller.dart';
 import 'patient_home_dashboard_state.dart';
@@ -76,8 +77,12 @@ class PatientHomeDashboardCubit extends Cubit<PatientHomeDashboardState> {
           if (isRead == false && id > lastViewedId) {
             unreadCount++;
           }
+        } else if (n is BookingModel) {
+          if (n.notificationUnread) {
+            unreadCount++;
+          }
         } else {
-          // If fallback local store (BookingModel or other types)
+          // If fallback local store (other types)
           unreadCount++;
         }
       }
@@ -128,6 +133,10 @@ class PatientHomeDashboardCubit extends Cubit<PatientHomeDashboardState> {
             final int id = idVal is int ? idVal : int.tryParse(idVal.toString()) ?? 0;
             final isRead = n['isRead'] ?? n['IsRead'] ?? n['isViewed'] ?? n['IsViewed'] ?? false;
             if (isRead == false && id > lastViewedId) {
+              unreadCount++;
+            }
+          } else if (n is BookingModel) {
+            if (n.notificationUnread) {
               unreadCount++;
             }
           } else {

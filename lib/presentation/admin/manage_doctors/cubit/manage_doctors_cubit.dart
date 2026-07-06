@@ -1,17 +1,54 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../data/repository/repository.dart';
 import 'manage_doctors_state.dart';
 
 class ManageDoctorsCubit extends Cubit<ManageDoctorsState> {
   final Repository repository;
   List<dynamic> doctorsList = [];
+  static const String _lockPrefKey = 'doctor_lock_';
   
   ManageDoctorsCubit(this.repository) : super(ManageDoctorsInitial());
+
+  // ── SharedPrefs helpers for lock status ──────────────────────────────
+  Future<void> _saveLockStatus(int doctorId, bool isLocked) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('$_lockPrefKey$doctorId', isLocked);
+  }
+
+  Future<bool?> _getSavedLockStatus(int doctorId) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('$_lockPrefKey$doctorId');
+  }
+
+  // Apply saved lock override to a doctor map
+  Future<Map<String, dynamic>> _applyLockOverride(Map<String, dynamic> doctor) async {
+    final id = (doctor['id'] ?? doctor['Id']);
+    if (id == null) return doctor;
+    final savedLock = await _getSavedLockStatus(id is int ? id : int.tryParse(id.toString()) ?? 0);
+    if (savedLock == null) return doctor; // No override saved, use API value
+    final updated = Map<String, dynamic>.from(doctor);
+    if (savedLock) {
+      final futureDate = DateTime.now().add(const Duration(days: 365)).toIso8601String();
+      updated['lockoutEnd'] = futureDate;
+      updated['LockoutEnd'] = futureDate;
+    } else {
+      updated['lockoutEnd'] = null;
+      updated['LockoutEnd'] = null;
+    }
+    return updated;
+  }
+  // ─────────────────────────────────────────────────────────────────────
+
 
   Future<void> fetchDoctors() async {
     emit(ManageDoctorsLoading());
     try {
-      final doctors = await repository.adminGetAllDoctors();
+      final rawDoctors = await repository.adminGetAllDoctors();
+      // Apply saved lock overrides to each doctor
+      final doctors = await Future.wait(
+        rawDoctors.map((d) => _applyLockOverride(Map<String, dynamic>.from(d))),
+      );
       doctorsList = List.from(doctors);
       emit(ManageDoctorsLoaded(doctors));
     } catch (e) {
@@ -105,6 +142,13 @@ class ManageDoctorsCubit extends Cubit<ManageDoctorsState> {
           }
 
           emit(ManageDoctorsDoctorDetailsLoaded(updatedDoctor));
+
+          // ── Persist the new lock state ──
+          final newIsLocked = (updatedDoctor['lockoutEnd'] != null &&
+              DateTime.tryParse(updatedDoctor['lockoutEnd'].toString()) != null &&
+              DateTime.parse(updatedDoctor['lockoutEnd'].toString()).isAfter(DateTime.now()));
+          await _saveLockStatus(doctorId, newIsLocked);
+          // ───────────────────────────────
         } else {
           emit(ManageDoctorsLoaded(List.from(doctorsList)));
         }
@@ -147,8 +191,10 @@ class ManageDoctorsCubit extends Cubit<ManageDoctorsState> {
     final currentState = state;
     emit(ManageDoctorsOperationLoading());
     try {
-      final doctor = await repository.adminGetDoctor(doctorId);
-      if (doctor != null) {
+      final rawDoctor = await repository.adminGetDoctor(doctorId);
+      if (rawDoctor != null) {
+        // Apply saved lock override on top of API data
+        final doctor = await _applyLockOverride(Map<String, dynamic>.from(rawDoctor));
         final index = doctorsList.indexWhere((d) => (d['id'] ?? d['Id']) == doctorId);
         if (index != -1) {
           doctorsList[index] = doctor;

@@ -92,12 +92,15 @@ class DoctorHomeCubit extends Cubit<DoctorHomeState> {
         print('Failed to load bookings: $e');
       }
 
+      int unreadNotificationsCount = 0;
       try {
         final notificationsRaw = await _repository.getDoctorNotifications(currentPage: 1);
         notifications = notificationsRaw
             .whereType<Map<String, dynamic>>()
             .map((n) => DoctorNotificationModel.fromJson(n))
             .toList();
+        final lastViewedId = await _sharedPrefController.getLastViewedDoctorNotificationId();
+        unreadNotificationsCount = notifications.where((n) => n.id > lastViewedId).length;
       } catch (e) {
         print('Failed to load doctor notifications: $e');
       }
@@ -176,6 +179,7 @@ class DoctorHomeCubit extends Cubit<DoctorHomeState> {
         historyBookings: historyBookings,
         pendingBookingsCount: pendingBookings.length,
         notifications: notifications,
+        unreadNotifications: unreadNotificationsCount,
       ));
     } catch (e) {
       emit(DoctorHomeError(e.toString()));
@@ -304,10 +308,34 @@ class DoctorHomeCubit extends Cubit<DoctorHomeState> {
           .map((n) => DoctorNotificationModel.fromJson(n))
           .toList();
 
-      emit(current.copyWith(notifications: notifications));
+      final lastViewedId = await _sharedPrefController.getLastViewedDoctorNotificationId();
+      final unreadCount = notifications.where((n) => n.id > lastViewedId).length;
+
+      emit(current.copyWith(
+        notifications: notifications,
+        unreadNotifications: unreadCount,
+      ));
     } catch (e) {
       print('Failed to refresh doctor notifications: $e');
     }
+  }
+
+  Future<void> markDoctorNotificationsRead() async {
+    final current = state;
+    if (current is! DoctorHomeSuccess) return;
+
+    int maxId = 0;
+    for (final n in current.notifications) {
+      if (n.id > maxId) {
+        maxId = n.id;
+      }
+    }
+
+    if (maxId > 0) {
+      await _sharedPrefController.saveLastViewedDoctorNotificationId(maxId);
+    }
+
+    emit(current.copyWith(unreadNotifications: 0));
   }
 
   Future<bool> discardNotification(int notificationId) async {
