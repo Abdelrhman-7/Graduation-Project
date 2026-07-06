@@ -1,14 +1,49 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../data/repository/shared_pref_controller.dart';
 import '../cubit/manage_doctors_cubit.dart';
 import '../cubit/manage_doctors_state.dart';
 import 'admin_edit_doctor_view.dart';
 import 'reset_password_dialog.dart';
 
-class AdminDoctorDetailsView extends StatelessWidget {
+class AdminDoctorDetailsView extends StatefulWidget {
   final Map<String, dynamic> doctor;
 
   const AdminDoctorDetailsView({super.key, required this.doctor});
+
+  @override
+  State<AdminDoctorDetailsView> createState() => _AdminDoctorDetailsViewState();
+}
+
+class _AdminDoctorDetailsViewState extends State<AdminDoctorDetailsView> {
+  final SharedPrefController _sharedPrefController = SharedPrefController();
+  bool? _savedLockStatus; // null = not loaded yet
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedLockStatus();
+  }
+
+  Future<void> _loadSavedLockStatus() async {
+    final doctorId = widget.doctor['id'] ?? widget.doctor['Id'];
+    if (doctorId == null) return;
+    final saved = await _sharedPrefController.getDoctorLockStatus(doctorId.toString());
+    if (mounted) {
+      setState(() {
+        _savedLockStatus = saved;
+      });
+    }
+  }
+
+  Future<void> _saveLockStatus(String doctorId, bool isLocked) async {
+    await _sharedPrefController.saveDoctorLockStatus(doctorId, isLocked);
+    if (mounted) {
+      setState(() {
+        _savedLockStatus = isLocked;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +66,7 @@ class AdminDoctorDetailsView extends StatelessWidget {
       },
       builder: (context, state) {
         // Use updated doctor data if available
-        Map<String, dynamic> currentDoctor = doctor;
+        Map<String, dynamic> currentDoctor = widget.doctor;
         if (state is ManageDoctorsDoctorDetailsLoaded) {
           currentDoctor = state.doctor;
         }
@@ -64,12 +99,16 @@ class AdminDoctorDetailsView extends StatelessWidget {
         final about =
             currentDoctor['aboutMe'] ?? currentDoctor['AboutMe'] ?? 'N/A';
 
+        // حساب الحالة من الـ API
         final lockoutEndVal =
             currentDoctor['lockoutEnd'] ?? currentDoctor['LockoutEnd'];
-        final isLocked =
+        final isLockedFromApi =
             lockoutEndVal != null &&
             DateTime.tryParse(lockoutEndVal.toString()) != null &&
             DateTime.parse(lockoutEndVal.toString()).isAfter(DateTime.now());
+
+        // استخدام الحالة المحفوظة إذا موجودة، وإلا استخدام حالة الـ API
+        final isLocked = _savedLockStatus ?? isLockedFromApi;
         final lockStatus = isLocked ? 'Locked' : 'Unlocked';
 
         return Scaffold(
@@ -202,6 +241,10 @@ class AdminDoctorDetailsView extends StatelessWidget {
                         ),
                       ),
                       onPressed: () {
+                        final newLockStatus = !isLocked;
+                        // حفظ الحالة الجديدة في SharedPreferences
+                        _saveLockStatus(doctorId.toString(), newLockStatus);
+                        // إرسال الطلب للـ API
                         context.read<ManageDoctorsCubit>().toggleDoctorLock(
                           doctorId,
                         );

@@ -11,12 +11,12 @@ class ManageDoctorsCubit extends Cubit<ManageDoctorsState> {
   ManageDoctorsCubit(this.repository) : super(ManageDoctorsInitial());
 
   // ── SharedPrefs helpers for lock status ──────────────────────────────
-  Future<void> _saveLockStatus(int doctorId, bool isLocked) async {
+  Future<void> _saveLockStatus(String doctorId, bool isLocked) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('$_lockPrefKey$doctorId', isLocked);
   }
 
-  Future<bool?> _getSavedLockStatus(int doctorId) async {
+  Future<bool?> _getSavedLockStatus(String doctorId) async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool('$_lockPrefKey$doctorId');
   }
@@ -25,7 +25,7 @@ class ManageDoctorsCubit extends Cubit<ManageDoctorsState> {
   Future<Map<String, dynamic>> _applyLockOverride(Map<String, dynamic> doctor) async {
     final id = (doctor['id'] ?? doctor['Id']);
     if (id == null) return doctor;
-    final savedLock = await _getSavedLockStatus(id is int ? id : int.tryParse(id.toString()) ?? 0);
+    final savedLock = await _getSavedLockStatus(id.toString());
     if (savedLock == null) return doctor; // No override saved, use API value
     final updated = Map<String, dynamic>.from(doctor);
     if (savedLock) {
@@ -96,60 +96,50 @@ class ManageDoctorsCubit extends Cubit<ManageDoctorsState> {
 
         // Update the doctor lock status locally in doctorsList
         final index = doctorsList.indexWhere((d) => (d['id'] ?? d['Id']) == doctorId);
+        bool newIsLocked = false;
+
         if (index != -1) {
           final doctor = doctorsList[index];
-          final currentIsLocked = (doctor['lockoutEnd'] != null && 
-              DateTime.tryParse(doctor['lockoutEnd'].toString()) != null && 
-              DateTime.parse(doctor['lockoutEnd'].toString()).isAfter(DateTime.now())) ||
-              (doctor['LockoutEnd'] != null && 
-              DateTime.tryParse(doctor['LockoutEnd'].toString()) != null && 
-              DateTime.parse(doctor['LockoutEnd'].toString()).isAfter(DateTime.now()));
-          
+          final currentIsLocked = _isDocLocked(doctor);
+          newIsLocked = !currentIsLocked;
+
           final updatedDoctor = Map<String, dynamic>.from(doctor);
-          if (currentIsLocked) {
-            updatedDoctor['lockoutEnd'] = null;
-            updatedDoctor['LockoutEnd'] = null;
-          } else {
+          if (newIsLocked) {
             final futureDate = DateTime.now().add(const Duration(days: 365)).toIso8601String();
             updatedDoctor['lockoutEnd'] = futureDate;
             updatedDoctor['LockoutEnd'] = futureDate;
+          } else {
+            updatedDoctor['lockoutEnd'] = null;
+            updatedDoctor['LockoutEnd'] = null;
           }
           doctorsList[index] = updatedDoctor;
         }
 
+        // ── دايماً احفظ الحالة الجديدة في SharedPrefs ──
         if (currentState is ManageDoctorsDoctorDetailsLoaded) {
           final updatedDoctor = Map<String, dynamic>.from(currentState.doctor);
-          final currentIsLocked = (updatedDoctor['lockoutEnd'] != null && 
-              DateTime.tryParse(updatedDoctor['lockoutEnd'].toString()) != null && 
-              DateTime.parse(updatedDoctor['lockoutEnd'].toString()).isAfter(DateTime.now())) ||
-              (updatedDoctor['LockoutEnd'] != null && 
-              DateTime.tryParse(updatedDoctor['LockoutEnd'].toString()) != null && 
-              DateTime.parse(updatedDoctor['LockoutEnd'].toString()).isAfter(DateTime.now()));
-          
-          if (currentIsLocked) {
-            updatedDoctor['lockoutEnd'] = null;
-            updatedDoctor['LockoutEnd'] = null;
-          } else {
+          final currentIsLocked = _isDocLocked(updatedDoctor);
+          newIsLocked = !currentIsLocked;
+
+          if (newIsLocked) {
             final futureDate = DateTime.now().add(const Duration(days: 365)).toIso8601String();
             updatedDoctor['lockoutEnd'] = futureDate;
             updatedDoctor['LockoutEnd'] = futureDate;
+          } else {
+            updatedDoctor['lockoutEnd'] = null;
+            updatedDoctor['LockoutEnd'] = null;
           }
 
-          // Sync back to doctorsList if it is there
+          // Sync back to doctorsList
           final idx = doctorsList.indexWhere((d) => (d['id'] ?? d['Id']) == doctorId);
           if (idx != -1) {
             doctorsList[idx] = updatedDoctor;
           }
 
+          await _saveLockStatus(doctorId.toString(), newIsLocked);
           emit(ManageDoctorsDoctorDetailsLoaded(updatedDoctor));
-
-          // ── Persist the new lock state ──
-          final newIsLocked = (updatedDoctor['lockoutEnd'] != null &&
-              DateTime.tryParse(updatedDoctor['lockoutEnd'].toString()) != null &&
-              DateTime.parse(updatedDoctor['lockoutEnd'].toString()).isAfter(DateTime.now()));
-          await _saveLockStatus(doctorId, newIsLocked);
-          // ───────────────────────────────
         } else {
+          await _saveLockStatus(doctorId.toString(), newIsLocked);
           emit(ManageDoctorsLoaded(List.from(doctorsList)));
         }
         return;
@@ -166,6 +156,13 @@ class ManageDoctorsCubit extends Cubit<ManageDoctorsState> {
     }
   }
 
+  bool _isDocLocked(Map<String, dynamic> doctor) {
+    final val = doctor['lockoutEnd'] ?? doctor['LockoutEnd'];
+    return val != null &&
+        DateTime.tryParse(val.toString()) != null &&
+        DateTime.parse(val.toString()).isAfter(DateTime.now());
+  }
+
   Future<void> resetDoctorPassword(int doctorId, String newPassword, String confirmPassword) async {
     final currentState = state;
     emit(ManageDoctorsOperationLoading());
@@ -173,7 +170,6 @@ class ManageDoctorsCubit extends Cubit<ManageDoctorsState> {
       final success = await repository.adminResetDoctorPassword(doctorId, newPassword, confirmPassword);
       if (success) {
         emit(ManageDoctorsOperationSuccess('Password reset successfully'));
-        // Restore state after success so the UI doesn't stay in success state if needed
       } else {
         emit(ManageDoctorsOperationError('Failed to reset password'));
       }

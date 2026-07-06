@@ -1,17 +1,60 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../data/repository/repository.dart';
 import 'manage_patients_state.dart';
 
 class ManagePatientsCubit extends Cubit<ManagePatientsState> {
   final Repository repository;
   List<dynamic> patientsList = [];
-  
+  static const String _lockPrefKey = 'patient_lock_';
+
   ManagePatientsCubit(this.repository) : super(ManagePatientsInitial());
+
+  // ── SharedPrefs helpers for lock status ──────────────────────────────
+  Future<void> _saveLockStatus(String patientId, bool isLocked) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('$_lockPrefKey$patientId', isLocked);
+  }
+
+  Future<bool?> _getSavedLockStatus(String patientId) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('$_lockPrefKey$patientId');
+  }
+
+  // Apply saved lock override to a patient map
+  Future<Map<String, dynamic>> _applyLockOverride(Map<String, dynamic> patient) async {
+    final id = (patient['id'] ?? patient['Id']);
+    if (id == null) return patient;
+    final savedLock = await _getSavedLockStatus(id.toString());
+    if (savedLock == null) return patient; // No override saved, use API value
+    final updated = Map<String, dynamic>.from(patient);
+    if (savedLock) {
+      final futureDate = DateTime.now().add(const Duration(days: 365)).toIso8601String();
+      updated['lockoutEnd'] = futureDate;
+      updated['LockoutEnd'] = futureDate;
+    } else {
+      updated['lockoutEnd'] = null;
+      updated['LockoutEnd'] = null;
+    }
+    return updated;
+  }
+
+  bool _isPatientLocked(Map<String, dynamic> patient) {
+    final val = patient['lockoutEnd'] ?? patient['LockoutEnd'];
+    return val != null &&
+        DateTime.tryParse(val.toString()) != null &&
+        DateTime.parse(val.toString()).isAfter(DateTime.now());
+  }
+  // ─────────────────────────────────────────────────────────────────────
 
   Future<void> fetchPatients() async {
     emit(ManagePatientsLoading());
     try {
-      final patients = await repository.adminGetAllPatients();
+      final rawPatients = await repository.adminGetAllPatients();
+      // Apply saved lock overrides to each patient
+      final patients = await Future.wait(
+        rawPatients.map((p) => _applyLockOverride(Map<String, dynamic>.from(p))),
+      );
       patientsList = List.from(patients);
       emit(ManagePatientsLoaded(patients));
     } catch (e) {
@@ -59,53 +102,50 @@ class ManagePatientsCubit extends Cubit<ManagePatientsState> {
 
         // Update the patient lock status locally in patientsList
         final index = patientsList.indexWhere((p) => (p['id'] ?? p['Id']) == patientId);
+        bool newIsLocked = false;
+
         if (index != -1) {
           final patient = patientsList[index];
-          final currentIsLocked = (patient['lockoutEnd'] != null && 
-              DateTime.tryParse(patient['lockoutEnd'].toString()) != null && 
-              DateTime.parse(patient['lockoutEnd'].toString()).isAfter(DateTime.now())) ||
-              (patient['LockoutEnd'] != null && 
-              DateTime.tryParse(patient['LockoutEnd'].toString()) != null && 
-              DateTime.parse(patient['LockoutEnd'].toString()).isAfter(DateTime.now()));
-          
+          final currentIsLocked = _isPatientLocked(patient);
+          newIsLocked = !currentIsLocked;
+
           final updatedPatient = Map<String, dynamic>.from(patient);
-          if (currentIsLocked) {
-            updatedPatient['lockoutEnd'] = null;
-            updatedPatient['LockoutEnd'] = null;
-          } else {
+          if (newIsLocked) {
             final futureDate = DateTime.now().add(const Duration(days: 365)).toIso8601String();
             updatedPatient['lockoutEnd'] = futureDate;
             updatedPatient['LockoutEnd'] = futureDate;
+          } else {
+            updatedPatient['lockoutEnd'] = null;
+            updatedPatient['LockoutEnd'] = null;
           }
           patientsList[index] = updatedPatient;
         }
 
+        // ── دايماً احفظ الحالة الجديدة في SharedPrefs ──
         if (currentState is ManagePatientsPatientDetailsLoaded) {
           final updatedPatient = Map<String, dynamic>.from(currentState.patient);
-          final currentIsLocked = (updatedPatient['lockoutEnd'] != null && 
-              DateTime.tryParse(updatedPatient['lockoutEnd'].toString()) != null && 
-              DateTime.parse(updatedPatient['lockoutEnd'].toString()).isAfter(DateTime.now())) ||
-              (updatedPatient['LockoutEnd'] != null && 
-              DateTime.tryParse(updatedPatient['LockoutEnd'].toString()) != null && 
-              DateTime.parse(updatedPatient['LockoutEnd'].toString()).isAfter(DateTime.now()));
-          
-          if (currentIsLocked) {
-            updatedPatient['lockoutEnd'] = null;
-            updatedPatient['LockoutEnd'] = null;
-          } else {
+          final currentIsLocked = _isPatientLocked(updatedPatient);
+          newIsLocked = !currentIsLocked;
+
+          if (newIsLocked) {
             final futureDate = DateTime.now().add(const Duration(days: 365)).toIso8601String();
             updatedPatient['lockoutEnd'] = futureDate;
             updatedPatient['LockoutEnd'] = futureDate;
+          } else {
+            updatedPatient['lockoutEnd'] = null;
+            updatedPatient['LockoutEnd'] = null;
           }
 
-          // Sync back to patientsList if it is there
+          // Sync back to patientsList
           final idx = patientsList.indexWhere((p) => (p['id'] ?? p['Id']) == patientId);
           if (idx != -1) {
             patientsList[idx] = updatedPatient;
           }
 
+          await _saveLockStatus(patientId.toString(), newIsLocked);
           emit(ManagePatientsPatientDetailsLoaded(updatedPatient));
         } else {
+          await _saveLockStatus(patientId.toString(), newIsLocked);
           emit(ManagePatientsLoaded(List.from(patientsList)));
         }
         return;
@@ -146,8 +186,10 @@ class ManagePatientsCubit extends Cubit<ManagePatientsState> {
     final currentState = state;
     emit(ManagePatientsOperationLoading());
     try {
-      final patient = await repository.adminGetPatient(patientId);
-      if (patient != null) {
+      final rawPatient = await repository.adminGetPatient(patientId);
+      if (rawPatient != null) {
+        // Apply saved lock override on top of API data
+        final patient = await _applyLockOverride(Map<String, dynamic>.from(rawPatient));
         final index = patientsList.indexWhere((p) => (p['id'] ?? p['Id']) == patientId);
         if (index != -1) {
           patientsList[index] = patient;

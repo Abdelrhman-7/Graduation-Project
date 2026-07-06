@@ -1,10 +1,12 @@
 // ignore_for_file: avoid_print
-import 'dart:io';
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
-import 'package:dio/io.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
-import 'package:path_provider/path_provider.dart';
+// IO-only imports — guarded at runtime via kIsWeb
+// ignore: uri_does_not_exist
+import 'api_manager_io.dart'
+    if (dart.library.html) 'api_manager_web.dart'
+    as platform_helper;
 import 'package:graduationproject/data/models/schudule/cliniceSchedual.dart';
 import 'package:graduationproject/data/models/schudule/creatSchudel.dart';
 import 'package:graduationproject/data/models/schudule/doctorModel.dart';
@@ -17,7 +19,9 @@ import '../repository/shared_pref_controller.dart';
 class ApiManager {
   final Dio _dio;
 
-  final PersistCookieJar _cookieJar;
+  // On Web we use an in-memory CookieJar; on IO we use PersistCookieJar.
+  // Both implement the CookieJar interface.
+  final CookieJar _cookieJar;
 
   static const String _baseUrl = 'http://clinicbook.runasp.net/api/';
 
@@ -38,24 +42,10 @@ class ApiManager {
       ),
     );
 
-    // تخطي فحص شهادات الأمان (SSL) لتسهيل الاتصال في بيئة التطوير
-    final adapter = dio.httpClientAdapter;
-    if (adapter is IOHttpClientAdapter) {
-      adapter.createHttpClient = () {
-        final client = HttpClient()
-          ..badCertificateCallback = (cert, host, port) => true;
-        client.userAgent = 'Dart/3.0 (dart:io)';
-        return client;
-      };
-    }
+    // Setup SSL fix and cookie jar — IO-only features skipped on Web
+    final cookieJar = await platform_helper.createCookieJar(dio);
 
-    // إعداد وتكوين حفظ الكوكيز (Cookies) بشكل دائم على جهاز المستخدم
-    final dir = await getApplicationDocumentsDirectory();
-    final cookieJar = PersistCookieJar(
-      ignoreExpires: true,
-      storage: FileStorage('${dir.path}/.cookies/'),
-    );
-
+    // ① إزالة Secure flag من الـ Set-Cookie عشان تتحفظ وتتبعت صح على HTTP
     //مسئوله عن نعجيل ال cookes من Https الي Http عشان تعرف تتعامل ب ال Http
     dio.interceptors.add(
       InterceptorsWrapper(
@@ -75,6 +65,7 @@ class ApiManager {
       ),
     );
 
+    // ② CookieManager بيتضاف بعد interceptor إزالة secure عشان يحفظ الـ cookies صح
     dio.interceptors.add(CookieManager(cookieJar));
 
     // معترض إعادة المحاولة: يعيد محاولة إرسال الطلب تلقائياً مرة واحدة عند حدوث انقطاع في الشبكة
@@ -150,7 +141,7 @@ class ApiManager {
   }
 
   //مساول عن حفظ ال cookes (جلسه)
-  PersistCookieJar get cookieJar => _cookieJar;
+  CookieJar get cookieJar => _cookieJar;
 
   // دالة مساعدة لاستخراج القوائم من استجابة السيرفر بغض النظر عن مسمى الحقل القادم بتقبل اي شكل للداتا
   List<dynamic> _extractListFromResponse(dynamic data, {List<String>? keys}) {

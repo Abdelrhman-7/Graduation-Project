@@ -251,4 +251,27 @@ class SharedPrefController {
     
     return {'heartRate': '72', 'bloodPressure': '120/80'};
   }
+
+  // --- Lock Status for Doctors & Patients ---
+  // Key pattern: 'lock_status_doctor_{id}' or 'lock_status_patient_{id}'
+
+  Future<void> saveDoctorLockStatus(String doctorId, bool isLocked) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('lock_status_doctor_$doctorId', isLocked);
+  }
+
+  Future<bool?> getDoctorLockStatus(String doctorId) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('lock_status_doctor_$doctorId');
+  }
+
+  Future<void> savePatientLockStatus(String patientId, bool isLocked) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('lock_status_patient_$patientId', isLocked);
+  }
+
+  Future<bool?> getPatientLockStatus(String patientId) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('lock_status_patient_$patientId');
+  }
 }

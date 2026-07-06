@@ -1,14 +1,49 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../data/repository/shared_pref_controller.dart';
 import '../cubit/manage_patients_cubit.dart';
 import '../cubit/manage_patients_state.dart';
 import 'admin_edit_patient_view.dart';
 import 'reset_patient_password_dialog.dart';
 
-class AdminPatientDetailsView extends StatelessWidget {
+class AdminPatientDetailsView extends StatefulWidget {
   final Map<String, dynamic> patient;
 
   const AdminPatientDetailsView({Key? key, required this.patient}) : super(key: key);
+
+  @override
+  State<AdminPatientDetailsView> createState() => _AdminPatientDetailsViewState();
+}
+
+class _AdminPatientDetailsViewState extends State<AdminPatientDetailsView> {
+  final SharedPrefController _sharedPrefController = SharedPrefController();
+  bool? _savedLockStatus; // null = not loaded yet
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedLockStatus();
+  }
+
+  Future<void> _loadSavedLockStatus() async {
+    final patientId = widget.patient['id'] ?? widget.patient['Id'];
+    if (patientId == null) return;
+    final saved = await _sharedPrefController.getPatientLockStatus(patientId.toString());
+    if (mounted) {
+      setState(() {
+        _savedLockStatus = saved;
+      });
+    }
+  }
+
+  Future<void> _saveLockStatus(String patientId, bool isLocked) async {
+    await _sharedPrefController.savePatientLockStatus(patientId, isLocked);
+    if (mounted) {
+      setState(() {
+        _savedLockStatus = isLocked;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +63,7 @@ class AdminPatientDetailsView extends StatelessWidget {
       },
       builder: (context, state) {
         // Use updated patient data if available
-        Map<String, dynamic> currentPatient = patient;
+        Map<String, dynamic> currentPatient = widget.patient;
         if (state is ManagePatientsPatientDetailsLoaded) {
           currentPatient = state.patient;
         }
@@ -40,11 +75,15 @@ class AdminPatientDetailsView extends StatelessWidget {
         final address = currentPatient['address'] ?? currentPatient['Address'] ?? 'N/A';
         final gender = currentPatient['gender'] ?? currentPatient['Gender'] ?? 'N/A';
         final dob = currentPatient['dateOfBirth'] ?? currentPatient['DateOfBirth'] ?? 'N/A';
-        
+
+        // حساب الحالة من الـ API
         final lockoutEndVal = currentPatient['lockoutEnd'] ?? currentPatient['LockoutEnd'];
-        final isLocked = lockoutEndVal != null &&
+        final isLockedFromApi = lockoutEndVal != null &&
             DateTime.tryParse(lockoutEndVal.toString()) != null &&
             DateTime.parse(lockoutEndVal.toString()).isAfter(DateTime.now());
+
+        // استخدام الحالة المحفوظة إذا موجودة، وإلا استخدام حالة الـ API
+        final isLocked = _savedLockStatus ?? isLockedFromApi;
         final lockStatus = isLocked ? 'Locked' : 'Unlocked';
 
         return Scaffold(
@@ -86,7 +125,7 @@ class AdminPatientDetailsView extends StatelessWidget {
                         const Divider(),
                         _buildDetailRow(Icons.calendar_today, 'Date of Birth', dob.toString().split('T').first),
                         const Divider(),
-                        _buildDetailRow(Icons.security, 'Lockout Status', lockStatus, 
+                        _buildDetailRow(Icons.security, 'Lockout Status', lockStatus,
                             valueColor: isLocked ? Colors.red : Colors.green),
                       ],
                     ),
@@ -137,6 +176,10 @@ class AdminPatientDetailsView extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       ),
                       onPressed: () {
+                        final newLockStatus = !isLocked;
+                        // حفظ الحالة الجديدة في SharedPreferences
+                        _saveLockStatus(patientId.toString(), newLockStatus);
+                        // إرسال الطلب للـ API
                         context.read<ManagePatientsCubit>().togglePatientLock(patientId);
                       },
                       icon: Icon(isLocked ? Icons.lock_open : Icons.lock, size: 16),
