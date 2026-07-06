@@ -74,18 +74,19 @@ class UpNextCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Container(
-                      width: s(48),
-                      height: s(48),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: ColorManager.primary.withOpacity(0.1),
-                      ),
-                      child: Icon(
-                        Icons.person,
-                        color: ColorManager.primary,
-                        size: s(24),
-                      ),
+                    CircleAvatar(
+                      radius: s(24),
+                      backgroundColor: ColorManager.primary.withOpacity(0.1),
+                      backgroundImage: (appointment['patientImageUrl'] != null && appointment['patientImageUrl'].toString().isNotEmpty)
+                          ? NetworkImage(appointment['patientImageUrl'].toString())
+                          : null,
+                      child: (appointment['patientImageUrl'] == null || appointment['patientImageUrl'].toString().isEmpty)
+                          ? Icon(
+                              Icons.person,
+                              color: ColorManager.primary,
+                              size: s(24),
+                            )
+                          : null,
                     ),
                     SizedBox(width: s(12)),
                     Expanded(

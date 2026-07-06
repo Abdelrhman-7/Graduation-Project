@@ -113,6 +113,7 @@ class DoctorHomeCubit extends Cubit<DoctorHomeState> {
         'time': '',
         'type': 'Waiting for bookings',
         'status': 'Empty',
+        'patientImageUrl': null,
       };
 
       List<Map<String, dynamic>> todaySchedule = [];
@@ -124,6 +125,7 @@ class DoctorHomeCubit extends Cubit<DoctorHomeState> {
           'time': next.startTime ?? next.time ?? 'Pending',
           'type': next.clinicName ?? 'New Booking',
           'status': 'Pending Approval',
+          'patientImageUrl': next.patientImageUrl,
         };
       } else if (allBookings.isNotEmpty) {
         final next = allBookings.firstWhere(
@@ -135,6 +137,7 @@ class DoctorHomeCubit extends Cubit<DoctorHomeState> {
           'time': next.startTime ?? next.time ?? '',
           'type': next.clinicName ?? 'Booking',
           'status': next.status ?? 'Scheduled',
+          'patientImageUrl': next.patientImageUrl,
         };
       }
 
@@ -211,6 +214,37 @@ class DoctorHomeCubit extends Cubit<DoctorHomeState> {
         print('Failed to load doctor history bookings in refresh: $e');
       }
 
+      Map<String, dynamic> upNext = {
+        'patientName': 'No upcoming appointments',
+        'time': '',
+        'type': 'Waiting for bookings',
+        'status': 'Empty',
+        'patientImageUrl': null,
+      };
+
+      if (pendingBookings.isNotEmpty) {
+        final next = pendingBookings.first;
+        upNext = {
+          'patientName': next.patientName,
+          'time': next.startTime ?? next.time ?? 'Pending',
+          'type': next.clinicName ?? 'New Booking',
+          'status': 'Pending Approval',
+          'patientImageUrl': next.patientImageUrl,
+        };
+      } else if (allBookings.isNotEmpty) {
+        final next = allBookings.firstWhere(
+          (b) => b.isApproved,
+          orElse: () => allBookings.first,
+        );
+        upNext = {
+          'patientName': next.patientName,
+          'time': next.startTime ?? next.time ?? '',
+          'type': next.clinicName ?? 'Booking',
+          'status': next.status ?? 'Scheduled',
+          'patientImageUrl': next.patientImageUrl,
+        };
+      }
+
       emit(current.copyWith(
         allBookings: allBookings,
         pendingBookings: pendingBookings,
@@ -218,6 +252,7 @@ class DoctorHomeCubit extends Cubit<DoctorHomeState> {
         patientRequests: patientRequests,
         patientsToday: allBookings.length,
         historyBookings: historyBookings,
+        upNextAppointment: upNext,
         clearProcessingBookingId: true,
       ));
     } catch (e) {

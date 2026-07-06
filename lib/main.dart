@@ -18,12 +18,14 @@ void main() async {
   final String? role = await prefController.getRole();
   final apiManager = await ApiManager.create();
 
-  runApp(MyApp(
-    isLoggedIn: isLoggedIn,
-    role: role,
-    prefController: prefController,
-    apiManager: apiManager,
-  ));
+  runApp(
+    MyApp(
+      isLoggedIn: isLoggedIn,
+      role: role,
+      prefController: prefController,
+      apiManager: apiManager,
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -69,10 +71,10 @@ class MyApp extends StatelessWidget {
           theme: ThemeManager.getApplicationTheme(),
           home: isLoggedIn
               ? (role == 'Admin'
-                  ? const AdminHomeView()
-                  : (role == 'Doctor'
-                      ? const DoctorHomeView()
-                      : const PatientHomeDashboardView()))
+                    ? const AdminHomeView()
+                    : (role == 'Doctor'
+                          ? const DoctorHomeView()
+                          : const PatientHomeDashboardView()))
               : const AuthChoiceView(),
         ),
       ),

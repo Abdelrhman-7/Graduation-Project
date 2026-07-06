@@ -85,12 +85,31 @@ class PastAppointmentsSection extends StatelessWidget {
             final doctorId = appt['doctorId'] ?? appt['doctor']?['id'];
             final int parsedDoctorId = doctorId != null ? (doctorId is int ? doctorId : int.tryParse(doctorId.toString()) ?? 0) : 0;
 
-            final doctorImageUrl =
-                appt['doctorImageUrl']?.toString() ??
-                appt['doctor']?['imageUrl']?.toString() ??
-                appt['doctor']?['profileImageUrl']?.toString() ??
-                appt['doctor']?['displayImageUrl']?.toString() ??
-                '';
+            // Helper: resolve relative backend image URL to full URL
+            String resolveImageUrl(dynamic src) {
+              if (src == null) return '';
+              final s = src.toString().trim();
+              if (s.isEmpty) return '';
+              if (s.startsWith('http')) return s;
+              return 'http://clinicbook.runasp.net${s.startsWith('/') ? '' : '/'}$s';
+            }
+
+            final doctorImageUrl = resolveImageUrl(
+                appt['doctorImageUrl'] ??
+                appt['DoctorImageUrl'] ??
+                appt['doctor']?['imageUrl'] ??
+                appt['doctor']?['ImageUrl'] ??
+                appt['doctor']?['profileImageUrl'] ??
+                appt['doctor']?['ProfileImageUrl'] ??
+                appt['doctor']?['displayImageUrl'] ??
+                appt['doctor']?['DisplayImageUrl'] ??
+                appt['doctor']?['image'] ??
+                appt['doctor']?['photo'] ??
+                appt['doctor']?['photoUrl'] ??
+                appt['schedule']?['doctor']?['imageUrl'] ??
+                appt['schedule']?['doctor']?['profileImageUrl'] ??
+                appt['schedule']?['doctor']?['displayImageUrl'],
+            );
 
             return PastVisitItem(
               doctorName: doctorName.toString(),

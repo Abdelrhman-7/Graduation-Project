@@ -4,6 +4,7 @@ class BookingModel {
   final String? patientEmail;
   final String? doctorName;
   final String? doctorImageUrl;
+  final String? patientImageUrl;
   final String? reasonForVisit;
   final String? clinicName;
   final String? date;
@@ -26,6 +27,7 @@ class BookingModel {
     this.patientEmail,
     this.doctorName,
     this.doctorImageUrl,
+    this.patientImageUrl,
     this.reasonForVisit,
     this.clinicName,
     this.date,
@@ -79,11 +81,37 @@ class BookingModel {
         json['FullName'] as String? ??
         'Unknown Patient';
 
+    String? patientImageUrl;
     if (patient is Map<String, dynamic>) {
       patientName = patient['fullName'] as String? ??
           patient['FullName'] as String? ??
           patient['name'] as String? ??
           patientName;
+      
+      final rawPatientImg = patient['imageUrl'] ?? patient['ImageUrl'] ??
+          patient['profileImageUrl'] ?? patient['ProfileImageUrl'] ??
+          patient['displayImageUrl'] ?? patient['DisplayImageUrl'] ??
+          patient['imagePath'] ?? patient['ImagePath'] ??
+          patient['image'] ?? patient['photo'] ?? patient['photoUrl'];
+      if (rawPatientImg != null && rawPatientImg.toString().isNotEmpty) {
+        final s = rawPatientImg.toString().trim();
+        patientImageUrl = s.startsWith('http')
+            ? s
+            : 'http://clinicbook.runasp.net${s.startsWith('/') ? '' : '/'}$s';
+      }
+    }
+
+    if (patientImageUrl == null) {
+      final rawPatientImg = json['patientImageUrl'] ?? json['PatientImageUrl'] ??
+          json['patientImage'] ?? json['PatientImage'] ??
+          json['patientImagePath'] ?? json['patientImagePath'] ??
+          json['imagePath'] ?? json['ImagePath'];
+      if (rawPatientImg != null && rawPatientImg.toString().isNotEmpty) {
+        final s = rawPatientImg.toString().trim();
+        patientImageUrl = s.startsWith('http')
+            ? s
+            : 'http://clinicbook.runasp.net${s.startsWith('/') ? '' : '/'}$s';
+      }
     }
 
     final clinic = json['clinic'];
@@ -158,6 +186,7 @@ class BookingModel {
                   json['doctor']['UserName'] as String?)
               : null),
       doctorImageUrl: resolvedImageUrl,
+      patientImageUrl: patientImageUrl,
       reasonForVisit: json['reasonForVisit'] as String? ??
           json['ReasonForVisit'] as String?,
       clinicName: clinicName,
@@ -196,6 +225,8 @@ class BookingModel {
       'patientName': patientName,
       'patientEmail': patientEmail,
       'doctorName': doctorName,
+      'doctorImageUrl': doctorImageUrl,
+      'patientImageUrl': patientImageUrl,
       'reasonForVisit': reasonForVisit,
       'clinicName': clinicName,
       'date': date,
@@ -221,12 +252,16 @@ class BookingModel {
     String? paymentMethod,
     String? date,
     String? time,
+    String? doctorImageUrl,
+    String? patientImageUrl,
   }) {
     return BookingModel(
       id: id ?? this.id,
       patientName: patientName,
       patientEmail: patientEmail,
       doctorName: doctorName,
+      doctorImageUrl: doctorImageUrl ?? this.doctorImageUrl,
+      patientImageUrl: patientImageUrl ?? this.patientImageUrl,
       reasonForVisit: reasonForVisit,
       clinicName: clinicName,
       date: date ?? this.date,
@@ -256,6 +291,7 @@ class BookingModel {
       'id': id,
       'doctorName': doctorName ?? 'Doctor',
       'doctorImageUrl': doctorImageUrl,
+      'patientImageUrl': patientImageUrl,
       'clinicName': clinicName,
       'specialty': clinicName ?? '',
       'bookingDate': date ?? createdAt ?? DateTime.now().toIso8601String(),
@@ -286,6 +322,7 @@ class BookingModel {
       'paymentMethod': paymentMethod,
       'isPending': isPending,
       'date': date,
+      'patientImageUrl': patientImageUrl,
     };
   }
 

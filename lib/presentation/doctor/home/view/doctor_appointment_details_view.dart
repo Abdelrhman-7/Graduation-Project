@@ -74,14 +74,19 @@ class DoctorAppointmentDetailsView extends StatelessWidget {
                   CircleAvatar(
                     radius: 40,
                     backgroundColor: ColorManager.primary.withOpacity(0.1),
-                    child: Text(
-                      patientName.isNotEmpty ? patientName[0].toUpperCase() : 'P',
-                      style: GoogleFonts.cairo(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: ColorManager.primary,
-                      ),
-                    ),
+                    backgroundImage: (appointment['patientImageUrl'] != null && appointment['patientImageUrl'].toString().isNotEmpty)
+                        ? NetworkImage(appointment['patientImageUrl'].toString())
+                        : null,
+                    child: (appointment['patientImageUrl'] == null || appointment['patientImageUrl'].toString().isEmpty)
+                        ? Text(
+                            patientName.isNotEmpty ? patientName[0].toUpperCase() : 'P',
+                            style: GoogleFonts.cairo(
+                              fontSize: 32,
+                              fontWeight: FontWeight.bold,
+                              color: ColorManager.primary,
+                            ),
+                          )
+                        : null,
                   ),
                   const SizedBox(height: 16),
                   Text(

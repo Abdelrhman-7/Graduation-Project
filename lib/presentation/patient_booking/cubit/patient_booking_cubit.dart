@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:graduationproject/data/local/local_booking_store.dart';
 import 'package:graduationproject/data/models/booking/booking_model.dart';
+import 'package:graduationproject/data/models/schudule/cliniceSchedual.dart';
 import 'package:graduationproject/data/models/schudule/doctorModel.dart';
 import 'package:graduationproject/data/repository/repository.dart';
 import 'package:graduationproject/data/repository/shared_pref_controller.dart';
@@ -60,9 +61,11 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
       await repository.chooseRole('Patient');
       final fetchedDoctors = await repository.getPatientDoctors();
       if (fetchedDoctors.isEmpty) {
-        emit(PatientBookingError(
-          'No doctors found. Please log in as a patient and try again.',
-        ));
+        emit(
+          PatientBookingError(
+            'No doctors found. Please log in as a patient and try again.',
+          ),
+        );
         return;
       }
       doctors = fetchedDoctors;
@@ -96,10 +99,7 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
   }
 
   /// جلب تفاصيل طبيب معين
-  Future<void> fetchDoctorDetails(
-    int doctorId, {
-    DoctorModel? fallback,
-  }) async {
+  Future<void> fetchDoctorDetails(int doctorId, {DoctorModel? fallback}) async {
     emit(PatientBookingLoading());
     try {
       final doctor = await repository.getPatientDoctorDetails(doctorId);
@@ -129,12 +129,13 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
     try {
       await repository.chooseRole('Patient');
       final clinics = await repository.getPatientDoctorClinics(doctorId);
-      
+
       // Workaround: Load local duration/notes since backend does not return them
       for (var clinic in clinics) {
         if (clinic.id != null) {
           final localData = await _prefs.getClinicLocalData(clinic.id!);
-          if (localData['duration'] != null && localData['duration']!.isNotEmpty) {
+          if (localData['duration'] != null &&
+              localData['duration']!.isNotEmpty) {
             clinic.appointmentDuration = localData['duration']!;
           }
           if (localData['notes'] != null && localData['notes']!.isNotEmpty) {
@@ -142,7 +143,7 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
           }
         }
       }
-      
+
       emit(PatientBookingClinicsSuccess(clinics));
     } catch (e) {
       emit(PatientBookingError(e.toString()));
@@ -213,13 +214,13 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
     final numberPart = cleaned.replaceAll(RegExp(r'[a-z]'), '').trim();
     final parts = numberPart.split(':');
     if (parts.isEmpty) return 0;
-    
+
     int hour = int.tryParse(parts[0]) ?? 0;
     int minute = parts.length > 1 ? (int.tryParse(parts[1]) ?? 0) : 0;
-    
+
     if (isPm && hour < 12) hour += 12;
     if (isAm && hour == 12) hour = 0;
-    
+
     return (hour * 60) + minute;
   }
 
@@ -241,6 +242,7 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
     int? clinicId,
     String? clinicName,
     String? doctorName,
+    String? doctorImageUrl,
     String? dayOfWeek,
     String? startTime,
     String? endTime,
@@ -253,141 +255,35 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
 
     final name = patientName ?? await _prefs.getName() ?? 'Patient';
     final email = await _prefs.getEmail();
+    final patientImg = await _prefs.getImage();
 
-    // 1. حساب تاريخ وساعة الحجز بناءً على المواعيد المسجلة
+    // 1. حساب تاريخ وساعة الحجز بدقة
     DateTime targetDate = _getNextDayOfWeek(dayOfWeek ?? 'Sunday');
-    int startMinutes = _parseTimeToMinutes(startTime ?? '09:00');
-    int endMinutes = _parseTimeToMinutes(endTime ?? '17:00');
-    int durationMinutes = _parseDurationToMinutes(appointmentDuration);
-
-    // جلب كل الحجوزات النشطة للعيادة لتجنب التضارب
-    List<dynamic> activeBookings = [];
-    try {
-      final clinicBookings = await repository.getClinicBookings(clinicId ?? 0);
-      activeBookings = clinicBookings.where((b) {
-        if (b is Map<String, dynamic>) {
-          final s = (b['status'] ?? '').toString().toLowerCase();
-          return !s.contains('reject') && !s.contains('cancel') && !s.contains('denied');
-        }
-        if (b is BookingModel) {
-          return !b.isRejected && b.status != 'Cancelled';
-        }
-        return true;
-      }).toList();
-    } catch (_) {}
-
-    int currentSlotMinutes = startMinutes;
-    String dateStr = '';
-    String slotTimeStr = '';
-    bool slotFound = false;
-
-    // البحث عن أقرب موعد متاح (بحد أقصى 52 أسبوعاً)
     final now = DateTime.now();
-    for (int week = 0; week < 52; week++) {
-      dateStr = '${targetDate.year}-${targetDate.month.toString().padLeft(2, '0')}-${targetDate.day.toString().padLeft(2, '0')}';
-
-      // قاعدة 1: لو نفس المريض عنده حجز في نفس اليوم، ننقله للأسبوع التالي مباشرة
-      final hasSamePatientBooking = activeBookings.any((b) {
-        String? bDate;
-        String? bPatientName;
-        String? bPatientEmail;
-
-        if (b is Map<String, dynamic>) {
-          bDate = b['date'] ?? b['bookingDate'];
-          bPatientName = b['patientName'] ?? b['patient']?['fullName'];
-          bPatientEmail = b['patientEmail'] ?? b['patient']?['email'];
-        } else if (b is BookingModel) {
-          bDate = b.date;
-          bPatientName = b.patientName;
-          bPatientEmail = b.patientEmail;
-        }
-
-        if (bDate == dateStr) {
-          if (bPatientName?.toLowerCase() == name.toLowerCase() ||
-              (bPatientEmail != null && email != null && bPatientEmail.toLowerCase() == email.toLowerCase())) {
-            return true;
-          }
-        }
-        return false;
-      });
-
-      if (hasSamePatientBooking) {
+    int startMinutes = _parseTimeToMinutes(startTime ?? '09:00');
+    
+    // التحقق من أن الوقت لم يمر بعد إذا كان الحجز في نفس اليوم
+    if (targetDate.year == now.year &&
+        targetDate.month == now.month &&
+        targetDate.day == now.day) {
+      int nowMinutes = now.hour * 60 + now.minute;
+      if (startMinutes <= nowMinutes) {
         targetDate = targetDate.add(const Duration(days: 7));
-        currentSlotMinutes = startMinutes; // إعادة ضبط الوقت لبداية اليوم الجديد
-        continue;
       }
-
-      // قاعدة 2: التحقق من التوقيتات الشاغرة في هذا اليوم
-      slotFound = false;
-      while (currentSlotMinutes + durationMinutes <= endMinutes) {
-        final slotStartStr = _formatMinutesToTime(currentSlotMinutes);
-        final slotEndStr = _formatMinutesToTime(currentSlotMinutes + durationMinutes);
-        slotTimeStr = '$slotStartStr - $slotEndStr';
-
-        // هل هذا التوقيت محجوز لمريض آخر؟
-        final isSlotTaken = activeBookings.any((b) {
-          String? bDate;
-          String? bTime;
-
-          if (b is Map<String, dynamic>) {
-            bDate = b['date'] ?? b['bookingDate'];
-            bTime = b['time'] ?? b['timeSlot'] ?? b['startTime'];
-          } else if (b is BookingModel) {
-            bDate = b.date;
-            bTime = b.time;
-          }
-
-          // تنظيف توقيت الـ API للمقارنة
-          if (bTime != null) {
-            bTime = bTime.trim();
-            if (bTime.contains(' ')) {
-              // لو الصيغة "Sunday 09:15" أو "Sunday 09:00 - 09:15" نستخلص التوقيت فقط
-              final parts = bTime.split(' ');
-              if (parts.length > 1) bTime = parts[1];
-            }
-            if (bTime.contains('-')) {
-              // لو الصيغة "09:00 - 09:15" نستخلص وقت البداية فقط
-              bTime = bTime.split('-')[0].trim();
-            }
-          }
-
-          return bDate == dateStr && bTime == slotStartStr;
-        });
-
-        if (!isSlotTaken) {
-          // التحقق من أن الوقت لم يمر بعد إذا كان الحجز في نفس اليوم
-          bool isSlotPassedToday = false;
-          if (targetDate.year == now.year && targetDate.month == now.month && targetDate.day == now.day) {
-            int nowMinutes = now.hour * 60 + now.minute;
-            if (currentSlotMinutes <= nowMinutes) {
-              isSlotPassedToday = true;
-            }
-          }
-
-          if (!isSlotPassedToday) {
-            slotFound = true;
-            break;
-          }
-        }
-
-        // لو محجوز، نؤخر الميعاد بالـ duration (مثلاً 15 دقيقة) لبداية ميعاد الكشف التالي
-        currentSlotMinutes += durationMinutes;
-      }
-
-      if (slotFound) {
-        break;
-      }
-
-      // لو اليوم ممتلئ تماماً، ننتقل للأسبوع التالي
-      targetDate = targetDate.add(const Duration(days: 7));
-      currentSlotMinutes = startMinutes;
     }
+    
+    final dateStr = '${targetDate.year}-${targetDate.month.toString().padLeft(2, '0')}-${targetDate.day.toString().padLeft(2, '0')}';
+    
+    // حفظ التوقيت كما تم اختياره بالضبط
+    final slotTimeStr = startTime ?? '10:00 AM';
 
     final pendingBooking = BookingModel(
       id: DateTime.now().millisecondsSinceEpoch,
       patientName: name,
       patientEmail: email,
       doctorName: doctorName,
+      doctorImageUrl: doctorImageUrl,
+      patientImageUrl: patientImg,
       reasonForVisit: reasonForVisit,
       clinicName: clinicName,
       dayOfWeek: dayOfWeek,
@@ -425,15 +321,17 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
           bookingSuccess = true;
         } else if (apiResult is Map) {
           // السيرفر رجع object
-          final idVal = apiResult['appointmentId'] ??
+          final idVal =
+              apiResult['appointmentId'] ??
               apiResult['AppointmentId'] ??
               apiResult['id'] ??
               apiResult['Id'] ??
               apiResult['bookingId'] ??
               apiResult['BookingId'];
           if (idVal != null) {
-            serverAppointmentId =
-                idVal is int ? idVal : int.tryParse(idVal.toString());
+            serverAppointmentId = idVal is int
+                ? idVal
+                : int.tryParse(idVal.toString());
           }
           bookingSuccess = true;
         } else if (apiResult is String) {
@@ -507,9 +405,17 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
         );
         // Mark the appointment as Paid locally so it moves to Past in the schedule
         await LocalBookingStore.instance.updateStatus(appointmentId, 'Paid');
-        emit(PatientPaymentSuccess(message.isNotEmpty ? message : 'Payment completed successfully!'));
+        emit(
+          PatientPaymentSuccess(
+            message.isNotEmpty ? message : 'Payment completed successfully!',
+          ),
+        );
       } else {
-        emit(PatientPaymentError(message.isNotEmpty ? message : 'Payment failed. Please try again.'));
+        emit(
+          PatientPaymentError(
+            message.isNotEmpty ? message : 'Payment failed. Please try again.',
+          ),
+        );
       }
     } catch (e) {
       emit(PatientPaymentError(e.toString()));

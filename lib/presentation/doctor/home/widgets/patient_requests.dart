@@ -120,14 +120,19 @@ class PatientRequestsList extends StatelessWidget {
                           backgroundColor: ColorManager.primary.withValues(
                             alpha: 0.1,
                           ),
-                          child: Text(
-                            initial,
-                            style: TextStyle(
-                              color: ColorManager.primary,
-                              fontSize: s(14),
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                          backgroundImage: (request['patientImageUrl'] != null && request['patientImageUrl'].toString().isNotEmpty)
+                              ? NetworkImage(request['patientImageUrl'].toString())
+                              : null,
+                          child: (request['patientImageUrl'] == null || request['patientImageUrl'].toString().isEmpty)
+                              ? Text(
+                                  initial,
+                                  style: TextStyle(
+                                    color: ColorManager.primary,
+                                    fontSize: s(14),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                )
+                              : null,
                         ),
                         SizedBox(width: s(10)),
                         Expanded(

@@ -200,9 +200,48 @@ class Repository {
       result['startTime'] ??= startTime;
       result['endTime']   ??= endTime;
 
-      // Build timeSlot if missing at top level
+      // Build bookingDate and timeSlot if missing at top level
       if ((result['bookingDate'] == null || result['bookingDate'].toString().isEmpty) &&
           (result['date'] == null || result['date'].toString().isEmpty)) {
+        if (dayOfWeek != null) {
+          final dayNames = {
+            'monday': DateTime.monday, 'tuesday': DateTime.tuesday,
+            'wednesday': DateTime.wednesday, 'thursday': DateTime.thursday,
+            'friday': DateTime.friday, 'saturday': DateTime.saturday,
+            'sunday': DateTime.sunday,
+          };
+          final targetWeekday = dayNames[dayOfWeek.toString().toLowerCase().trim()] ?? DateTime.sunday;
+          final now = DateTime.now();
+          int diff = targetWeekday - now.weekday;
+          if (diff < 0) diff += 7;
+          
+          var nextDate = now.add(Duration(days: diff));
+          
+          // Check if time has already passed today
+          if (diff == 0) {
+            try {
+              final sTime = startTime ?? '09:00';
+              int startMins = 0;
+              final cleanTime = sTime.toString().trim().toLowerCase();
+              bool isPm = cleanTime.contains('pm');
+              bool isAm = cleanTime.contains('am');
+              final numberPart = cleanTime.replaceAll(RegExp(r'[a-z]'), '').trim();
+              final parts = numberPart.split(':');
+              if (parts.isNotEmpty) {
+                int hour = int.tryParse(parts[0]) ?? 0;
+                int minute = parts.length > 1 ? (int.tryParse(parts[1]) ?? 0) : 0;
+                if (isPm && hour < 12) hour += 12;
+                if (isAm && hour == 12) hour = 0;
+                startMins = hour * 60 + minute;
+              }
+              int nowMins = now.hour * 60 + now.minute;
+              if (startMins <= nowMins) {
+                nextDate = nextDate.add(const Duration(days: 7));
+              }
+            } catch (_) {}
+          }
+          result['bookingDate'] = '${nextDate.year}-${nextDate.month.toString().padLeft(2, '0')}-${nextDate.day.toString().padLeft(2, '0')}';
+        }
         if (dayOfWeek != null || startTime != null) {
           result['timeSlot'] = result['timeSlot'] ?? '$dayOfWeek $startTime'.trim();
         }
@@ -435,6 +474,21 @@ class Repository {
     final apiBookingsRaw = await apiManager.getDoctorAllAppointments(
       currentPage: 1,
     );
+    if (apiBookingsRaw.isNotEmpty) {
+      print('=== DEBUG DOCTOR APPOINTMENTS RAW DATA ===');
+      final first = apiBookingsRaw.first;
+      if (first is Map) {
+        first.forEach((k, v) {
+          if (v is Map) {
+            print('  [$k] (Map):');
+            v.forEach((nk, nv) => print('    -- [$nk]: $nv'));
+          } else {
+            print('  [$k]: $v');
+          }
+        });
+      }
+      print('=========================================');
+    }
     final apiBookings = apiBookingsRaw
         .whereType<Map<String, dynamic>>()
         .map(BookingModel.fromJson)
@@ -499,6 +553,22 @@ class Repository {
 
     final combinedApi = [...api, ...historyApi];
 
+    // DEBUG: Print raw first appointment to find image URL field name
+    if (combinedApi.isNotEmpty) {
+      final first = combinedApi.first;
+      print('=== DEBUG APPOINTMENT RAW DATA ===');
+      if (first is Map) {
+        first.forEach((k, v) {
+          if (v is! Map && v is! List) {
+            print('  [$k]: $v');
+          } else {
+            print('  [$k]: (nested) $v');
+          }
+        });
+      }
+      print('==================================');
+    }
+
     final uniqueMaps = <dynamic>[];
     final seenIds = <dynamic>{};
 
@@ -521,13 +591,89 @@ class Repository {
           rawItem['dayOfWeek'] ??= sched['dayOfWeek'] ?? sched['DayOfWeek'];
           rawItem['startTime'] ??= sched['startTime'] ?? sched['StartTime'];
           rawItem['endTime'] ??= sched['endTime'] ?? sched['EndTime'];
-          // Pull booking date from schedule if missing
-          rawItem['bookingDate'] ??= sched['bookingDate'] ?? sched['BookingDate'] ?? sched['date'] ?? sched['Date'];
+          // Pull booking date from appointment fields, or fallback to calculating next weekday date
+          final apptDate = rawItem['bookingDate'] ?? rawItem['date'] ?? rawItem['BookingDate'] ?? rawItem['appointmentDate'] ?? rawItem['scheduledDate'];
+          if (apptDate != null && apptDate.toString().isNotEmpty && !apptDate.toString().contains('0001')) {
+            rawItem['bookingDate'] = apptDate;
+          } else {
+            final day = sched['dayOfWeek'] ?? sched['DayOfWeek'];
+            if (day != null) {
+              final dayNames = {
+                'monday': DateTime.monday, 'tuesday': DateTime.tuesday,
+                'wednesday': DateTime.wednesday, 'thursday': DateTime.thursday,
+                'friday': DateTime.friday, 'saturday': DateTime.saturday,
+                'sunday': DateTime.sunday,
+              };
+              final targetWeekday = dayNames[day.toString().toLowerCase().trim()] ?? DateTime.sunday;
+              final now = DateTime.now();
+              int diff = targetWeekday - now.weekday;
+              if (diff < 0) diff += 7;
+              
+              var nextDate = now.add(Duration(days: diff));
+              
+              // Check if time has already passed today
+              if (diff == 0) {
+                try {
+                  final sTime = sched['startTime'] ?? sched['StartTime'] ?? '09:00';
+                  int startMins = 0;
+                  final cleanTime = sTime.toString().trim().toLowerCase();
+                  bool isPm = cleanTime.contains('pm');
+                  bool isAm = cleanTime.contains('am');
+                  final numberPart = cleanTime.replaceAll(RegExp(r'[a-z]'), '').trim();
+                  final parts = numberPart.split(':');
+                  if (parts.isNotEmpty) {
+                    int hour = int.tryParse(parts[0]) ?? 0;
+                    int minute = parts.length > 1 ? (int.tryParse(parts[1]) ?? 0) : 0;
+                    if (isPm && hour < 12) hour += 12;
+                    if (isAm && hour == 12) hour = 0;
+                    startMins = hour * 60 + minute;
+                  }
+                  int nowMins = now.hour * 60 + now.minute;
+                  if (startMins <= nowMins) {
+                    nextDate = nextDate.add(const Duration(days: 7));
+                  }
+                } catch (_) {}
+              }
+              rawItem['bookingDate'] = '${nextDate.year}-${nextDate.month.toString().padLeft(2, '0')}-${nextDate.day.toString().padLeft(2, '0')}';
+            } else {
+              rawItem['bookingDate'] = sched['bookingDate'] ?? sched['BookingDate'] ?? sched['date'] ?? sched['Date'];
+            }
+          }
           // Pull clinic info from schedule
           final schedClinic = sched['clinic'] ?? sched['Clinic'];
           if (schedClinic is Map) {
             rawItem['clinicName'] ??= schedClinic['name'] ?? schedClinic['Name'];
             rawItem['consultationPrice'] ??= schedClinic['consultationPrice'] ?? schedClinic['ConsultationPrice'] ?? schedClinic['price'];
+          }
+          // Pull doctor image URL from schedule.doctor
+          final schedDoc = sched['doctor'] ?? sched['Doctor'];
+          if (schedDoc is Map) {
+            String resolveImg(dynamic src) {
+              if (src == null) return '';
+              final s = src.toString().trim();
+              if (s.isEmpty) return '';
+              if (s.startsWith('http')) return s;
+              return 'http://clinicbook.runasp.net${s.startsWith('/') ? '' : '/'}$s';
+            }
+            final imgUrl = resolveImg(
+              schedDoc['imageUrl'] ?? schedDoc['ImageUrl'] ??
+              schedDoc['profileImageUrl'] ?? schedDoc['ProfileImageUrl'] ??
+              schedDoc['displayImageUrl'] ?? schedDoc['DisplayImageUrl'] ??
+              schedDoc['image'] ?? schedDoc['photo'] ?? schedDoc['photoUrl'],
+            );
+            if (imgUrl.isNotEmpty) {
+              rawItem['doctorImageUrl'] ??= imgUrl;
+              // Also inject into doctor map so nested lookups work
+              if (rawItem['doctor'] is Map) {
+                (rawItem['doctor'] as Map)['imageUrl'] ??= imgUrl;
+              } else {
+                rawItem['doctor'] = Map<String, dynamic>.from(schedDoc as Map);
+              }
+            }
+            // Also lift doctor name if missing
+            rawItem['doctorName'] ??=
+                schedDoc['fullName'] ?? schedDoc['FullName'] ??
+                schedDoc['name'] ?? schedDoc['Name'];
           }
         }
         // Also pull clinic info directly from appointment if nested

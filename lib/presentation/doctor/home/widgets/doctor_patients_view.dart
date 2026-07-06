@@ -250,13 +250,18 @@ class _DoctorPatientBookingCard extends StatelessWidget {
             children: [
               CircleAvatar(
                 backgroundColor: ColorManager.primary.withValues(alpha: 0.1),
-                child: Text(
-                  booking.patientName.isNotEmpty ? booking.patientName[0] : '?',
-                  style: const TextStyle(
-                    color: ColorManager.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                backgroundImage: (booking.patientImageUrl != null && booking.patientImageUrl!.isNotEmpty)
+                    ? NetworkImage(booking.patientImageUrl!)
+                    : null,
+                child: (booking.patientImageUrl == null || booking.patientImageUrl!.isEmpty)
+                    ? Text(
+                        booking.patientName.isNotEmpty ? booking.patientName[0] : '?',
+                        style: const TextStyle(
+                          color: ColorManager.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      )
+                    : null,
               ),
               const SizedBox(width: 12),
               Expanded(

@@ -103,6 +103,7 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
       clinicId: widget.clinic.id,
       clinicName: widget.clinic.name,
       doctorName: widget.doctor.fullName,
+      doctorImageUrl: widget.doctor.imageUrl,
       dayOfWeek: (widget.schedule['dayOfWeek'] ?? widget.schedule['day'])?.toString(),
       startTime: widget.schedule['startTime']?.toString(),
       endTime: widget.schedule['endTime']?.toString(),
@@ -426,7 +427,34 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
             final now = DateTime.now();
             int diff = targetWeekday - now.weekday;
             if (diff < 0) diff += 7;
-            final nextDate = now.add(Duration(days: diff));
+            
+            var nextDate = now.add(Duration(days: diff));
+            
+            if (diff == 0) {
+              try {
+                // Parse start time (e.g. "10:00 AM" or "10:00:00")
+                int startMins = 0;
+                final cleanTime = start.trim().toLowerCase();
+                bool isPm = cleanTime.contains('pm');
+                bool isAm = cleanTime.contains('am');
+                final numberPart = cleanTime.replaceAll(RegExp(r'[a-z]'), '').trim();
+                final parts = numberPart.split(':');
+                if (parts.isNotEmpty) {
+                  int hour = int.tryParse(parts[0]) ?? 0;
+                  int minute = parts.length > 1 ? (int.tryParse(parts[1]) ?? 0) : 0;
+                  if (isPm && hour < 12) hour += 12;
+                  if (isAm && hour == 12) hour = 0;
+                  startMins = hour * 60 + minute;
+                }
+                
+                int nowMins = now.hour * 60 + now.minute;
+                if (startMins <= nowMins) {
+                  // Time has passed today, move to next week
+                  nextDate = nextDate.add(const Duration(days: 7));
+                }
+              } catch (_) {}
+            }
+            
             final months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
             final dateStr = '${months[nextDate.month - 1]} ${nextDate.day}, ${nextDate.year}';
             return 'Day: $day, $dateStr';

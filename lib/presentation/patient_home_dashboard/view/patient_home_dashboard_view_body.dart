@@ -10,7 +10,6 @@ import '../widgets/patient_notifications_sheet.dart';
 import '../cubit/patient_home_dashboard_cubit.dart';
 import '../cubit/patient_home_dashboard_state.dart';
 import '../widgets/appointment_card.dart';
-import '../../../../core/resources/color_manager.dart';
 import '../../patient_appointment_details/view/patient_appointment_details_view.dart';
 import '../../patient_schedule/view/patient_schedule_view.dart';
 import '../../patient_emergency/view/patient_emergency_view.dart';
@@ -92,7 +91,12 @@ class PatientHomeDashboardViewBody extends StatelessWidget {
                                   doctorName: nextAppointment['doctorName'] ?? nextAppointment['doctor']?['fullName'] ?? 'Unknown Doctor',
                                   specialty: nextAppointment['specialty'] ?? nextAppointment['doctor']?['specialty'] ?? 'Specialty',
                                   dateTime: nextAppointment['bookingDate'] ?? nextAppointment['date'] ?? 'Upcoming',
-                                  imagePath: nextAppointment['doctor']?['imageUrl'] ?? nextAppointment['imageUrl'] ?? '',
+                                  imagePath: () {
+                                    final img = nextAppointment['doctorImageUrl'] ?? nextAppointment['doctor']?['imageUrl'] ?? nextAppointment['imageUrl'] ?? '';
+                                    if (img.toString().trim().isEmpty) return '';
+                                    if (img.toString().startsWith('http')) return img.toString();
+                                    return 'http://clinicbook.runasp.net${img.toString().startsWith('/') ? '' : '/'}$img';
+                                  }(),
                                   bookingId: int.tryParse(nextAppointment['id']?.toString() ?? '0') ?? 0,
                                   status: nextAppointment['status'],
                                   isViewOnly: true,
