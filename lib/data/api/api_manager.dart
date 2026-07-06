@@ -23,7 +23,7 @@ class ApiManager {
 
   ApiManager._internal(this._dio, this._cookieJar);
 
-  /// Call this factory to create an ApiManager with fully initialized cookies.
+  /// إنشاء وإعداد مكتبة Dio لإجراء الاتصالات مع تهيئة الكوكيز والـ Interceptors
   static Future<ApiManager> create() async {
     final dio = Dio(
       BaseOptions(
@@ -38,7 +38,7 @@ class ApiManager {
       ),
     );
 
-    // Fix SSL + Force HTTP/1.1
+    // تخطي فحص شهادات الأمان (SSL) لتسهيل الاتصال في بيئة التطوير
     final adapter = dio.httpClientAdapter;
     if (adapter is IOHttpClientAdapter) {
       adapter.createHttpClient = () {
@@ -49,14 +49,14 @@ class ApiManager {
       };
     }
 
-    // Setup PersistCookieJar
+    // إعداد وتكوين حفظ الكوكيز (Cookies) بشكل دائم على جهاز المستخدم
     final dir = await getApplicationDocumentsDirectory();
     final cookieJar = PersistCookieJar(
       ignoreExpires: true,
       storage: FileStorage('${dir.path}/.cookies/'),
     );
 
-    // Strip secure flag from cookies so they can be sent over HTTP
+    //مسئوله عن نعجيل ال cookes من Https الي Http عشان تعرف تتعامل ب ال Http
     dio.interceptors.add(
       InterceptorsWrapper(
         onResponse: (response, handler) {
@@ -77,7 +77,7 @@ class ApiManager {
 
     dio.interceptors.add(CookieManager(cookieJar));
 
-    // Retry interceptor
+    // معترض إعادة المحاولة: يعيد محاولة إرسال الطلب تلقائياً مرة واحدة عند حدوث انقطاع في الشبكة
     dio.interceptors.add(
       InterceptorsWrapper(
         onError: (DioException error, ErrorInterceptorHandler handler) async {
@@ -94,6 +94,7 @@ class ApiManager {
               final response = await dio.request(
                 opts.path,
                 data: opts.data,
+                //Query Parameters هي البيانات اللي بتتبعت في آخر الـ URL بعد علامة
                 queryParameters: opts.queryParameters,
                 options: Options(
                   method: opts.method,
@@ -101,6 +102,7 @@ class ApiManager {
                   extra: opts.extra,
                 ),
               );
+              //رجع الكلب تاني بعد ما الخطاء يروح
               handler.resolve(response);
               return;
             } catch (retryError) {
@@ -109,6 +111,7 @@ class ApiManager {
               } else {
                 handler.next(error);
               }
+              //علشان يخرج من الدالة ومينفذش أي كود بعده.
               return;
             }
           }
@@ -117,7 +120,7 @@ class ApiManager {
       ),
     );
 
-    // Log interceptor
+    // معترض السجلات: لطباعة تفاصيل الطلبات والردود في الكونسول لتسهيل عملية التصحيح (Debugging)
     dio.interceptors.add(
       LogInterceptor(
         requestBody: true,
@@ -127,7 +130,7 @@ class ApiManager {
       ),
     );
 
-    // Auth interceptor (JWT Token)
+    // معترض المصادقة: لجلب توكن الـ JWT المخزن محلياً وإضافته تلقائياً في هيدر الطلب
     dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
@@ -135,6 +138,8 @@ class ApiManager {
           final token = await prefs.getToken();
           if (token != null && token.isNotEmpty) {
             options.headers['Authorization'] = 'Bearer $token';
+            // إضافة التوكن في الهيدر بصيغة Bearer
+            // Authorization: Bearer abc123xyz
           }
           return handler.next(options);
         },
@@ -144,14 +149,18 @@ class ApiManager {
     return ApiManager._internal(dio, cookieJar);
   }
 
+  //مساول عن حفظ ال cookes (جلسه)
   PersistCookieJar get cookieJar => _cookieJar;
 
+  // دالة مساعدة لاستخراج القوائم من استجابة السيرفر بغض النظر عن مسمى الحقل القادم بتقبل اي شكل للداتا
   List<dynamic> _extractListFromResponse(dynamic data, {List<String>? keys}) {
     if (data is List) return data;
     if (data is Map) {
+      // عشان نقدر نتعامل معاه بسهولة و اكثر امان
       final map = Map<String, dynamic>.from(data);
       final searchKeys =
           keys ??
+          //ابحث عن المفاتيح دي
           [
             'items',
             'data',
@@ -175,9 +184,11 @@ class ApiManager {
         if (value is List) return value;
       }
     }
+    // يرجع List فاضي بدل ما التطبيق ي crash
     return [];
   }
 
+  // دالة مساعدة لاستخراج رسالة الخطأ من استجابة السيرفر
   String? _extractErrorMessage(dynamic data) {
     if (data is String && data.trim().isNotEmpty) return data.trim();
     if (data is Map) {
@@ -190,6 +201,7 @@ class ApiManager {
     return null;
   }
 
+  // دالة لتحليل وتفصيل أخطاء الـ API وعرضها بشكل نصي واضح
   String _parseApiError(Response response, String defaultMsg) {
     final data = response.data;
     if (data == null) return defaultMsg;
@@ -198,18 +210,20 @@ class ApiManager {
       if (errors != null) {
         if (errors is Map) {
           final list = [];
-          errors.forEach((k, v) {
-            if (v is List) {
-              list.add(v.join(', '));
+          // "لف على كل الأخطاء، وخد القيمة بتاعتها (v) عشان تعرضها للمستخدم"
+          errors.forEach((key, value) {
+            if (value is List) {
+              list.add(value.join(', '));
             } else {
-              list.add(v.toString());
+              list.add(value.toString());
             }
           });
           if (list.isNotEmpty) return list.join('\n');
         }
         return errors.toString();
       }
-      final msg = data['message'] ?? data['Message'] ?? data['title'] ?? data['Title'];
+      final msg =
+          data['message'] ?? data['Message'] ?? data['title'] ?? data['Title'];
       if (msg != null && msg.toString().trim().isNotEmpty) {
         return msg.toString().trim();
       }
@@ -221,6 +235,10 @@ class ApiManager {
     return defaultMsg;
   }
 
+  // دالة لتحويل البيانات القادمة إلى قائمة من كائنات عيادات (ClinicModel)
+  //في حاله بو كان عنصر واحد هيرجع Map
+  // لو اكتر من عنصر هيرجه List
+  //في النهايه كله هيبقا List
   List<ClinicModel> _parseClinicList(dynamic data) {
     if (data is Map &&
         (data.containsKey('clinicId') ||
@@ -247,14 +265,17 @@ class ApiManager {
     return clinics;
   }
 
+  // دالة لتحويل البيانات القادمة إلى قائمة من كائنات حجوزات (BookingModel)
   List<BookingModel> _parseBookingList(dynamic data) {
     return _extractListFromResponse(data)
         .whereType<Map<String, dynamic>>()
         .map(BookingModel.fromJson)
         .where((b) => b.id > 0)
         .toList();
+    //بنحول من json الي لBookModel
   }
 
+  // تحويل أخطاء الاتصال الفنية لرسائل مفهومة وودية للمستخدم
   String _friendlyError(DioException e) {
     switch (e.type) {
       case DioExceptionType.connectionTimeout:
@@ -268,12 +289,13 @@ class ApiManager {
     }
   }
 
+  // دالة لتحليل وتحويل البيانات القادمة إلى كائن طبيب (DoctorModel)
   DoctorModel? _parseDoctorResponse(dynamic data) {
     if (data == null) return null;
     if (data is! Map) return null;
 
     final map = Map<String, dynamic>.from(data);
-
+    //لف على كل الأسماء الممكنة اللي السيرفر ممكن يحط فيها الدكتو
     for (final key in [
       'doctor',
       'Doctor',
@@ -287,6 +309,7 @@ class ApiManager {
         return DoctorModel.fromJson(Map<String, dynamic>.from(nested));
       }
     }
+    //لو مفتاح من دول موجود بيبقا دكتور
 
     if (map.containsKey('id') ||
         map.containsKey('Id') ||
@@ -302,6 +325,7 @@ class ApiManager {
     return null;
   }
 
+  // دالة مساعدة لإرسال طلب حذف (DELETE) للسيرفر مع معالجة النتيجة
   Future<bool> _deleteRequest(String endpoint) async {
     try {
       final response = await _dio.delete(
@@ -329,22 +353,6 @@ class ApiManager {
     }
   }
 
-  // ============================================================
-  // Patient Notification APIs
-  // ============================================================
-
-  /// GET /Patient/NotificationApi/GetAllNotifications?currentPage={page}
-
-  /// GET /Patient/NotificationApi/GetNotification/{id}
-
-  /// DELETE /Patient/NotificationApi/DiscardNotification/{id}
-
-  // ============================================================
-  // Payment APIs
-  // ============================================================
-
-  /// POST /Patient/AppointmentApi/PayAppointmentByCard/{appointmentId}
-
   // ==========================================
   // AccountApi
   // ==========================================
@@ -366,6 +374,10 @@ class ApiManager {
             message: 'Login Successful',
             data: LoginData(
               token: data['token'] as String?,
+
+              // السيرفر في login API مش بيرجع البيانات دي
+              // فهي مش متاحة وقت تسجيل الدخول
+              // وبتتجاب يعدين أو من endpoint تاني
               email: null,
               fullName: null,
             ),
@@ -617,10 +629,366 @@ class ApiManager {
       return false;
     }
   }
+  // ==========================================
+  // ClinicApi
+  // ==========================================
+
+  Future<bool> addClinic(ClinicModel clinic) async {
+    try {
+      final formData = FormData.fromMap(clinic.toJson());
+
+      final response = await _dio.post(
+        'Doctor/ClinicApi/CreateClinic',
+        data: formData,
+        options: Options(
+          contentType: 'multipart/form-data',
+          validateStatus: (status) => true,
+        ),
+      );
+
+      print('Add Clinic Response: ${response.statusCode} - ${response.data}');
+
+      return response.statusCode == 200 || response.statusCode == 201;
+    } catch (e) {
+      print('Failed to add clinic: $e');
+      return false;
+    }
+  }
+
+  Future<ClinicModel?> getClinic(int id) async {
+    try {
+      final response = await _dio.get(
+        'Doctor/ClinicApi/GetClinic/$id',
+        options: Options(validateStatus: (status) => true),
+      );
+      if ((response.statusCode == 200 || response.statusCode == 201) &&
+          response.data is Map) {
+        return ClinicModel.fromJson(Map<String, dynamic>.from(response.data));
+      }
+      return null;
+    } catch (e) {
+      print('getClinic error: $e');
+      return null;
+    }
+  }
+
+  // جلب كل العيادات الخاصة بالطبيب
+  Future<List<ClinicModel>> getDoctorClinics() async {
+    try {
+      final response = await _dio.get(
+        'Doctor/ClinicApi/GetAllClinics',
+        queryParameters: {'currentPage': 1},
+        options: Options(validateStatus: (status) => true),
+      );
+
+      print('===== GetAllClinics RAW RESPONSE =====');
+      print('Status: ${response.statusCode}');
+      print('Data Type: ${response.data.runtimeType}');
+      print('Data: ${response.data}');
+      print('======================================');
+
+      if (response.statusCode == 302 || response.statusCode == 401) {
+        throw 'Session expired. Please login again.';
+      }
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw _extractErrorMessage(response.data) ??
+            'Server returned ${response.statusCode}';
+      }
+
+      final data = response.data;
+      if (data == null) return [];
+      if (data is String) {
+        if (data.trim().isEmpty) return [];
+        throw data.trim();
+      }
+
+      return _parseClinicList(data);
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      if (status == 302 || status == 401) {
+        throw 'Session expired. Please login again.';
+      }
+      final message = _extractErrorMessage(e.response?.data);
+      throw message ?? e.message ?? 'Network error while loading clinics';
+    } catch (e) {
+      print('Failed to get clinics: $e');
+      final msg = e.toString().replaceFirst('Exception: ', '').trim();
+      if (msg.isEmpty) {
+        throw 'Failed to load clinics. Please try again.';
+      }
+      if (msg.startsWith('Failed to load clinics')) {
+        throw msg;
+      }
+      throw 'Failed to load clinics: $msg';
+    }
+  }
+
+  Future<bool> updateClinic(ClinicModel clinic) async {
+    try {
+      final formData = FormData.fromMap({'Id': clinic.id, ...clinic.toJson()});
+
+      final response = await _dio.put(
+        'Doctor/ClinicApi/EditClinic/${clinic.id}',
+        data: formData,
+        options: Options(
+          contentType: 'multipart/form-data',
+          validateStatus: (status) => true,
+        ),
+      );
+
+      print('Edit Clinic Response: ${response.statusCode} - ${response.data}');
+
+      return response.statusCode == 200 || response.statusCode == 204;
+    } catch (e) {
+      print('Failed to update clinic: $e');
+      return false;
+    }
+  }
+
+  Future<bool> deleteClinic(int id) async {
+    try {
+      final response = await _dio.delete(
+        'Doctor/ClinicApi/DeleteClinic/$id',
+        queryParameters: {'id': id},
+      );
+      return response.statusCode == 200 || response.statusCode == 204;
+    } catch (e) {
+      print('Failed to delete clinic: $e');
+      return false;
+    }
+  }
 
   // ==========================================
-  // AppointmentApi
+  // ScheduleApi
   // ==========================================
+
+  Future<bool> createSchedule(CreateScheduleModel schedule) async {
+    try {
+      // تحويل الـ ClinicId لرقم لأن السيرفر غالباً بيطلبه int
+      final int? clinicIdInt = schedule.clinicId;
+
+      final formData = FormData.fromMap({
+        'DayOfWeek': schedule.day, // تغيير المفتاح بناءً على طلبك
+        'StartTime': schedule.startTime,
+        'EndTime': schedule.endTime,
+        'ClinicId': clinicIdInt,
+      });
+
+      print(
+        'Sending CreateSchedule with: Day=${schedule.day}, Start=${schedule.startTime}, End=${schedule.endTime}, ClinicId=$clinicIdInt',
+      );
+
+      final response = await _dio.post(
+        'Doctor/ScheduleApi/CreateSchedule',
+        data: formData,
+        options: Options(
+          contentType: 'multipart/form-data',
+          validateStatus: (status) => true, // عشان نشوف الـ Response حتى لو 400
+        ),
+      );
+
+      print(
+        'CreateSchedule Response: ${response.statusCode} - ${response.data}',
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return true;
+      } else {
+        // استخراج رسالة الخطأ من السيرفر (مثلاً: A schedule with overlapping time already exists)
+        String errorMessage = 'Failed to create schedule';
+        if (response.data is Map<String, dynamic> &&
+            response.data.containsKey('message')) {
+          errorMessage = response.data['message'];
+        } else if (response.data is String) {
+          errorMessage = response.data;
+        }
+
+        print('Server Error Message: $errorMessage');
+        throw errorMessage; // نرفع الخطأ عشان الـ Cubit يمسكه ويعرضه
+      }
+    } catch (e) {
+      print('Failed to create schedule: $e');
+      rethrow; // إعادة رفع الخطأ
+    }
+  }
+
+  Future<Map<String, dynamic>?> getSchedule(int id) async {
+    try {
+      final response = await _dio.get(
+        'Doctor/ScheduleApi/GetSchedule/$id',
+        options: Options(validateStatus: (status) => true),
+      );
+      if ((response.statusCode == 200 || response.statusCode == 201) &&
+          response.data is Map) {
+        return Map<String, dynamic>.from(response.data);
+      }
+      return null;
+    } catch (e) {
+      print('getSchedule error: $e');
+      return null;
+    }
+  }
+
+  Future<List<dynamic>> getAllSchedules() async {
+    try {
+      final response = await _dio.get(
+        'Doctor/ScheduleApi/GetAllSchedules',
+        queryParameters: {'currentPage': 1},
+        options: Options(validateStatus: (status) => true),
+      );
+      print(
+        '=== GetAllSchedules Response: ${response.statusCode} - ${response.data} ===',
+      );
+
+      if (response.statusCode != 200) {
+        return [];
+      }
+
+      if (response.data is List) {
+        return response.data as List;
+      }
+
+      if (response.data is Map<String, dynamic>) {
+        final map = response.data as Map<String, dynamic>;
+        for (final key in [
+          'schedules',
+          'data',
+          'items',
+          'result',
+          'Schedules',
+          'Items',
+        ]) {
+          if (map[key] is List) return map[key] as List;
+        }
+      }
+      return [];
+    } catch (e) {
+      print('Failed to get all schedules: $e');
+      return [];
+    }
+  }
+
+  Future<bool> editSchedule(editClinicModel clinic) async {
+    try {
+      final mapData = <String, dynamic>{};
+      if (clinic.clinicId != null && clinic.clinicId!.isNotEmpty) {
+        mapData['ClinicId'] = int.tryParse(clinic.clinicId!);
+      }
+      if (clinic.day != null && clinic.day!.isNotEmpty) {
+        mapData['DayOfWeek'] = clinic.day;
+      }
+      if (clinic.startTime != null && clinic.startTime!.isNotEmpty) {
+        mapData['StartTime'] = clinic.startTime;
+      }
+      if (clinic.endTime != null && clinic.endTime!.isNotEmpty) {
+        mapData['EndTime'] = clinic.endTime;
+      }
+      if (clinic.appointmentDuration != null &&
+          clinic.appointmentDuration!.isNotEmpty) {
+        mapData['AppointmentDuration'] = int.tryParse(
+          clinic.appointmentDuration!,
+        );
+      }
+      if (clinic.nots != null && clinic.nots!.isNotEmpty) {
+        mapData['Notes'] = clinic.nots;
+      }
+
+      print('Sending EditSchedule data: $mapData');
+
+      final response = await _dio.put(
+        'Doctor/ScheduleApi/EditSchedule/${clinic.id}',
+        data: FormData.fromMap(mapData),
+        options: Options(validateStatus: (status) => true),
+      );
+
+      print('EditSchedule Response: ${response.statusCode} - ${response.data}');
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        return true;
+      } else {
+        String errorMessage = 'Failed to edit schedule';
+        if (response.data is Map<String, dynamic>) {
+          if (response.data.containsKey('message')) {
+            errorMessage = response.data['message'];
+          } else if (response.data.containsKey('errors')) {
+            errorMessage = response.data['errors'].toString();
+          } else {
+            errorMessage = response.data.toString();
+          }
+        } else if (response.data != null &&
+            response.data.toString().isNotEmpty) {
+          errorMessage = response.data.toString();
+        }
+        throw errorMessage;
+      }
+    } catch (e) {
+      print('Failed to edit schedule: $e');
+      throw e.toString();
+    }
+  }
+
+  Future<bool> deleteSchedule(int scheduleId) async {
+    try {
+      final response = await _dio.delete(
+        'Doctor/ScheduleApi/DeleteSchedule/$scheduleId',
+        options: Options(validateStatus: (status) => true),
+      );
+      print(
+        'DeleteSchedule[$scheduleId]: ${response.statusCode} - ${response.data}',
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        return true;
+      } else {
+        String errorMessage = 'Failed to delete schedule';
+        if (response.data is Map<String, dynamic> &&
+            response.data.containsKey('message')) {
+          errorMessage = response.data['message'];
+        } else if (response.data is String) {
+          errorMessage = response.data;
+        }
+        throw errorMessage;
+      }
+    } catch (e) {
+      print('Failed to delete schedule: $e');
+      throw e.toString();
+    }
+  }
+
+  // ==========================================
+  // BookingApi
+  // ==========================================
+
+  Future<List<dynamic>> getClinicBookings(int clinicId) async {
+    final endpoints = [
+      'Doctor/BookingApi/GetClinicBookings/$clinicId',
+      'Doctor/BookingApi/GetBookings/$clinicId',
+      'Doctor/ScheduleApi/GetClinicBookings',
+    ];
+
+    for (final endpoint in endpoints) {
+      try {
+        final response = await _dio.get(
+          endpoint,
+          queryParameters: endpoint.contains('GetClinicBookings')
+              ? {'clinicId': clinicId, 'currentPage': 1}
+              : {'currentPage': 1},
+          options: Options(validateStatus: (status) => true),
+        );
+
+        print('GetClinicBookings [$endpoint]: ${response.statusCode}');
+
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          final items = _extractListFromResponse(response.data);
+          if (items.isNotEmpty) return items;
+        }
+      } catch (e) {
+        print('GetClinicBookings endpoint $endpoint failed: $e');
+      }
+    }
+    return [];
+  }
 
   /// إلغاء حجز للباشنت
   Future<bool> cancelPatientBooking(int bookingId) async {
@@ -678,15 +1046,15 @@ class ApiManager {
         'card[cvc]': cvv,
       };
 
-      print('Requesting Stripe Token for card expiration $expiryMonth/$expiryYear...');
+      print(
+        'Requesting Stripe Token for card expiration $expiryMonth/$expiryYear...',
+      );
       final stripeRes = await stripeDio.post(
         'https://api.stripe.com/v1/tokens',
         data: stripeBody,
         options: Options(
           contentType: Headers.formUrlEncodedContentType,
-          headers: {
-            'Authorization': 'Bearer pk_test_TYooMQauvdEDq54NiTphI7jx',
-          },
+          headers: {'Authorization': 'Bearer pk_test_TYooMQauvdEDq54NiTphI7jx'},
           validateStatus: (status) => true,
         ),
       );
@@ -694,14 +1062,16 @@ class ApiManager {
       print('Stripe token response code: ${stripeRes.statusCode}');
       print('Stripe token response data: ${stripeRes.data}');
       if (stripeRes.statusCode != 200) {
-        String errorMsg = 'Payment processing failed. Please check your card details and try again.';
+        String errorMsg =
+            'Payment processing failed. Please check your card details and try again.';
         if (stripeRes.data is Map && stripeRes.data['error'] != null) {
           final stripeError = stripeRes.data['error'];
           final stripeMsg = stripeError['message']?.toString() ?? '';
           final stripeCode = stripeError['code']?.toString() ?? '';
           if (stripeCode == 'card_declined') {
             errorMsg = 'Your card was declined. Please use a different card.';
-          } else if (stripeCode == 'invalid_expiry_year' || stripeCode == 'invalid_expiry_month') {
+          } else if (stripeCode == 'invalid_expiry_year' ||
+              stripeCode == 'invalid_expiry_month') {
             errorMsg = 'Invalid card expiry date. Please check and try again.';
           } else if (stripeCode == 'incorrect_cvc') {
             errorMsg = 'Incorrect CVV. Please check your card and try again.';
@@ -713,10 +1083,13 @@ class ApiManager {
         }
         return {'success': false, 'message': errorMsg};
       }
-
+      // أنت هنا بتاخد Token اللي رجع من Stripe response
       final stripeToken = stripeRes.data['id'] as String?;
       if (stripeToken == null || stripeToken.isEmpty) {
-        return {'success': false, 'message': 'Failed to generate payment token'};
+        return {
+          'success': false,
+          'message': 'Failed to generate payment token',
+        };
       }
 
       print('Generated Stripe Token: $stripeToken. Sending to backend...');
@@ -724,14 +1097,14 @@ class ApiManager {
       // 2. Send token to backend as multipart/form-data
       final formData = FormData.fromMap({
         'StripeToken': stripeToken,
-        'stripeToken': stripeToken, // Keep this just in case backend expects lowercase
+        'stripeToken':
+            stripeToken, // Keep this just in case backend expects lowercase
         'CardNumber': cardNumber.replaceAll(' ', ''),
         'CVV': cvv,
         'ExpiryMonth': int.tryParse(expiryMonth) ?? 1,
         'ExpiryYear': int.tryParse(expiryYear) ?? DateTime.now().year,
         'CardHolderName': cardHolderName,
       });
-
       final response = await _dio.post(
         'Patient/AppointmentApi/PayAppointmentByCard/$appointmentId',
         data: formData,
@@ -743,9 +1116,13 @@ class ApiManager {
         ),
       );
 
-      print('PayAppointmentByCard response: ${response.statusCode} - ${response.data}');
+      print(
+        'PayAppointmentByCard response: ${response.statusCode} - ${response.data}',
+      );
 
-      if (response.statusCode == 200 || response.statusCode == 201 || response.statusCode == 204) {
+      if (response.statusCode == 200 ||
+          response.statusCode == 201 ||
+          response.statusCode == 204) {
         return {'success': true, 'message': 'Payment completed successfully'};
       } else {
         final errorMsg = _parseApiError(response, 'Payment failed');
@@ -761,6 +1138,9 @@ class ApiManager {
     }
   }
 
+  /////////////
+  ///ِAppointments///
+  /////////////////
   Future<List<dynamic>> getPatientAllAppointments({int currentPage = 1}) async {
     try {
       final response = await _dio.get(
@@ -784,7 +1164,8 @@ class ApiManager {
         'Patient/AppointmentApi/GetAppointment/$id',
         options: Options(validateStatus: (status) => true),
       );
-      if ((response.statusCode == 200 || response.statusCode == 201) && response.data is Map) {
+      if ((response.statusCode == 200 || response.statusCode == 201) &&
+          response.data is Map) {
         return Map<String, dynamic>.from(response.data);
       }
       return {'error': 'API Error ${response.statusCode}: ${response.data}'};
@@ -820,15 +1201,14 @@ class ApiManager {
     try {
       final response = await _dio.post(
         'Patient/BookingApi/CreateDoctorReview/$doctorId',
-        data: {
-          'rating': rating,
-          'comment': comment,
-        },
+        data: {'rating': rating, 'comment': comment},
         options: Options(validateStatus: (status) => true),
       );
       print('AddReview response: ${response.statusCode} - ${response.data}');
-      if (response.statusCode == 200 || response.statusCode == 201 || response.statusCode == 204) {
-        return null; // success
+      if (response.statusCode == 200 ||
+          response.statusCode == 201 ||
+          response.statusCode == 204) {
+        return null; // success مفيش حاجه لازم ترجع
       }
       return 'Error ${response.statusCode}: ${response.data?.toString()}';
     } catch (e) {
@@ -846,13 +1226,12 @@ class ApiManager {
     try {
       final response = await _dio.put(
         'Patient/BookingApi/EditDoctorReview/$reviewId',
-        data: {
-          'rating': rating,
-          'comment': comment,
-        },
+        data: {'rating': rating, 'comment': comment},
         options: Options(validateStatus: (status) => true),
       );
-      if (response.statusCode == 200 || response.statusCode == 201 || response.statusCode == 204) {
+      if (response.statusCode == 200 ||
+          response.statusCode == 201 ||
+          response.statusCode == 204) {
         return null; // success
       }
       return 'Error ${response.statusCode}: ${response.data?.toString()}';
@@ -869,7 +1248,9 @@ class ApiManager {
         'Patient/BookingApi/DeleteDoctorReview/$reviewId',
         options: Options(validateStatus: (status) => true),
       );
-      if (response.statusCode == 200 || response.statusCode == 201 || response.statusCode == 204) {
+      if (response.statusCode == 200 ||
+          response.statusCode == 201 ||
+          response.statusCode == 204) {
         return null; // success
       }
       return 'Error ${response.statusCode}: ${response.data?.toString()}';
@@ -903,7 +1284,9 @@ class ApiManager {
         data: data,
         options: Options(validateStatus: (status) => true),
       );
-      return response.statusCode == 200 || response.statusCode == 201 || response.statusCode == 204;
+      return response.statusCode == 200 ||
+          response.statusCode == 201 ||
+          response.statusCode == 204;
     } catch (e) {
       print('editPatientAppointment error: $e');
       return false;
@@ -937,7 +1320,8 @@ class ApiManager {
         'Doctor/AppointmentApi/GetAppointment/$id',
         options: Options(validateStatus: (status) => true),
       );
-      if ((response.statusCode == 200 || response.statusCode == 201) && response.data is Map) {
+      if ((response.statusCode == 200 || response.statusCode == 201) &&
+          response.data is Map) {
         return Map<String, dynamic>.from(response.data);
       }
       return null;
@@ -953,7 +1337,9 @@ class ApiManager {
         'Doctor/AppointmentApi/ConfirmAppointment/$id',
         options: Options(validateStatus: (status) => true),
       );
-      return response.statusCode == 200 || response.statusCode == 201 || response.statusCode == 204;
+      return response.statusCode == 200 ||
+          response.statusCode == 201 ||
+          response.statusCode == 204;
     } catch (e) {
       print('confirmDoctorAppointment error: $e');
       return false;
@@ -966,45 +1352,13 @@ class ApiManager {
         'Doctor/AppointmentApi/CompleteAppointment/$id',
         options: Options(validateStatus: (status) => true),
       );
-      return response.statusCode == 200 || response.statusCode == 201 || response.statusCode == 204;
+      return response.statusCode == 200 ||
+          response.statusCode == 201 ||
+          response.statusCode == 204;
     } catch (e) {
       print('completeDoctorAppointment error: $e');
       return false;
     }
-  }
-
-  // ==========================================
-  // BookingApi
-  // ==========================================
-
-  Future<List<dynamic>> getClinicBookings(int clinicId) async {
-    final endpoints = [
-      'Doctor/BookingApi/GetClinicBookings/$clinicId',
-      'Doctor/BookingApi/GetBookings/$clinicId',
-      'Doctor/ScheduleApi/GetClinicBookings',
-    ];
-
-    for (final endpoint in endpoints) {
-      try {
-        final response = await _dio.get(
-          endpoint,
-          queryParameters: endpoint.contains('GetClinicBookings')
-              ? {'clinicId': clinicId, 'currentPage': 1}
-              : {'currentPage': 1},
-          options: Options(validateStatus: (status) => true),
-        );
-
-        print('GetClinicBookings [$endpoint]: ${response.statusCode}');
-
-        if (response.statusCode == 200 || response.statusCode == 201) {
-          final items = _extractListFromResponse(response.data);
-          if (items.isNotEmpty) return items;
-        }
-      } catch (e) {
-        print('GetClinicBookings endpoint $endpoint failed: $e');
-      }
-    }
-    return [];
   }
 
   /// جلب طلبات الحجز المعلقة للطبيب
@@ -1254,17 +1608,12 @@ class ApiManager {
             return [ClinicModel.fromJson(map)];
           }
         }
-        return items
-            .whereType<Map>()
-            .map(
-              (item) {
-                final map = Map<String, dynamic>.from(item);
-                print('🏥 Clinic JSON keys: ${map.keys.toList()}');
-                print('🏥 Clinic JSON data: $map');
-                return ClinicModel.fromJson(map);
-              },
-            )
-            .toList();
+        return items.whereType<Map>().map((item) {
+          final map = Map<String, dynamic>.from(item);
+          print('🏥 Clinic JSON keys: ${map.keys.toList()}');
+          print('🏥 Clinic JSON data: $map');
+          return ClinicModel.fromJson(map);
+        }).toList();
       }
       return [];
     } catch (e) {
@@ -1341,7 +1690,10 @@ class ApiManager {
     }
   }
 
-  Future<dynamic> bookForOther(int scheduleId, Map<String, dynamic> data) async {
+  Future<dynamic> bookForOther(
+    int scheduleId,
+    Map<String, dynamic> data,
+  ) async {
     await chooseRole('Patient');
     try {
       final response = await _dio.post(
@@ -1359,7 +1711,8 @@ class ApiManager {
         return response.data;
       } else {
         String errorMessage = 'Failed to book appointment for other';
-        if (response.data is Map<String, dynamic> && response.data.containsKey('message')) {
+        if (response.data is Map<String, dynamic> &&
+            response.data.containsKey('message')) {
           errorMessage = response.data['message'];
         } else if (response.data is String) {
           errorMessage = response.data;
@@ -1484,7 +1837,11 @@ class ApiManager {
             }
 
             // 2. If it's a doctor without clinics nested, fetch them individually
-            final docId = item['id'] ?? item['doctorId'] ?? item['Id'] ?? item['DoctorId'];
+            final docId =
+                item['id'] ??
+                item['doctorId'] ??
+                item['Id'] ??
+                item['DoctorId'];
             if (!hasClinics &&
                 !item.containsKey('consultationPrice') &&
                 docId != null) {
@@ -1694,217 +2051,6 @@ class ApiManager {
   }
 
   // ==========================================
-  // ClinicApi
-  // ==========================================
-
-  Future<ClinicModel?> getClinic(int id) async {
-    try {
-      final response = await _dio.get(
-        'Doctor/ClinicApi/GetClinic/$id',
-        options: Options(validateStatus: (status) => true),
-      );
-      if ((response.statusCode == 200 || response.statusCode == 201) && response.data is Map) {
-        return ClinicModel.fromJson(Map<String, dynamic>.from(response.data));
-      }
-      return null;
-    } catch (e) {
-      print('getClinic error: $e');
-      return null;
-    }
-  }
-
-  // جلب كل العيادات الخاصة بالطبيب
-  Future<List<ClinicModel>> getDoctorClinics() async {
-    try {
-      final response = await _dio.get(
-        'Doctor/ClinicApi/GetAllClinics',
-        queryParameters: {'currentPage': 1},
-        options: Options(validateStatus: (status) => true),
-      );
-
-      print('===== GetAllClinics RAW RESPONSE =====');
-      print('Status: ${response.statusCode}');
-      print('Data Type: ${response.data.runtimeType}');
-      print('Data: ${response.data}');
-      print('======================================');
-
-      if (response.statusCode == 302 || response.statusCode == 401) {
-        throw 'Session expired. Please login again.';
-      }
-
-      if (response.statusCode != 200 && response.statusCode != 201) {
-        throw _extractErrorMessage(response.data) ??
-            'Server returned ${response.statusCode}';
-      }
-
-      final data = response.data;
-      if (data == null) return [];
-      if (data is String) {
-        if (data.trim().isEmpty) return [];
-        throw data.trim();
-      }
-
-      return _parseClinicList(data);
-    } on DioException catch (e) {
-      final status = e.response?.statusCode;
-      if (status == 302 || status == 401) {
-        throw 'Session expired. Please login again.';
-      }
-      final message = _extractErrorMessage(e.response?.data);
-      throw message ?? e.message ?? 'Network error while loading clinics';
-    } catch (e) {
-      print('Failed to get clinics: $e');
-      final msg = e.toString().replaceFirst('Exception: ', '').trim();
-      if (msg.isEmpty) {
-        throw 'Failed to load clinics. Please try again.';
-      }
-      if (msg.startsWith('Failed to load clinics')) {
-        throw msg;
-      }
-      throw 'Failed to load clinics: $msg';
-    }
-  }
-
-  Future<bool> addClinic(ClinicModel clinic) async {
-    try {
-      final formData = FormData.fromMap(clinic.toJson());
-
-      final response = await _dio.post(
-        'Doctor/ClinicApi/CreateClinic',
-        data: formData,
-        options: Options(
-          contentType: 'multipart/form-data',
-          validateStatus: (status) => true,
-        ),
-      );
-
-      print('Add Clinic Response: ${response.statusCode} - ${response.data}');
-
-      return response.statusCode == 200 || response.statusCode == 201;
-    } catch (e) {
-      print('Failed to add clinic: $e');
-      return false;
-    }
-  }
-
-  Future<bool> updateClinic(ClinicModel clinic) async {
-    try {
-      final formData = FormData.fromMap({'Id': clinic.id, ...clinic.toJson()});
-
-      final response = await _dio.put(
-        'Doctor/ClinicApi/EditClinic/${clinic.id}',
-        data: formData,
-        options: Options(
-          contentType: 'multipart/form-data',
-          validateStatus: (status) => true,
-        ),
-      );
-
-      print('Edit Clinic Response: ${response.statusCode} - ${response.data}');
-
-      return response.statusCode == 200 || response.statusCode == 204;
-    } catch (e) {
-      print('Failed to update clinic: $e');
-      return false;
-    }
-  }
-
-  Future<bool> deleteClinic(int id) async {
-    try {
-      final response = await _dio.delete(
-        'Doctor/ClinicApi/DeleteClinic/$id',
-        queryParameters: {'id': id},
-      );
-      return response.statusCode == 200 || response.statusCode == 204;
-    } catch (e) {
-      print('Failed to delete clinic: $e');
-      return false;
-    }
-  }
-
-  // ==========================================
-  // DepartmentApi
-  // ==========================================
-
-  Future<List<dynamic>> getAllDepartments({int currentPage = 1}) async {
-    try {
-      final response = await _dio.get(
-        'Admin/DepartmentApi/GetAllDepartments',
-        queryParameters: {'currentPage': currentPage},
-        options: Options(validateStatus: (status) => true),
-      );
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return _extractListFromResponse(response.data);
-      } else {
-        throw _parseApiError(response, 'Failed to fetch departments');
-      }
-    } catch (e) {
-      print('getAllDepartments error: $e');
-      throw e.toString();
-    }
-  }
-
-  Future<Map<String, dynamic>?> getDepartment(int id) async {
-    try {
-      final response = await _dio.get(
-        'Admin/DepartmentApi/GetDepartment/$id',
-        options: Options(validateStatus: (status) => true),
-      );
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        if (response.data is Map) {
-          return Map<String, dynamic>.from(response.data);
-        }
-        return null;
-      } else {
-        throw _parseApiError(response, 'Failed to fetch department details');
-      }
-    } catch (e) {
-      print('getDepartment error: $e');
-      throw e.toString();
-    }
-  }
-
-  Future<bool> createDepartment(Map<String, dynamic> data) async {
-    try {
-      final response = await _dio.post(
-        'Admin/DepartmentApi/CreateDepartment',
-        data: data,
-        options: Options(validateStatus: (status) => true),
-      );
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return true;
-      } else {
-        throw _parseApiError(response, 'Failed to create department');
-      }
-    } catch (e) {
-      print('createDepartment error: $e');
-      throw e.toString();
-    }
-  }
-
-  Future<bool> editDepartment(int id, Map<String, dynamic> data) async {
-    try {
-      final response = await _dio.put(
-        'Admin/DepartmentApi/EditDepartment/$id',
-        data: data,
-        options: Options(validateStatus: (status) => true),
-      );
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return true;
-      } else {
-        throw _parseApiError(response, 'Failed to update department');
-      }
-    } catch (e) {
-      print('editDepartment error: $e');
-      throw e.toString();
-    }
-  }
-
-  Future<bool> deleteDepartment(int id) async {
-    return _deleteRequest('Admin/DepartmentApi/DeleteDepartment/$id');
-  }
-
-  // ==========================================
   // DoctorApi
   // ==========================================
 
@@ -2067,7 +2213,13 @@ class ApiManager {
         if (response.data is List) return response.data as List;
         if (response.data is Map<String, dynamic>) {
           final map = response.data as Map<String, dynamic>;
-          for (final key in ['bookings', 'appointments', 'data', 'items', 'result']) {
+          for (final key in [
+            'bookings',
+            'appointments',
+            'data',
+            'items',
+            'result',
+          ]) {
             if (map[key] is List) return map[key] as List;
           }
         }
@@ -2080,7 +2232,9 @@ class ApiManager {
   }
 
   /// جلب تفاصيل موعد محدد للمريض من السجل
-  Future<Map<String, dynamic>?> getPatientHistoryAppointmentDetails(int appointmentId) async {
+  Future<Map<String, dynamic>?> getPatientHistoryAppointmentDetails(
+    int appointmentId,
+  ) async {
     try {
       final response = await _dio.get(
         'Patient/HistoryApi/GetAppointment/$appointmentId',
@@ -2112,7 +2266,13 @@ class ApiManager {
         if (response.data is List) return response.data as List;
         if (response.data is Map<String, dynamic>) {
           final map = response.data as Map<String, dynamic>;
-          for (final key in ['bookings', 'appointments', 'data', 'items', 'result']) {
+          for (final key in [
+            'bookings',
+            'appointments',
+            'data',
+            'items',
+            'result',
+          ]) {
             if (map[key] is List) return map[key] as List;
           }
         }
@@ -2125,7 +2285,9 @@ class ApiManager {
   }
 
   /// جلب تفاصيل موعد محدد للطبيب من السجل
-  Future<Map<String, dynamic>?> getDoctorHistoryAppointmentDetails(int appointmentId) async {
+  Future<Map<String, dynamic>?> getDoctorHistoryAppointmentDetails(
+    int appointmentId,
+  ) async {
     try {
       final response = await _dio.get(
         'Doctor/HistoryApi/GetAppointment/$appointmentId',
@@ -2672,202 +2834,6 @@ class ApiManager {
   }
 
   // ==========================================
-  // ScheduleApi
-  // ==========================================
-
-  Future<bool> createSchedule(CreateScheduleModel schedule) async {
-    try {
-      // تحويل الـ ClinicId لرقم لأن السيرفر غالباً بيطلبه int
-      final int? clinicIdInt = schedule.clinicId;
-
-      final formData = FormData.fromMap({
-        'DayOfWeek': schedule.day, // تغيير المفتاح بناءً على طلبك
-        'StartTime': schedule.startTime,
-        'EndTime': schedule.endTime,
-        'ClinicId': clinicIdInt,
-      });
-
-      print(
-        'Sending CreateSchedule with: Day=${schedule.day}, Start=${schedule.startTime}, End=${schedule.endTime}, ClinicId=$clinicIdInt',
-      );
-
-      final response = await _dio.post(
-        'Doctor/ScheduleApi/CreateSchedule',
-        data: formData,
-        options: Options(
-          contentType: 'multipart/form-data',
-          validateStatus: (status) => true, // عشان نشوف الـ Response حتى لو 400
-        ),
-      );
-
-      print(
-        'CreateSchedule Response: ${response.statusCode} - ${response.data}',
-      );
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return true;
-      } else {
-        // استخراج رسالة الخطأ من السيرفر (مثلاً: A schedule with overlapping time already exists)
-        String errorMessage = 'Failed to create schedule';
-        if (response.data is Map<String, dynamic> &&
-            response.data.containsKey('message')) {
-          errorMessage = response.data['message'];
-        } else if (response.data is String) {
-          errorMessage = response.data;
-        }
-
-        print('Server Error Message: $errorMessage');
-        throw errorMessage; // نرفع الخطأ عشان الـ Cubit يمسكه ويعرضه
-      }
-    } catch (e) {
-      print('Failed to create schedule: $e');
-      rethrow; // إعادة رفع الخطأ
-    }
-  }
-
-  Future<Map<String, dynamic>?> getSchedule(int id) async {
-    try {
-      final response = await _dio.get(
-        'Doctor/ScheduleApi/GetSchedule/$id',
-        options: Options(validateStatus: (status) => true),
-      );
-      if ((response.statusCode == 200 || response.statusCode == 201) && response.data is Map) {
-        return Map<String, dynamic>.from(response.data);
-      }
-      return null;
-    } catch (e) {
-      print('getSchedule error: $e');
-      return null;
-    }
-  }
-
-  Future<List<dynamic>> getAllSchedules() async {
-    try {
-      final response = await _dio.get(
-        'Doctor/ScheduleApi/GetAllSchedules',
-        queryParameters: {'currentPage': 1},
-        options: Options(validateStatus: (status) => true),
-      );
-      print(
-        '=== GetAllSchedules Response: ${response.statusCode} - ${response.data} ===',
-      );
-
-      if (response.statusCode != 200) {
-        return [];
-      }
-
-      if (response.data is List) {
-        return response.data as List;
-      }
-
-      if (response.data is Map<String, dynamic>) {
-        final map = response.data as Map<String, dynamic>;
-        for (final key in [
-          'schedules',
-          'data',
-          'items',
-          'result',
-          'Schedules',
-          'Items',
-        ]) {
-          if (map[key] is List) return map[key] as List;
-        }
-      }
-      return [];
-    } catch (e) {
-      print('Failed to get all schedules: $e');
-      return [];
-    }
-  }
-
-  Future<bool> editSchedule(editClinicModel clinic) async {
-    try {
-      final mapData = <String, dynamic>{};
-      if (clinic.clinicId != null && clinic.clinicId!.isNotEmpty) {
-        mapData['ClinicId'] = int.tryParse(clinic.clinicId!);
-      }
-      if (clinic.day != null && clinic.day!.isNotEmpty) {
-        mapData['DayOfWeek'] = clinic.day;
-      }
-      if (clinic.startTime != null && clinic.startTime!.isNotEmpty) {
-        mapData['StartTime'] = clinic.startTime;
-      }
-      if (clinic.endTime != null && clinic.endTime!.isNotEmpty) {
-        mapData['EndTime'] = clinic.endTime;
-      }
-      if (clinic.appointmentDuration != null &&
-          clinic.appointmentDuration!.isNotEmpty) {
-        mapData['AppointmentDuration'] = int.tryParse(
-          clinic.appointmentDuration!,
-        );
-      }
-      if (clinic.nots != null && clinic.nots!.isNotEmpty) {
-        mapData['Notes'] = clinic.nots;
-      }
-
-      print('Sending EditSchedule data: $mapData');
-
-      final response = await _dio.put(
-        'Doctor/ScheduleApi/EditSchedule/${clinic.id}',
-        data: FormData.fromMap(mapData),
-        options: Options(validateStatus: (status) => true),
-      );
-
-      print('EditSchedule Response: ${response.statusCode} - ${response.data}');
-
-      if (response.statusCode == 200 || response.statusCode == 204) {
-        return true;
-      } else {
-        String errorMessage = 'Failed to edit schedule';
-        if (response.data is Map<String, dynamic>) {
-          if (response.data.containsKey('message')) {
-            errorMessage = response.data['message'];
-          } else if (response.data.containsKey('errors')) {
-            errorMessage = response.data['errors'].toString();
-          } else {
-            errorMessage = response.data.toString();
-          }
-        } else if (response.data != null &&
-            response.data.toString().isNotEmpty) {
-          errorMessage = response.data.toString();
-        }
-        throw errorMessage;
-      }
-    } catch (e) {
-      print('Failed to edit schedule: $e');
-      throw e.toString();
-    }
-  }
-
-  Future<bool> deleteSchedule(int scheduleId) async {
-    try {
-      final response = await _dio.delete(
-        'Doctor/ScheduleApi/DeleteSchedule/$scheduleId',
-        options: Options(validateStatus: (status) => true),
-      );
-      print(
-        'DeleteSchedule[$scheduleId]: ${response.statusCode} - ${response.data}',
-      );
-
-      if (response.statusCode == 200 || response.statusCode == 204) {
-        return true;
-      } else {
-        String errorMessage = 'Failed to delete schedule';
-        if (response.data is Map<String, dynamic> &&
-            response.data.containsKey('message')) {
-          errorMessage = response.data['message'];
-        } else if (response.data is String) {
-          errorMessage = response.data;
-        }
-        throw errorMessage;
-      }
-    } catch (e) {
-      print('Failed to delete schedule: $e');
-      throw e.toString();
-    }
-  }
-
-  // ==========================================
   // Other
   // ==========================================
 
@@ -2875,6 +2841,85 @@ class ApiManager {
     return getPatientClinicSchedules(clinicId: clinicId);
   }
 
+  // ==========================================
+  // DepartmentApi
+  // ==========================================
+
+  Future<List<dynamic>> getAllDepartments({int currentPage = 1}) async {
+    try {
+      final response = await _dio.get(
+        'Admin/DepartmentApi/GetAllDepartments',
+        queryParameters: {'currentPage': currentPage},
+        options: Options(validateStatus: (status) => true),
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return _extractListFromResponse(response.data);
+      } else {
+        throw _parseApiError(response, 'Failed to fetch departments');
+      }
+    } catch (e) {
+      print('getAllDepartments error: $e');
+      throw e.toString();
+    }
+  }
+
+  Future<Map<String, dynamic>?> getDepartment(int id) async {
+    try {
+      final response = await _dio.get(
+        'Admin/DepartmentApi/GetDepartment/$id',
+        options: Options(validateStatus: (status) => true),
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        if (response.data is Map) {
+          return Map<String, dynamic>.from(response.data);
+        }
+        return null;
+      } else {
+        throw _parseApiError(response, 'Failed to fetch department details');
+      }
+    } catch (e) {
+      print('getDepartment error: $e');
+      throw e.toString();
+    }
+  }
+
+  Future<bool> createDepartment(Map<String, dynamic> data) async {
+    try {
+      final response = await _dio.post(
+        'Admin/DepartmentApi/CreateDepartment',
+        data: data,
+        options: Options(validateStatus: (status) => true),
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return true;
+      } else {
+        throw _parseApiError(response, 'Failed to create department');
+      }
+    } catch (e) {
+      print('createDepartment error: $e');
+      throw e.toString();
+    }
+  }
+
+  Future<bool> editDepartment(int id, Map<String, dynamic> data) async {
+    try {
+      final response = await _dio.put(
+        'Admin/DepartmentApi/EditDepartment/$id',
+        data: data,
+        options: Options(validateStatus: (status) => true),
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return true;
+      } else {
+        throw _parseApiError(response, 'Failed to update department');
+      }
+    } catch (e) {
+      print('editDepartment error: $e');
+      throw e.toString();
+    }
+  }
+
+  Future<bool> deleteDepartment(int id) async {
+    return _deleteRequest('Admin/DepartmentApi/DeleteDepartment/$id');
+  }
 }
-
-

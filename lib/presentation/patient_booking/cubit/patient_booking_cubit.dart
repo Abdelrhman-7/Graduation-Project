@@ -490,6 +490,8 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
           date: DateTime.now().toIso8601String(),
           doctorName: doctorName,
         );
+        // Mark the appointment as Paid locally so it moves to Past in the schedule
+        await LocalBookingStore.instance.updateStatus(appointmentId, 'Paid');
         emit(PatientPaymentSuccess(message.isNotEmpty ? message : 'Payment completed successfully!'));
       } else {
         emit(PatientPaymentError(message.isNotEmpty ? message : 'Payment failed. Please try again.'));

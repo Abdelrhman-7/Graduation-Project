@@ -891,7 +891,7 @@ class _PaymentCardViewState extends State<PaymentCardView>
                 height: 52,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.of(context).popUntil((route) => route.isFirst);
+                    Navigator.of(context).pop();
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF137FEC),
@@ -901,7 +901,7 @@ class _PaymentCardViewState extends State<PaymentCardView>
                     ),
                   ),
                   child: Text(
-                    'Go to Home',
+                    'Back to Appointments',
                     style: GoogleFonts.cairo(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,

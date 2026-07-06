@@ -9,10 +9,56 @@ class DoctorInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final doctor = details['doctor'] ?? {};
-    final doctorName = doctor['fullName'] ?? doctor['name'] ?? details['doctorName'] ?? 'Unknown Doctor';
-    final specialty = doctor['specialty'] ?? details['specialty'] ?? 'Specialty';
-    final imageUrl = doctor['imageUrl'] ?? details['imageUrl'] ?? '';
+    final doctor = details['doctor'] ?? details['Doctor'] ?? {};
+
+    // Collect doctor name from all possible paths
+    final doctorName = (doctor is Map ? (doctor['fullName'] ?? doctor['FullName'] ?? doctor['name'] ?? doctor['Name']) : null)
+        ?? details['doctorName'] ?? details['DoctorName'] ?? details['doctorFullName'] ?? 'Unknown Doctor';
+
+    // Collect specialty from all possible paths
+    final specialty = (doctor is Map ? (doctor['specialty'] ?? doctor['Specialty']) : null)
+        ?? details['specialty'] ?? details['clinicName'] ?? 'Specialty';
+
+    // Collect image URL from all possible paths
+    String resolveImage(dynamic src) {
+      if (src == null) return '';
+      final s = src.toString().trim();
+      if (s.isEmpty) return '';
+      if (s.startsWith('http')) return s;
+      return 'http://clinicbook.runasp.net${s.startsWith('/') ? '' : '/'}$s';
+    }
+
+    String imageUrl = '';
+    if (doctor is Map) {
+      imageUrl = resolveImage(
+        doctor['imageUrl'] ?? doctor['ImageUrl'] ??
+        doctor['profileImageUrl'] ?? doctor['ProfileImageUrl'] ??
+        doctor['displayImageUrl'] ?? doctor['DisplayImageUrl'] ??
+        doctor['image'] ?? doctor['Image'] ?? doctor['photo'] ?? doctor['photoUrl'],
+      );
+    }
+    if (imageUrl.isEmpty) {
+      imageUrl = resolveImage(
+        details['imageUrl'] ?? details['ImageUrl'] ??
+        details['doctorImageUrl'] ?? details['DoctorImageUrl'] ??
+        details['profileImageUrl'] ?? details['ProfileImageUrl'] ??
+        details['displayImageUrl'] ?? details['DisplayImageUrl'],
+      );
+    }
+    // Also check inside schedule > doctor
+    if (imageUrl.isEmpty) {
+      final sched = details['schedule'] ?? details['Schedule'];
+      if (sched is Map) {
+        final schedDoc = sched['doctor'] ?? sched['Doctor'];
+        if (schedDoc is Map) {
+          imageUrl = resolveImage(
+            schedDoc['imageUrl'] ?? schedDoc['ImageUrl'] ??
+            schedDoc['profileImageUrl'] ?? schedDoc['ProfileImageUrl'] ??
+            schedDoc['displayImageUrl'] ?? schedDoc['DisplayImageUrl'],
+          );
+        }
+      }
+    }
 
     return Container(
       padding: const EdgeInsets.all(16),

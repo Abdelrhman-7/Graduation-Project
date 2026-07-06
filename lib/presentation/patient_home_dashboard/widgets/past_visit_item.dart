@@ -9,6 +9,7 @@ class PastVisitItem extends StatelessWidget {
   final String specialty;
   final String date;
   final String? statusLabel;
+  final String? imagePath;
   final VoidCallback? onDetails;
   final VoidCallback? onRate;
 
@@ -18,6 +19,7 @@ class PastVisitItem extends StatelessWidget {
     required this.specialty,
     required this.date,
     this.statusLabel,
+    this.imagePath,
     this.onDetails,
     this.onRate,
   });
@@ -39,11 +41,22 @@ class PastVisitItem extends StatelessWidget {
             decoration: BoxDecoration(
               color: ColorManager.primaryOpacity10,
               borderRadius: BorderRadius.circular(12),
+              image: (imagePath != null && imagePath!.isNotEmpty)
+                  ? DecorationImage(
+                      image: NetworkImage(imagePath!),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
             ),
-            child: const Icon(
-              Icons.history_rounded,
-              color: ColorManager.primary,
-            ),
+            width: 48,
+            height: 48,
+            child: (imagePath == null || imagePath!.isEmpty)
+                ? const Icon(
+                    Icons.history_rounded,
+                    color: ColorManager.primary,
+                    size: 24,
+                  )
+                : null,
           ),
           const SizedBox(width: AppSize.s12),
           Expanded(

@@ -10,7 +10,7 @@ class AppointmentInfoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dateStr = details['bookingDate'] ?? details['date'] ?? details['appointmentDate'];
-    final timeStr = details['time'] ?? details['appointmentTime'] ?? '';
+    final timeStr = details['time'] ?? details['timeSlot'] ?? details['appointmentTime'] ?? '';
     final status = details['status'] ?? 'Scheduled';
     final price = details['consultationPrice']?.toString() ?? details['price']?.toString() ?? 'N/A';
     final clinicName = details['clinicName'] ?? 'Clinic';
@@ -18,18 +18,61 @@ class AppointmentInfoCard extends StatelessWidget {
     final clinicAddress = details['clinicAddress'];
     final clinicPhone = details['clinicPhoneNumber'];
     final paymentMethod = details['paymentMethod'];
-    final paymentStatus = details['paymentStatus'];
+    final rawPayStatus = details['paymentStatus']?.toString() ?? '';
+    // Show Paid if status is Paid OR paymentStatus says so
+    final isPaid = rawPayStatus.toLowerCase().contains('paid') ||
+        status.toString().toLowerCase() == 'paid';
+    final paymentStatus = isPaid ? 'Paid' : (rawPayStatus.isNotEmpty ? rawPayStatus : null);
     final scheduleNotes = details['scheduleNotes'];
 
-    String displayDate = dateStr?.toString() ?? 'Unknown Date';
-    if (dateStr != null) {
+    final months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+    // Try parsing the date from API
+    String displayDate = 'Unknown Date';
+    bool dateResolved = false;
+    if (dateStr != null && dateStr.toString().isNotEmpty) {
       try {
         final parsed = DateTime.tryParse(dateStr.toString());
         if (parsed != null) {
-          final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-          displayDate = '${months[parsed.month - 1]} ${parsed.day}, ${parsed.year}';
+          // Accept the date only if it's within the next ~6 months
+          final sixMonthsFromNow = DateTime.now().add(const Duration(days: 185));
+          if (parsed.isBefore(sixMonthsFromNow)) {
+            displayDate = '${months[parsed.month - 1]} ${parsed.day}, ${parsed.year}';
+            dateResolved = true;
+          }
         }
       } catch (_) {}
+    }
+
+    // If date is missing or too far in future, derive from dayOfWeek
+    if (!dateResolved) {
+      final dayOfWeek = details['dayOfWeek']?.toString() ??
+          details['schedule']?['dayOfWeek']?.toString() ?? '';
+      // Also try to extract dayOfWeek from timeSlot e.g. "Sunday 09:00 - 09:30"
+      final timeSlotStr = timeStr.toString().trim();
+      final dayNames = {
+        'monday': DateTime.monday, 'tuesday': DateTime.tuesday,
+        'wednesday': DateTime.wednesday, 'thursday': DateTime.thursday,
+        'friday': DateTime.friday, 'saturday': DateTime.saturday,
+        'sunday': DateTime.sunday,
+      };
+      String foundDay = dayOfWeek.toLowerCase().trim();
+      if (foundDay.isEmpty) {
+        for (final d in dayNames.keys) {
+          if (timeSlotStr.toLowerCase().startsWith(d)) {
+            foundDay = d;
+            break;
+          }
+        }
+      }
+      final targetWeekday = dayNames[foundDay];
+      if (targetWeekday != null) {
+        final now = DateTime.now();
+        int diff = targetWeekday - now.weekday;
+        if (diff < 0) diff += 7;
+        final nextDate = now.add(Duration(days: diff));
+        displayDate = '${months[nextDate.month - 1]} ${nextDate.day}, ${nextDate.year}';
+      }
     }
 
     return Container(

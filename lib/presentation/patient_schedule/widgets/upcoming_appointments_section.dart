@@ -74,35 +74,60 @@ class UpcomingAppointmentsSection extends StatelessWidget {
                 appt['time'] ??
                 appt['startTime'] ??
                 '10:00 AM';
+
             final bookingId = appt['id'] is int
                 ? appt['id'] as int
                 : int.tryParse(appt['id']?.toString() ?? '') ?? 0;
             final doctorImageUrl =
-                appt['doctor']?['imageUrl']?.toString() ?? '';
+                appt['doctorImageUrl']?.toString() ??
+                appt['doctor']?['imageUrl']?.toString() ??
+                appt['doctor']?['profileImageUrl']?.toString() ??
+                appt['doctor']?['displayImageUrl']?.toString() ??
+                '';
 
             // Format date nicely if possible
             String displayDate = date.toString();
-            try {
-              final parsedDate = DateTime.tryParse(date.toString());
-              if (parsedDate != null) {
-                final months = [
-                  'Jan',
-                  'Feb',
-                  'Mar',
-                  'Apr',
-                  'May',
-                  'Jun',
-                  'Jul',
-                  'Aug',
-                  'Sep',
-                  'Oct',
-                  'Nov',
-                  'Dec',
-                ];
-                displayDate =
-                    '${months[parsedDate.month - 1]} ${parsedDate.day}, ${parsedDate.year}';
+            if (date.toString().isNotEmpty) {
+              try {
+                final parsedDate = DateTime.tryParse(date.toString());
+                if (parsedDate != null) {
+                  final months = [
+                    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+                  ];
+                  displayDate =
+                      '${months[parsedDate.month - 1]} ${parsedDate.day}, ${parsedDate.year}';
+                }
+              } catch (_) {}
+            } else {
+              // No date from API — derive from dayOfWeek in timeSlot (e.g. "Sunday 09:00 - 09:30")
+              final timeSlotStr = timeSlot.toString().trim();
+              final dayNames = {
+                'monday': DateTime.monday, 'tuesday': DateTime.tuesday,
+                'wednesday': DateTime.wednesday, 'thursday': DateTime.thursday,
+                'friday': DateTime.friday, 'saturday': DateTime.saturday,
+                'sunday': DateTime.sunday,
+              };
+              String? foundDay;
+              for (final day in dayNames.keys) {
+                if (timeSlotStr.toLowerCase().startsWith(day)) {
+                  foundDay = day;
+                  break;
+                }
               }
-            } catch (_) {}
+              if (foundDay != null) {
+                final targetWeekday = dayNames[foundDay]!;
+                final now = DateTime.now();
+                int diff = targetWeekday - now.weekday;
+                if (diff < 0) diff += 7;
+                final nextOccurrence = now.add(Duration(days: diff));
+                final months = [
+                  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+                ];
+                displayDate = '${months[nextOccurrence.month - 1]} ${nextOccurrence.day}, ${nextOccurrence.year}';
+              }
+            }
 
             final cubit = context.read<PatientScheduleCubit>();
             final state = context.watch<PatientScheduleCubit>().state;
@@ -117,8 +142,7 @@ class UpcomingAppointmentsSection extends StatelessWidget {
             final isConfirmed =
                 rawStatus.contains('confirm') ||
                 rawStatus.contains('accept') ||
-                rawStatus.contains('approv') ||
-                rawStatus.contains('paid');
+                rawStatus.contains('approv');
             final rawPayStatus = (appt['paymentStatus'] ?? appt['PaymentStatus'] ?? '')
                 .toString()
                 .toLowerCase();
@@ -126,7 +150,7 @@ class UpcomingAppointmentsSection extends StatelessWidget {
                 rawPayStatus.contains('paid') ||
                 rawPayStatus.contains('complet') ||
                 rawPayStatus.contains('success') ||
-                rawStatus.contains('paid');
+                rawStatus == 'paid';
             final paymentMethod = (appt['paymentMethod'] ?? appt['PaymentMethod'] ?? '').toString().toLowerCase();
             final isPayable = isConfirmed && !isPaid;
             // ────────────────────────────────────────────────────────────────

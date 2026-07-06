@@ -145,26 +145,115 @@ class Repository {
       final localBookings = await LocalBookingStore.instance.getAll();
       try {
         final local = localBookings.firstWhere((b) => b.id == id);
+        final isPaidLocally = local.status?.toLowerCase() == 'paid';
+
+        // Calculate next occurrence of dayOfWeek as the display date
+        String resolvedDate = local.date ?? local.createdAt ?? DateTime.now().toIso8601String();
+        if (local.dayOfWeek != null && local.dayOfWeek!.isNotEmpty) {
+          final dayNames = {
+            'monday': DateTime.monday, 'tuesday': DateTime.tuesday,
+            'wednesday': DateTime.wednesday, 'thursday': DateTime.thursday,
+            'friday': DateTime.friday, 'saturday': DateTime.saturday,
+            'sunday': DateTime.sunday,
+          };
+          final targetWeekday = dayNames[local.dayOfWeek!.toLowerCase().trim()];
+          if (targetWeekday != null) {
+            final now = DateTime.now();
+            int diff = targetWeekday - now.weekday;
+            if (diff < 0) diff += 7;
+            final nextDate = now.add(Duration(days: diff));
+            resolvedDate = '${nextDate.year}-${nextDate.month.toString().padLeft(2, '0')}-${nextDate.day.toString().padLeft(2, '0')}';
+          }
+        }
+
         return {
           'id': local.id,
           'doctorName': local.doctorName ?? 'Doctor',
           'clinicName': local.clinicName,
           'specialty': local.clinicName ?? '',
-          'bookingDate':
-              local.date ?? local.createdAt ?? DateTime.now().toIso8601String(),
+          'bookingDate': resolvedDate,
           'time': local.time ?? local.startTime,
+          'dayOfWeek': local.dayOfWeek,
           'status': local.status ?? 'Pending',
           'reasonForVisit': local.reasonForVisit ?? '',
           'price': local.price?.toString() ?? 'N/A',
           'paymentMethod': local.paymentMethod ?? 'Unknown',
-          'paymentStatus':
-              'NotPaid', // Local bookings are typically not paid yet
+          'paymentStatus': isPaidLocally ? 'Paid' : 'NotPaid',
         };
       } catch (_) {
         // Not found locally
       }
     }
-    return apiManager.getPatientAppointment(id);
+    final raw = await apiManager.getPatientAppointment(id);
+    if (raw == null || raw.containsKey('error')) return raw;
+
+    // Enrich: extract date/time from schedule object if not at top level
+    final result = Map<String, dynamic>.from(raw);
+    final schedule = result['schedule'] ?? result['Schedule'];
+
+    if (schedule is Map) {
+      // Lift dayOfWeek/startTime/endTime to top level always
+      final dayOfWeek = schedule['dayOfWeek'] ?? schedule['DayOfWeek'];
+      final startTime = schedule['startTime'] ?? schedule['StartTime'];
+      final endTime   = schedule['endTime']   ?? schedule['EndTime'];
+      result['dayOfWeek'] ??= dayOfWeek;
+      result['startTime'] ??= startTime;
+      result['endTime']   ??= endTime;
+
+      // Build timeSlot if missing at top level
+      if ((result['bookingDate'] == null || result['bookingDate'].toString().isEmpty) &&
+          (result['date'] == null || result['date'].toString().isEmpty)) {
+        if (dayOfWeek != null || startTime != null) {
+          result['timeSlot'] = result['timeSlot'] ?? '$dayOfWeek $startTime'.trim();
+        }
+      }
+
+      // Extract doctor info (including image) from schedule.doctor
+      final schedDoc = schedule['doctor'] ?? schedule['Doctor'];
+      if (schedDoc is Map) {
+        // Lift doctor name if missing
+        result['doctorName'] ??= schedDoc['fullName'] ?? schedDoc['FullName'] ??
+            schedDoc['name'] ?? schedDoc['Name'];
+        // Resolve doctor image URL
+        String resolveImg(dynamic src) {
+          if (src == null) return '';
+          final s = src.toString().trim();
+          if (s.isEmpty) return '';
+          if (s.startsWith('http')) return s;
+          return 'http://clinicbook.runasp.net${s.startsWith('/') ? '' : '/'}$s';
+        }
+        final imgUrl = resolveImg(
+          schedDoc['imageUrl'] ?? schedDoc['ImageUrl'] ??
+          schedDoc['profileImageUrl'] ?? schedDoc['ProfileImageUrl'] ??
+          schedDoc['displayImageUrl'] ?? schedDoc['DisplayImageUrl'],
+        );
+        if (imgUrl.isNotEmpty) {
+          result['doctorImageUrl'] ??= imgUrl;
+          // Also inject into doctor map if it exists
+          if (result['doctor'] is Map) {
+            (result['doctor'] as Map)['imageUrl'] ??= imgUrl;
+          } else {
+            result['doctor'] = Map<String, dynamic>.from(schedDoc);
+          }
+        }
+      }
+
+      // Copy nested clinic info if not present at top level
+      final clinic = schedule['clinic'] ?? schedule['Clinic'];
+      if (clinic is Map) {
+        result['clinicName'] ??= clinic['name'] ?? clinic['Name'];
+        result['clinicAddress'] ??= clinic['address'] ?? clinic['Address'];
+        result['clinicPhoneNumber'] ??= clinic['phoneNumber'] ?? clinic['PhoneNumber'] ?? clinic['phone'];
+        result['consultationPrice'] ??= clinic['consultationPrice'] ?? clinic['ConsultationPrice'] ?? clinic['price'];
+      }
+    }
+
+    // Normalize timeSlot into 'time' field for display
+    if (result['time'] == null || result['time'].toString().isEmpty) {
+      result['time'] = result['timeSlot'] ?? result['appointmentTime'];
+    }
+
+    return result;
   }
 
   Future<bool> editPatientAppointment(int id, Map<String, dynamic> data) async {
@@ -424,18 +513,48 @@ class Repository {
           seenIds.add(id);
         }
         
-        final parsed = BookingModel.fromJson(Map<String, dynamic>.from(item));
+        // Enrich raw item: pull date/time/clinic from nested 'schedule' if missing at top level
+        final rawItem = Map<String, dynamic>.from(item);
+        final sched = rawItem['schedule'] ?? rawItem['Schedule'];
+        if (sched is Map) {
+          // Pull dayOfWeek/startTime/endTime from schedule
+          rawItem['dayOfWeek'] ??= sched['dayOfWeek'] ?? sched['DayOfWeek'];
+          rawItem['startTime'] ??= sched['startTime'] ?? sched['StartTime'];
+          rawItem['endTime'] ??= sched['endTime'] ?? sched['EndTime'];
+          // Pull booking date from schedule if missing
+          rawItem['bookingDate'] ??= sched['bookingDate'] ?? sched['BookingDate'] ?? sched['date'] ?? sched['Date'];
+          // Pull clinic info from schedule
+          final schedClinic = sched['clinic'] ?? sched['Clinic'];
+          if (schedClinic is Map) {
+            rawItem['clinicName'] ??= schedClinic['name'] ?? schedClinic['Name'];
+            rawItem['consultationPrice'] ??= schedClinic['consultationPrice'] ?? schedClinic['ConsultationPrice'] ?? schedClinic['price'];
+          }
+        }
+        // Also pull clinic info directly from appointment if nested
+        final apptClinic = rawItem['clinic'] ?? rawItem['Clinic'];
+        if (apptClinic is Map) {
+          rawItem['clinicName'] ??= apptClinic['name'] ?? apptClinic['Name'];
+          rawItem['consultationPrice'] ??= apptClinic['consultationPrice'] ?? apptClinic['ConsultationPrice'] ?? apptClinic['price'];
+        }
+
+        final parsed = BookingModel.fromJson(rawItem);
         
-        // Merge local data to preserve paymentMethod and staggered dates from the smart algorithm
+        // Merge local data to preserve paymentMethod and Paid status
         BookingModel mergedParsed = parsed;
         try {
           final localData = localMaps.firstWhere((l) => l['id'] == id, orElse: () => <String, dynamic>{});
           if (localData.isNotEmpty) {
             final localBooking = BookingModel.fromJson(Map<String, dynamic>.from(localData));
+            // If locally marked as Paid, preserve that status (API may not update it yet)
+            final effectiveStatus = (localBooking.status?.toLowerCase() == 'paid')
+                ? 'Paid'
+                : parsed.status;
             mergedParsed = parsed.copyWith(
               paymentMethod: parsed.paymentMethod ?? localBooking.paymentMethod,
-              date: localBooking.date ?? parsed.date,
-              time: localBooking.time ?? parsed.time,
+              // API date/time always takes priority — only use local as fallback
+              date: (parsed.date != null && parsed.date!.isNotEmpty) ? parsed.date : localBooking.date,
+              time: (parsed.time != null && parsed.time!.isNotEmpty) ? parsed.time : localBooking.time,
+              status: effectiveStatus,
             );
           }
         } catch (_) {}

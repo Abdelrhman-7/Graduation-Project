@@ -414,7 +414,23 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
             padding: EdgeInsets.symmetric(vertical: 10),
             child: Divider(height: 1, color: Color(0xFFF1F5F9)),
           ),
-          _buildItemRow(Icons.calendar_today_rounded, 'Day: $day'),
+          _buildItemRow(Icons.calendar_today_rounded, () {
+            // Calculate next occurrence of this weekday
+            final dayNames = {
+              'monday': DateTime.monday, 'tuesday': DateTime.tuesday,
+              'wednesday': DateTime.wednesday, 'thursday': DateTime.thursday,
+              'friday': DateTime.friday, 'saturday': DateTime.saturday,
+              'sunday': DateTime.sunday,
+            };
+            final targetWeekday = dayNames[day.toLowerCase().trim()] ?? DateTime.sunday;
+            final now = DateTime.now();
+            int diff = targetWeekday - now.weekday;
+            if (diff < 0) diff += 7;
+            final nextDate = now.add(Duration(days: diff));
+            final months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            final dateStr = '${months[nextDate.month - 1]} ${nextDate.day}, ${nextDate.year}';
+            return 'Day: $day, $dateStr';
+          }()),
           _buildItemRow(Icons.access_time_rounded, 'Time Range: $displayStart - $displayEnd'),
           _buildItemRow(Icons.hourglass_bottom_rounded, 'Duration: $duration'),
           if (notes.isNotEmpty) ...[

@@ -7,24 +7,49 @@ class PatientAppointmentDetailsCubit extends Cubit<PatientAppointmentDetailsStat
 
   PatientAppointmentDetailsCubit({required this.repository}) : super(PatientAppointmentDetailsInitial());
 
-  Future<void> getDetails(int bookingId) async {
-    emit(PatientAppointmentDetailsLoading());
+  Future<void> getDetails(int bookingId, {Map<String, dynamic>? initialData}) async {
+    // Show initial data immediately while fetching from API
+    if (initialData != null && initialData.isNotEmpty) {
+      emit(PatientAppointmentDetailsLoaded(details: initialData));
+    } else {
+      emit(PatientAppointmentDetailsLoading());
+    }
     try {
       final details = await repository.getPatientAppointment(bookingId);
-      print('=== APPOINTMENT DETAILS IN CUBIT ===');
-      print(details);
-      
-      if (details != null) {
-        if (details.containsKey('error')) {
-          emit(PatientAppointmentDetailsError(message: 'Debug [ID: $bookingId]: ${details['error']}'));
-        } else {
-          emit(PatientAppointmentDetailsLoaded(details: details));
+      if (details != null && !details.containsKey('error')) {
+        // Merge: prefer API data but keep local fields the API might be missing
+        final merged = <String, dynamic>{};
+        if (initialData != null) merged.addAll(initialData);
+        merged.addAll(details);
+        // Keep local date/dayOfWeek if API didn't return them
+        if ((merged['dayOfWeek'] == null || merged['dayOfWeek'].toString().isEmpty) &&
+            initialData != null) {
+          merged['dayOfWeek'] ??= initialData['dayOfWeek'];
         }
+        if ((merged['bookingDate'] == null || merged['bookingDate'].toString().isEmpty) &&
+            initialData != null) {
+          merged['bookingDate'] ??= initialData['bookingDate'];
+        }
+        if ((merged['time'] == null || merged['time'].toString().isEmpty) &&
+            initialData != null) {
+          merged['time'] ??= initialData['timeSlot'] ?? initialData['time'];
+        }
+        emit(PatientAppointmentDetailsLoaded(details: merged));
+      } else if (initialData != null) {
+        // Keep showing initial data on API error
+        emit(PatientAppointmentDetailsLoaded(details: initialData));
       } else {
-        emit(PatientAppointmentDetailsError(message: 'Failed to load details for ID $bookingId.'));
+        emit(PatientAppointmentDetailsError(
+            message: details?.containsKey('error') == true
+                ? details!['error'].toString()
+                : 'Failed to load details for ID $bookingId.'));
       }
     } catch (e) {
-      emit(PatientAppointmentDetailsError(message: 'An error occurred: $e'));
+      if (initialData != null) {
+        emit(PatientAppointmentDetailsLoaded(details: initialData));
+      } else {
+        emit(PatientAppointmentDetailsError(message: 'An error occurred: $e'));
+      }
     }
   }
 }

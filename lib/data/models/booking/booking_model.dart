@@ -3,6 +3,7 @@ class BookingModel {
   final String patientName;
   final String? patientEmail;
   final String? doctorName;
+  final String? doctorImageUrl;
   final String? reasonForVisit;
   final String? clinicName;
   final String? date;
@@ -24,6 +25,7 @@ class BookingModel {
     required this.patientName,
     this.patientEmail,
     this.doctorName,
+    this.doctorImageUrl,
     this.reasonForVisit,
     this.clinicName,
     this.date,
@@ -108,6 +110,34 @@ class BookingModel {
           schedule['endTime'] as String? ?? schedule['EndTime'] as String?;
     }
 
+    // Resolve doctor image URL from all possible sources
+    String? resolvedImageUrl;
+    final rawImg = json['doctorImageUrl'] ?? json['DoctorImageUrl'] ??
+        json['imageUrl'] ?? json['ImageUrl'] ??
+        json['profileImageUrl'] ?? json['ProfileImageUrl'] ??
+        json['displayImageUrl'] ?? json['DisplayImageUrl'];
+    if (rawImg != null && rawImg.toString().isNotEmpty) {
+      final s = rawImg.toString().trim();
+      resolvedImageUrl = s.startsWith('http')
+          ? s
+          : 'http://clinicbook.runasp.net${s.startsWith('/') ? '' : '/'}$s';
+    }
+    // Also check inside doctor/schedule.doctor
+    if (resolvedImageUrl == null) {
+      final doc = json['doctor'] ?? json['Doctor'];
+      final schedDoc = (json['schedule'] ?? json['Schedule']) is Map
+          ? ((json['schedule'] ?? json['Schedule']) as Map)['doctor'] ?? ((json['schedule'] ?? json['Schedule']) as Map)['Doctor']
+          : null;
+      final src = (doc is Map ? (doc['imageUrl'] ?? doc['ImageUrl'] ?? doc['profileImageUrl'] ?? doc['ProfileImageUrl'] ?? doc['displayImageUrl'] ?? doc['DisplayImageUrl']) : null)
+          ?? (schedDoc is Map ? (schedDoc['imageUrl'] ?? schedDoc['ImageUrl'] ?? schedDoc['profileImageUrl'] ?? schedDoc['ProfileImageUrl'] ?? schedDoc['displayImageUrl'] ?? schedDoc['DisplayImageUrl']) : null);
+      if (src != null && src.toString().isNotEmpty) {
+        final s = src.toString().trim();
+        resolvedImageUrl = s.startsWith('http')
+            ? s
+            : 'http://clinicbook.runasp.net${s.startsWith('/') ? '' : '/'}$s';
+      }
+    }
+
     return BookingModel(
       id: _parseId(json),
       patientName: patientName,
@@ -127,6 +157,7 @@ class BookingModel {
                   json['doctor']['userName'] as String? ??
                   json['doctor']['UserName'] as String?)
               : null),
+      doctorImageUrl: resolvedImageUrl,
       reasonForVisit: json['reasonForVisit'] as String? ??
           json['ReasonForVisit'] as String?,
       clinicName: clinicName,
@@ -224,6 +255,7 @@ class BookingModel {
     return {
       'id': id,
       'doctorName': doctorName ?? 'Doctor',
+      'doctorImageUrl': doctorImageUrl,
       'clinicName': clinicName,
       'specialty': clinicName ?? '',
       'bookingDate': date ?? createdAt ?? DateTime.now().toIso8601String(),

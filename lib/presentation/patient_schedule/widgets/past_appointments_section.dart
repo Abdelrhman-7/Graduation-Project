@@ -85,10 +85,18 @@ class PastAppointmentsSection extends StatelessWidget {
             final doctorId = appt['doctorId'] ?? appt['doctor']?['id'];
             final int parsedDoctorId = doctorId != null ? (doctorId is int ? doctorId : int.tryParse(doctorId.toString()) ?? 0) : 0;
 
+            final doctorImageUrl =
+                appt['doctorImageUrl']?.toString() ??
+                appt['doctor']?['imageUrl']?.toString() ??
+                appt['doctor']?['profileImageUrl']?.toString() ??
+                appt['doctor']?['displayImageUrl']?.toString() ??
+                '';
+
             return PastVisitItem(
               doctorName: doctorName.toString(),
               specialty: specialty.toString(),
               date: displayDate,
+              imagePath: doctorImageUrl,
               statusLabel: statusLabel,
               onRate: (parsedDoctorId > 0 && !status.contains('cancel') && !status.contains('reject') && !status.contains('denied'))
                   ? () {
