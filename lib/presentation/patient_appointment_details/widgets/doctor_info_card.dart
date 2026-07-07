@@ -32,30 +32,14 @@ class DoctorInfoCard extends StatelessWidget {
       doctorId = fallbackDoctorIdStr is int ? fallbackDoctorIdStr : int.tryParse(fallbackDoctorIdStr.toString()) ?? 0;
     }
 
-    String imageUrl = '';
-    if (doctor is Map) {
-      imageUrl = doctor['imageUrl'] ?? doctor['ImageUrl'] ??
-                 doctor['profileImageUrl'] ?? doctor['ProfileImageUrl'] ??
-                 doctor['displayImageUrl'] ?? doctor['DisplayImageUrl'] ??
-                 doctor['image'] ?? doctor['Image'] ?? doctor['photo'] ?? doctor['photoUrl'] ?? '';
-    }
-    if (imageUrl.isEmpty) {
-      imageUrl = details['imageUrl'] ?? details['ImageUrl'] ??
-                 details['doctorImageUrl'] ?? details['DoctorImageUrl'] ??
-                 details['profileImageUrl'] ?? details['ProfileImageUrl'] ??
-                 details['displayImageUrl'] ?? details['DisplayImageUrl'] ?? '';
-    }
-    if (imageUrl.isEmpty) {
-      final sched = details['schedule'] ?? details['Schedule'];
-      if (sched is Map) {
-        final schedDoc = sched['doctor'] ?? sched['Doctor'];
-        if (schedDoc is Map) {
-          imageUrl = schedDoc['imageUrl'] ?? schedDoc['ImageUrl'] ??
-                     schedDoc['profileImageUrl'] ?? schedDoc['ProfileImageUrl'] ??
-                     schedDoc['displayImageUrl'] ?? schedDoc['DisplayImageUrl'] ?? '';
-        }
-      }
-    }
+    final doctorImageUrlRaw = details['doctorImageUrl'] ??
+        details['DoctorImageUrl'] ??
+        (doctor is Map ? (doctor['imageUrl'] ?? doctor['ImageUrl'] ?? doctor['profileImageUrl'] ?? doctor['ProfileImageUrl'] ?? doctor['displayImageUrl'] ?? doctor['DisplayImageUrl'] ?? doctor['image'] ?? doctor['photo'] ?? doctor['photoUrl']) : null) ??
+        (details['schedule'] is Map && details['schedule']['doctor'] is Map ? (details['schedule']['doctor']['imageUrl'] ?? details['schedule']['doctor']['profileImageUrl'] ?? details['schedule']['doctor']['displayImageUrl']) : null) ??
+        (details['Schedule'] is Map && details['Schedule']['Doctor'] is Map ? (details['Schedule']['Doctor']['ImageUrl'] ?? details['Schedule']['Doctor']['ProfileImageUrl'] ?? details['Schedule']['Doctor']['DisplayImageUrl']) : null) ??
+        '';
+
+    String imageUrl = doctorImageUrlRaw.toString();
     
     final docModel = DoctorModel(
       id: doctorId,

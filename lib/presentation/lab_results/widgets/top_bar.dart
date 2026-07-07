@@ -21,14 +21,7 @@ class LabResultsTopBar extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          IconButton(
-            icon: SvgPicture.asset(
-              ImageAssets.goBack,
-              width: s(24),
-              height: s(24),
-            ),
-            onPressed: () => Navigator.pop(context),
-          ),
+          SizedBox(width: s(48)),
           Text(
             AppStrings.labResults,
             style: ThemeManager.getLabHeading3Style().copyWith(fontSize: s(18)),

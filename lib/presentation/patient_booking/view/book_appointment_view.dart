@@ -6,6 +6,7 @@ import 'package:graduationproject/data/models/schudule/doctorModel.dart';
 import '../cubit/patient_booking_cubit.dart';
 import '../cubit/patient_booking_state.dart';
 import 'package:graduationproject/data/api/api_manager.dart';
+import '../../patient_schedule/view/patient_schedule_view.dart';
 
 class BookAppointmentView extends StatefulWidget {
   final DoctorModel doctor;
@@ -767,7 +768,10 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () {
-                Navigator.of(context).popUntil((route) => route.isFirst);
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const PatientScheduleView()),
+                  (route) => false,
+                );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: isOnlinePayment
@@ -782,7 +786,7 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
                 ),
               ),
               child: Text(
-                isOnlinePayment ? 'Pay Later — Go to Home' : 'Go back to Home',
+                isOnlinePayment ? 'Pay Later — Go to Schedule' : 'Go to Schedule',
                 style: GoogleFonts.cairo(
                   fontSize: s(14),
                   fontWeight: FontWeight.w700,

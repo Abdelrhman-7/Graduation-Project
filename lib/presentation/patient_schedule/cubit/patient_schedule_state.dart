@@ -12,7 +12,7 @@ class PatientScheduleSuccess extends PatientScheduleState {
   static String _statusOf(dynamic a) =>
       (a['status'] ?? '').toString().toLowerCase();
 
-  /// Upcoming: pending + approved (not cancelled/rejected/completed/paid)
+  /// Upcoming: pending + approved (not cancelled/rejected/completed)
   List<dynamic> get upcomingAppointments {
     return appointments.where((a) {
       final status = _statusOf(a);
@@ -20,20 +20,18 @@ class PatientScheduleSuccess extends PatientScheduleState {
       if (status.contains('reject')) return false;
       if (status.contains('denied')) return false;
       if (status.contains('complet')) return false;
-      if (status == 'paid') return false;
-      return true; // pending, approved, accept, empty → upcoming
+      return true; // pending, approved, accept, paid, empty → upcoming
     }).toList();
   }
 
-  /// Past: cancelled, rejected, completed, denied, or paid
+  /// Past: cancelled, rejected, completed, denied
   List<dynamic> get pastAppointments {
     return appointments.where((a) {
       final status = _statusOf(a);
       return status.contains('cancel') ||
           status.contains('reject') ||
           status.contains('denied') ||
-          status.contains('complet') ||
-          status == 'paid';
+          status.contains('complet');
     }).toList();
   }
 }

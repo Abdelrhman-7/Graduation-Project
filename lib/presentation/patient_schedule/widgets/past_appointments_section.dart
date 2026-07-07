@@ -141,7 +141,10 @@ class PastAppointmentsSection extends StatelessWidget {
                     context,
                     MaterialPageRoute(
                       builder: (_) =>
-                          PatientAppointmentDetailsView(bookingId: bookingId),
+                          PatientAppointmentDetailsView(
+                            bookingId: bookingId,
+                            initialData: Map<String, dynamic>.from(appt),
+                          ),
                     ),
                   );
                 }

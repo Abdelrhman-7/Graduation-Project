@@ -14,6 +14,8 @@ class LabResultsCubit extends Cubit<LabResultsState> {
     required String bloodSugar,
     required String weight,
     required String notes,
+    String? medTitle,
+    String? medSubtitle,
   }) async {
     emit(LabResultsSubmitLoading());
     try {
@@ -29,6 +31,18 @@ class LabResultsCubit extends Cubit<LabResultsState> {
         'timestamp': DateTime.now().toIso8601String(),
       };
       await repository.addPatientHealthMetricRecord(record);
+      
+      if (medTitle != null && medTitle.isNotEmpty) {
+        final newMed = {
+          'title': medTitle,
+          'subtitle': medSubtitle ?? '',
+          'badge': 'Active'
+        };
+        // Load existing and add new
+        final currentMeds = await repository.getPatientMedications();
+        currentMeds.insert(0, newMed);
+        await repository.savePatientMedications(currentMeds);
+      }
       
       if (!isClosed) {
         emit(LabResultsSubmitSuccess());

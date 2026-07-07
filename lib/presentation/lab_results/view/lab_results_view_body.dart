@@ -7,6 +7,7 @@ import '../cubit/lab_results_state.dart';
 import '../widgets/top_bar.dart';
 import '../widgets/health_metrics_history_sheet.dart';
 import '../../patient_home_dashboard/widgets/patient_bottom_nav.dart';
+import '../../patient_home_dashboard/view/patient_home_dashboard_view.dart';
 
 class LabResultsViewBody extends StatefulWidget {
   const LabResultsViewBody({super.key});
@@ -52,8 +53,13 @@ class _LabResultsViewBodyState extends State<LabResultsViewBody> {
     _bloodSugarController.dispose();
     _weightController.dispose();
     _notesController.dispose();
+    _medTitleController.dispose();
+    _medSubtitleController.dispose();
     super.dispose();
   }
+
+  final _medTitleController = TextEditingController();
+  final _medSubtitleController = TextEditingController();
 
   void _submit() {
     if (_formKey.currentState?.validate() ?? false) {
@@ -64,6 +70,8 @@ class _LabResultsViewBodyState extends State<LabResultsViewBody> {
             bloodSugar: _bloodSugarController.text,
             weight: _weightController.text,
             notes: _notesController.text,
+            medTitle: _medTitleController.text,
+            medSubtitle: _medSubtitleController.text,
           );
     }
   }
@@ -84,7 +92,12 @@ class _LabResultsViewBodyState extends State<LabResultsViewBody> {
                   backgroundColor: ColorManager.primary,
                 ),
               );
-              Navigator.pop(context); // Or clear form
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const PatientHomeDashboardView(),
+                ),
+              );
             } else if (state is LabResultsSubmitError) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -212,6 +225,35 @@ class _LabResultsViewBodyState extends State<LabResultsViewBody> {
                             controller: _notesController,
                             keyboardType: TextInputType.text,
                             icon: Icons.notes_rounded,
+                            isRequired: false,
+                          ),
+                          SizedBox(height: s(24)),
+                          
+                          // Medications
+                          Text(
+                            'Current Medication (Optional)',
+                            style: GoogleFonts.cairo(
+                              fontSize: s(16),
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF1E293B),
+                            ),
+                          ),
+                          SizedBox(height: s(12)),
+                          _buildTextField(
+                            label: 'Medication Name',
+                            hintText: 'e.g. Amoxicillin',
+                            controller: _medTitleController,
+                            keyboardType: TextInputType.text,
+                            icon: Icons.medication_outlined,
+                            isRequired: false,
+                          ),
+                          SizedBox(height: s(12)),
+                          _buildTextField(
+                            label: 'Dosage & Instructions',
+                            hintText: 'e.g. 500mg • 1 pill/day',
+                            controller: _medSubtitleController,
+                            keyboardType: TextInputType.text,
+                            icon: Icons.info_outline,
                             isRequired: false,
                           ),
                           SizedBox(height: s(32)),

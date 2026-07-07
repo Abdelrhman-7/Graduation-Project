@@ -8,6 +8,8 @@ import 'package:graduationproject/core/resources/values_manager.dart';
 import 'package:graduationproject/core/widgets/custom_text_field.dart';
 import 'package:graduationproject/core/widgets/custom_dropdown_field.dart';
 import 'package:graduationproject/presentation/doctor/register%20screen/cubit/registergoctor_cubit.dart';
+import '../../../login/view/login_view.dart';
+import '../../../role_selection/cubit/role_selection_state.dart';
 
 class DoctorRegisterForm extends StatefulWidget {
   const DoctorRegisterForm({super.key});
@@ -103,7 +105,13 @@ class _DoctorRegisterFormState extends State<DoctorRegisterForm> {
               backgroundColor: Colors.green,
             ),
           );
-          Navigator.pop(context); // Go back to login or role selection
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const LoginView(role: UserRole.doctor),
+            ),
+            (route) => false,
+          );
         } else if (state is DoctorRegisterError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

@@ -1,4 +1,5 @@
 // ignore_for_file: avoid_print
+import 'dart:convert';
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
@@ -466,6 +467,15 @@ class ApiManager {
         'Register response: '
         '${response.statusCode} — ${response.data}',
       );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return RegisterResponse(
+          status: true,
+          message: response.data is Map<String, dynamic>
+              ? (response.data['message']?.toString() ?? 'Registration successful')
+              : response.data.toString(),
+        );
+      }
 
       return RegisterResponse.fromJson(
         response.data is Map<String, dynamic>
@@ -1084,23 +1094,39 @@ class ApiManager {
       }
 
       print('Generated Stripe Token: $stripeToken. Sending to backend...');
+      // 2. Send token to backend
+      final cleanCardNumber = cardNumber.replaceAll(' ', '');
+      final cleanCvv = cvv.trim();
+      final expMonth = int.tryParse(expiryMonth.trim()) ?? 1;
+      final expYear = int.tryParse(expiryYear.trim()) ?? DateTime.now().year;
+      final holderName = cardHolderName.trim().isNotEmpty ? cardHolderName.trim() : 'Card Holder';
 
-      // 2. Send token to backend as multipart/form-data
-      final formData = FormData.fromMap({
+      // Debug: print actual values before sending
+      print('=== PAYMENT DEBUG ===');
+      print('CardNumber: "$cleanCardNumber" (len=${cleanCardNumber.length})');
+      print('CVV: "$cleanCvv" (len=${cleanCvv.length})');
+      print('ExpiryMonth: $expMonth, ExpiryYear: $expYear');
+      print('CardHolderName: "$holderName"');
+      print('StripeToken: "$stripeToken"');
+      print('===================');
+
+      // Pass Map directly to Dio — Dio handles JSON encoding internally.
+      // Passing a pre-encoded String can cause double-encoding issues.
+      final bodyMap = <String, dynamic>{
         'StripeToken': stripeToken,
-        'stripeToken':
-            stripeToken, // Keep this just in case backend expects lowercase
-        'CardNumber': cardNumber.replaceAll(' ', ''),
-        'CVV': cvv,
-        'ExpiryMonth': int.tryParse(expiryMonth) ?? 1,
-        'ExpiryYear': int.tryParse(expiryYear) ?? DateTime.now().year,
-        'CardHolderName': cardHolderName,
-      });
+        'CardNumber': cleanCardNumber,
+        'CVV': cleanCvv,
+        'ExpiryMonth': expMonth,
+        'ExpiryYear': expYear,
+        'CardHolderName': holderName,
+      };
+      print('Payment body JSON: ${jsonEncode(bodyMap)}');
+
       final response = await _dio.post(
         'Patient/AppointmentApi/PayAppointmentByCard/$appointmentId',
-        data: formData,
+        data: bodyMap,   // ← Map, not String — Dio serializes to JSON correctly
         options: Options(
-          contentType: 'multipart/form-data',
+          contentType: 'application/json',
           validateStatus: (status) => true,
           sendTimeout: const Duration(seconds: 45),
           receiveTimeout: const Duration(seconds: 45),
@@ -1667,9 +1693,17 @@ class ApiManager {
         return response.data;
       } else {
         String errorMessage = 'Failed to book appointment';
-        if (response.data is Map<String, dynamic> &&
-            response.data.containsKey('message')) {
-          errorMessage = response.data['message'];
+        if (response.data is Map<String, dynamic>) {
+          final data = response.data as Map<String, dynamic>;
+          if (data.containsKey('message')) {
+            errorMessage = data['message'];
+          } else if (data.containsKey('errors')) {
+            errorMessage = data['errors'].toString();
+          } else if (data.containsKey('title')) {
+            errorMessage = data['title'];
+          } else {
+            errorMessage = response.data.toString();
+          }
         } else if (response.data is String) {
           errorMessage = response.data;
         }

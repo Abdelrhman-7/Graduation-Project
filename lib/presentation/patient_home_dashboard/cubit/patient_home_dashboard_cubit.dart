@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:graduationproject/data/models/booking/booking_model.dart';
 import 'package:graduationproject/data/repository/repository.dart';
 import 'package:graduationproject/data/repository/shared_pref_controller.dart';
+import 'package:graduationproject/data/local/local_booking_store.dart';
 import 'patient_home_dashboard_state.dart';
 
 class PatientHomeDashboardCubit extends Cubit<PatientHomeDashboardState> {
@@ -118,12 +119,29 @@ class PatientHomeDashboardCubit extends Cubit<PatientHomeDashboardState> {
           if (status.contains('complet')) return false;
           return true;
         }).toList();
-        if (upcoming.isNotEmpty) {
-          nextAppt = upcoming.first;
+        // Validate if the appointment still exists on the server!
+        while (upcoming.isNotEmpty) {
+          final potentialAppt = upcoming.first;
+          final bookingId = int.tryParse(potentialAppt['id']?.toString() ?? '0') ?? 0;
+          
+          if (bookingId > 0) {
+            final check = await _repository.getPatientAppointment(bookingId);
+            if (check != null && check.containsKey('error')) {
+              // The appointment is likely deleted/cancelled by the doctor
+              await LocalBookingStore.instance.deleteBooking(bookingId);
+              upcoming.removeAt(0);
+              continue; // Try the next one
+            }
+          }
+          nextAppt = potentialAppt;
+          break;
         }
-      } catch (_) {}
+      } catch (e) {
+        print('Error getting dashboard appointments: $e');
+      }
 
       final healthMetrics = await _repository.getPatientHealthMetrics();
+      var meds = await _repository.getPatientMedications();
 
       emit(PatientHomeDashboardSuccess(
         userName: userName,
@@ -132,10 +150,7 @@ class PatientHomeDashboardCubit extends Cubit<PatientHomeDashboardState> {
         nextAppointment: nextAppt,
         heartRate: healthMetrics['heartRate'] ?? '72',
         bloodPressure: healthMetrics['bloodPressure'] ?? '120/80',
-        medications: const [
-          {'title': 'Amoxicillin', 'subtitle': '500mg • 1 pill/day', 'badge': 'Active'},
-          {'title': 'Lisinopril', 'subtitle': '10mg • 1 pill/day', 'badge': 'Refill'},
-        ],
+        medications: meds,
       ));
     } catch (e) {
       // Fallback لو حصل خطأ
@@ -180,6 +195,7 @@ class PatientHomeDashboardCubit extends Cubit<PatientHomeDashboardState> {
         } catch (_) {}
 
         final healthMetrics = await _repository.getPatientHealthMetrics();
+        var meds = await _repository.getPatientMedications();
 
         emit(PatientHomeDashboardSuccess(
           userName: userName,
@@ -188,10 +204,7 @@ class PatientHomeDashboardCubit extends Cubit<PatientHomeDashboardState> {
           nextAppointment: nextAppt,
           heartRate: healthMetrics['heartRate'] ?? '72',
           bloodPressure: healthMetrics['bloodPressure'] ?? '120/80',
-          medications: const [
-            {'title': 'Amoxicillin', 'subtitle': '500mg • 1 pill/day', 'badge': 'Active'},
-            {'title': 'Lisinopril', 'subtitle': '10mg • 1 pill/day', 'badge': 'Refill'},
-          ],
+          medications: meds,
         ));
       } catch (_) {
         emit(PatientHomeDashboardError(e.toString()));

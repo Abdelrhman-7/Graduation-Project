@@ -14,6 +14,8 @@ import '../widgets/registration_footer.dart';
 import '../widgets/registration_progress_bar.dart';
 
 import 'package:intl/intl.dart';
+import '../../login/view/login_view.dart';
+import '../../role_selection/cubit/role_selection_state.dart';
 
 class PatientRegistrationViewBody extends StatefulWidget {
   const PatientRegistrationViewBody({super.key});
@@ -167,7 +169,14 @@ class _PatientRegistrationViewBodyState extends State<PatientRegistrationViewBod
               ),
             );
           },
-          onLoginPressed: () {},
+          onLoginPressed: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const LoginView(role: UserRole.patient),
+              ),
+            );
+          },
         ),
       ],
     );

@@ -11,6 +11,8 @@ import '../../../core/resources/values_manager.dart';
 import '../../../core/widgets/custom_text_field.dart';
 import '../../forgot_password/view/forgot_password_view.dart';
 import '../cubit/login_cubit.dart';
+import '../../doctor/register screen/view/doctor_register_view.dart';
+import '../../patient_registration/view/patient_registration_view.dart';
 import '../../../data/models/Auth/login_model.dart';
 
 class LoginForm extends StatefulWidget {
@@ -234,7 +236,21 @@ class _LoginFormState extends State<LoginForm> {
               ),
               TextButton(
                 onPressed: () {
-                  Navigator.maybePop(context);
+                  if (widget.role == UserRole.patient) {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const PatientRegistrationView(),
+                      ),
+                    );
+                  } else if (widget.role == UserRole.doctor) {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const DoctorRegisterView(),
+                      ),
+                    );
+                  }
                 },
                 child: Text(
                   AppStrings.register,

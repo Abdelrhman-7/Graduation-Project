@@ -7,6 +7,8 @@ import '../../../core/widgets/custom_text_field.dart';
 import '../cubit/patient_registration_cubit.dart';
 import '../cubit/patient_registration_state.dart';
 import '../widgets/registration_progress_bar.dart';
+import '../../login/view/login_view.dart';
+import '../../role_selection/cubit/role_selection_state.dart';
 
 class PatientRegistrationStep2ViewBody extends StatefulWidget {
   const PatientRegistrationStep2ViewBody({super.key});
@@ -53,13 +55,19 @@ class _PatientRegistrationStep2ViewBodyState
               backgroundColor: Colors.green,
             ),
           );
-          // Navigate to login or home after successful registration
-          Navigator.of(context).popUntil((route) => route.isFirst);
+          // Navigate to login after successful registration
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const LoginView(role: UserRole.patient),
+            ),
+            (route) => false,
+          );
         } else if (state is PatientRegistrationError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
-              backgroundColor: Colors.red,
+              backgroundColor: Colors.green,
             ),
           );
         }

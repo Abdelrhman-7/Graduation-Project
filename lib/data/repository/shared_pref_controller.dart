@@ -252,6 +252,34 @@ class SharedPrefController {
     return {'heartRate': '72', 'bloodPressure': '120/80'};
   }
 
+  static const String _medicationsKey = 'patient_medications';
+
+  Future<void> saveMedications(List<Map<String, dynamic>> medications) async {
+    final prefs = await SharedPreferences.getInstance();
+    // Convert list of maps to list of JSON strings for simple storage
+    final List<String> medsStr = medications.map((m) {
+      return '{"title": "${m['title']}", "subtitle": "${m['subtitle']}", "badge": "${m['badge']}"}';
+    }).toList();
+    await prefs.setStringList(_medicationsKey, medsStr);
+  }
+
+  Future<List<Map<String, dynamic>>> getMedications() async {
+    final prefs = await SharedPreferences.getInstance();
+    final List<String> medsStr = prefs.getStringList(_medicationsKey) ?? [];
+    if (medsStr.isEmpty) return [];
+
+    return medsStr.map((s) {
+      final titleMatch = RegExp(r'"title":\s*"([^"]+)"').firstMatch(s);
+      final subtitleMatch = RegExp(r'"subtitle":\s*"([^"]+)"').firstMatch(s);
+      final badgeMatch = RegExp(r'"badge":\s*"([^"]+)"').firstMatch(s);
+      return {
+        'title': titleMatch?.group(1) ?? '',
+        'subtitle': subtitleMatch?.group(1) ?? '',
+        'badge': badgeMatch?.group(1) ?? '',
+      };
+    }).toList();
+  }
+
   // --- Lock Status for Doctors & Patients ---
   // Key pattern: 'lock_status_doctor_{id}' or 'lock_status_patient_{id}'
 

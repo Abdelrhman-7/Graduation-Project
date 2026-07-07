@@ -94,11 +94,25 @@ class UpcomingAppointmentsSection extends StatelessWidget {
                 appt['date'] ??
                 appt['scheduledDate'] ??
                 '';
-            final timeSlot =
-                appt['timeSlot'] ??
+            final timeStr = (appt['timeSlot'] ??
                 appt['time'] ??
                 appt['startTime'] ??
-                '10:00 AM';
+                '10:00 AM').toString();
+
+            String timeSlot = timeStr;
+            if (timeSlot.isNotEmpty && timeSlot != '10:00 AM') {
+              try {
+                final RegExp timeRegex = RegExp(r'(\d{1,2}):(\d{2})(?::\d{2})?');
+                final match = timeRegex.firstMatch(timeSlot);
+                if (match != null) {
+                  final int hour = int.parse(match.group(1)!);
+                  final int min = int.parse(match.group(2)!);
+                  final String period = hour >= 12 ? 'PM' : 'AM';
+                  final int displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
+                  timeSlot = '${displayHour.toString().padLeft(2, '0')}:${min.toString().padLeft(2, '0')} $period';
+                }
+              } catch (_) {}
+            }
 
             final bookingId = appt['id'] is int
                 ? appt['id'] as int
@@ -361,7 +375,10 @@ class UpcomingAppointmentsSection extends StatelessWidget {
                     context,
                     MaterialPageRoute(
                       builder: (_) =>
-                          PatientAppointmentDetailsView(bookingId: bookingId),
+                          PatientAppointmentDetailsView(
+                            bookingId: bookingId,
+                            initialData: Map<String, dynamic>.from(appt),
+                          ),
                     ),
                   );
                 }

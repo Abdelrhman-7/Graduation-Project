@@ -60,6 +60,10 @@ class PatientHomeDashboardViewBody extends StatelessWidget {
                 ? state.bloodPressure
                 : '120/80';
 
+            final medications = state is PatientHomeDashboardSuccess
+                ? state.medications
+                : [];
+
             return Container(
               color: bg,
               child: Center(
@@ -85,9 +89,32 @@ class PatientHomeDashboardViewBody extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               if (nextAppointment != null) ...[
-                                Text(
-                                  'Next Appointment',
-                                  style: _headingStyle(scale),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      'Next Appointment',
+                                      style: _headingStyle(scale),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => const PatientScheduleView(),
+                                          ),
+                                        );
+                                      },
+                                      child: Text(
+                                        'See All',
+                                        style: GoogleFonts.cairo(
+                                          color: const Color(0xFF137FEC),
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                                 SizedBox(height: s(16)),
                                 Builder(
@@ -123,6 +150,27 @@ class PatientHomeDashboardViewBody extends StatelessWidget {
                                           nextAppointment['displayImageUrl']),
                                     );
 
+                                    final timeStr = (nextAppointment['timeSlot'] ??
+                                        nextAppointment['time'] ??
+                                        nextAppointment['startTime'] ??
+                                        'TBD').toString();
+                                    
+                                    String formattedTime = timeStr;
+                                    if (formattedTime.isNotEmpty && formattedTime != 'TBD') {
+                                      try {
+                                        // Match any time-like string e.g. 18:00 or 18:00:00 or 2026-07-12T18:00:00
+                                        final RegExp timeRegex = RegExp(r'(\d{1,2}):(\d{2})(?::\d{2})?');
+                                        final match = timeRegex.firstMatch(formattedTime);
+                                        if (match != null) {
+                                          final int hour = int.parse(match.group(1)!);
+                                          final int min = int.parse(match.group(2)!);
+                                          final String period = hour >= 12 ? 'PM' : 'AM';
+                                          final int displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
+                                          formattedTime = '${displayHour.toString().padLeft(2, '0')}:${min.toString().padLeft(2, '0')} $period';
+                                        }
+                                      } catch (_) {}
+                                    }
+
                                     return AppointmentCard(
                                       doctorName: doctor.fullName,
                                       specialty: nextAppointment['specialty'] ??
@@ -137,8 +185,11 @@ class PatientHomeDashboardViewBody extends StatelessWidget {
                                         doctorId: doctor.id,
                                         imageUrl: doctor.imageUrl,
                                       ),
+                                      timeSlot: formattedTime,
                                       bookingId: int.tryParse(nextAppointment['id']?.toString() ?? '0') ?? 0,
-                                      status: nextAppointment['status'],
+                                      status: (nextAppointment['status']?.toString().toLowerCase() == 'paid' || nextAppointment['paymentStatus']?.toString().toLowerCase() == 'paid') 
+                                          ? 'Paid' 
+                                          : (nextAppointment['status'] ?? 'Pending'),
                                       isViewOnly: true,
                                       onDetails: () {
                                         final bookingId = int.tryParse(nextAppointment['id']?.toString() ?? '0') ?? 0;
@@ -146,7 +197,10 @@ class PatientHomeDashboardViewBody extends StatelessWidget {
                                           Navigator.push(
                                             context,
                                             MaterialPageRoute(
-                                              builder: (_) => PatientAppointmentDetailsView(bookingId: bookingId),
+                                              builder: (_) => PatientAppointmentDetailsView(
+                                                bookingId: bookingId,
+                                                initialData: Map<String, dynamic>.from(nextAppointment),
+                                              ),
                                             ),
                                           );
                                         }
@@ -235,25 +289,35 @@ class PatientHomeDashboardViewBody extends StatelessWidget {
                                 style: _headingStyle(scale),
                               ),
                               SizedBox(height: s(16)),
-                              _MedicationTile(
-                                scale: scale,
-                                icon: Icons.medication_outlined,
-                                iconBg: const Color(0xFFFEF2F2),
-                                title: 'Amoxicillin',
-                                subtitle: '500mg • 1 pill/day',
-                                badge: AppStrings.active,
-                                badgeColor: const Color(0xFF16A34A),
-                              ),
-                              SizedBox(height: s(12)),
-                              _MedicationTile(
-                                scale: scale,
-                                icon: Icons.assignment_outlined,
-                                iconBg: const Color(0xFFF1F5F9),
-                                title: 'Lisinopril',
-                                subtitle: '10mg • 1 pill/day',
-                                badge: AppStrings.refillBadge,
-                                badgeColor: const Color(0xFF2563EB),
-                              ),
+                              if (medications.isEmpty)
+                                Padding(
+                                  padding: EdgeInsets.symmetric(vertical: s(12)),
+                                  child: Center(
+                                    child: Text(
+                                      'No current medications',
+                                      style: GoogleFonts.cairo(
+                                        fontSize: 14,
+                                        color: const Color(0xFF64748B),
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              else
+                                ...medications.map((med) {
+                                  final isRefill = med['badge'].toString().toLowerCase() == 'refill';
+                                  return Padding(
+                                    padding: EdgeInsets.only(bottom: s(12)),
+                                    child: _MedicationTile(
+                                      scale: scale,
+                                      icon: isRefill ? Icons.assignment_outlined : Icons.medication_outlined,
+                                      iconBg: isRefill ? const Color(0xFFF1F5F9) : const Color(0xFFFEF2F2),
+                                      title: med['title']?.toString() ?? 'Medication',
+                                      subtitle: med['subtitle']?.toString() ?? '',
+                                      badge: med['badge']?.toString() ?? 'Active',
+                                      badgeColor: isRefill ? const Color(0xFF2563EB) : const Color(0xFF16A34A),
+                                    ),
+                                  );
+                                }),
                               SizedBox(height: s(16)),
                               _StatsCard(
                                 scale: scale,

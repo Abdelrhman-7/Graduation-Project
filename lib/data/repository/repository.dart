@@ -695,8 +695,19 @@ class Repository {
             final effectiveStatus = (localBooking.status?.toLowerCase() == 'paid')
                 ? 'Paid'
                 : parsed.status;
+            
+            final safeDoctorName = (parsed.doctorName != null && parsed.doctorName!.isNotEmpty && parsed.doctorName != 'Doctor' && parsed.doctorName != 'Unknown Doctor')
+                ? parsed.doctorName
+                : localBooking.doctorName;
+                
+            final safeClinicName = (parsed.clinicName != null && parsed.clinicName!.isNotEmpty)
+                ? parsed.clinicName
+                : localBooking.clinicName;
+
             mergedParsed = parsed.copyWith(
               paymentMethod: parsed.paymentMethod ?? localBooking.paymentMethod,
+              doctorName: safeDoctorName,
+              clinicName: safeClinicName,
               // API date/time always takes priority — only use local as fallback
               date: (parsed.date != null && parsed.date!.isNotEmpty) ? parsed.date : localBooking.date,
               time: (parsed.time != null && parsed.time!.isNotEmpty) ? parsed.time : localBooking.time,
@@ -737,12 +748,8 @@ class Repository {
     }
     
     return uniqueMaps.where((item) {
-      if (item is Map) {
-        final docName = item['doctorName']?.toString().toLowerCase().trim() ?? '';
-        if (docName == 'doctor' || docName == 'unknown doctor' || docName.isEmpty) {
-          return false;
-        }
-      }
+      // Allow all appointments. The UI (UpcomingAppointmentsSection) 
+      // already handles empty or missing doctor names gracefully.
       return true;
     }).toList();
   }
@@ -1164,6 +1171,16 @@ class Repository {
   Future<Map<String, String>> getPatientHealthMetrics() async {
     final prefs = SharedPrefController();
     return await prefs.getHealthMetrics();
+  }
+
+  Future<void> savePatientMedications(List<Map<String, dynamic>> medications) async {
+    final prefs = SharedPrefController();
+    await prefs.saveMedications(medications);
+  }
+
+  Future<List<Map<String, dynamic>>> getPatientMedications() async {
+    final prefs = SharedPrefController();
+    return await prefs.getMedications();
   }
 
   /// دفع قيمة الحجز بالبطاقة الائتمانية

@@ -9,23 +9,65 @@ class AppointmentInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dateStr = details['bookingDate'] ?? details['date'] ?? details['appointmentDate'];
-    final timeStr = details['time'] ?? details['timeSlot'] ?? details['appointmentTime'] ?? '';
+    final dateStr =
+        details['bookingDate'] ?? details['date'] ?? details['appointmentDate'];
+    final timeStr =
+        details['time'] ??
+        details['timeSlot'] ??
+        details['appointmentTime'] ??
+        '';
     final status = details['status'] ?? 'Scheduled';
-    final price = details['consultationPrice']?.toString() ?? details['price']?.toString() ?? 'N/A';
+    final price =
+        details['consultationPrice']?.toString() ??
+        details['price']?.toString() ??
+        'N/A';
     final clinicName = details['clinicName'] ?? 'Clinic';
-    
+
     final clinicAddress = details['clinicAddress'];
     final clinicPhone = details['clinicPhoneNumber'];
     final paymentMethod = details['paymentMethod'];
-    final rawPayStatus = details['paymentStatus']?.toString() ?? '';
+
+    String formattedTime = timeStr.toString();
+    if (formattedTime.isNotEmpty) {
+      try {
+        final RegExp timeRegex = RegExp(r'(\d{1,2}):(\d{2})(?::\d{2})?');
+        final match = timeRegex.firstMatch(formattedTime);
+        if (match != null) {
+          final int hour = int.parse(match.group(1)!);
+          final int min = int.parse(match.group(2)!);
+          final String period = hour >= 12 ? 'PM' : 'AM';
+          final int displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
+          formattedTime = '${displayHour.toString().padLeft(2, '0')}:${min.toString().padLeft(2, '0')} $period';
+        }
+      } catch (_) {}
+    }
+
+    final rawPayStatus = (details['paymentStatus'] ?? details['PaymentStatus'] ?? '').toString();
     // Show Paid if status is Paid OR paymentStatus says so
-    final isPaid = rawPayStatus.toLowerCase().contains('paid') ||
+    final isPaid =
+        rawPayStatus.toLowerCase().contains('paid') ||
+        rawPayStatus.toLowerCase().contains('complet') ||
+        rawPayStatus.toLowerCase().contains('success') ||
         status.toString().toLowerCase() == 'paid';
-    final paymentStatus = isPaid ? 'Paid' : (rawPayStatus.isNotEmpty ? rawPayStatus : null);
+    final paymentStatus = isPaid
+        ? 'Paid'
+        : (rawPayStatus.isNotEmpty ? rawPayStatus : 'Unpaid');
     final scheduleNotes = details['scheduleNotes'];
 
-    final months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    final months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
 
     // Try parsing the date from API
     String displayDate = 'Unknown Date';
@@ -33,27 +75,29 @@ class AppointmentInfoCard extends StatelessWidget {
     if (dateStr != null && dateStr.toString().isNotEmpty) {
       try {
         final parsed = DateTime.tryParse(dateStr.toString());
-        if (parsed != null) {
-          // Accept the date only if it's within the next ~6 months
-          final sixMonthsFromNow = DateTime.now().add(const Duration(days: 185));
-          if (parsed.isBefore(sixMonthsFromNow)) {
-            displayDate = '${months[parsed.month - 1]} ${parsed.day}, ${parsed.year}';
-            dateResolved = true;
-          }
+        if (parsed != null && parsed.year > 2000) {
+          displayDate =
+              '${months[parsed.month - 1]} ${parsed.day}, ${parsed.year}';
+          dateResolved = true;
         }
       } catch (_) {}
     }
 
     // If date is missing or too far in future, derive from dayOfWeek
     if (!dateResolved) {
-      final dayOfWeek = details['dayOfWeek']?.toString() ??
-          details['schedule']?['dayOfWeek']?.toString() ?? '';
+      final dayOfWeek =
+          details['dayOfWeek']?.toString() ??
+          details['schedule']?['dayOfWeek']?.toString() ??
+          '';
       // Also try to extract dayOfWeek from timeSlot e.g. "Sunday 09:00 - 09:30"
       final timeSlotStr = timeStr.toString().trim();
       final dayNames = {
-        'monday': DateTime.monday, 'tuesday': DateTime.tuesday,
-        'wednesday': DateTime.wednesday, 'thursday': DateTime.thursday,
-        'friday': DateTime.friday, 'saturday': DateTime.saturday,
+        'monday': DateTime.monday,
+        'tuesday': DateTime.tuesday,
+        'wednesday': DateTime.wednesday,
+        'thursday': DateTime.thursday,
+        'friday': DateTime.friday,
+        'saturday': DateTime.saturday,
         'sunday': DateTime.sunday,
       };
       String foundDay = dayOfWeek.toLowerCase().trim();
@@ -71,7 +115,8 @@ class AppointmentInfoCard extends StatelessWidget {
         int diff = targetWeekday - now.weekday;
         if (diff < 0) diff += 7;
         final nextDate = now.add(Duration(days: diff));
-        displayDate = '${months[nextDate.month - 1]} ${nextDate.day}, ${nextDate.year}';
+        displayDate =
+            '${months[nextDate.month - 1]} ${nextDate.day}, ${nextDate.year}';
       }
     }
 
@@ -93,47 +138,81 @@ class AppointmentInfoCard extends StatelessWidget {
           _buildDetailRow(Icons.calendar_today_outlined, 'Date', displayDate),
           if (timeStr.isNotEmpty) ...[
             const Divider(height: 24),
-            _buildDetailRow(Icons.access_time, 'Time', timeStr),
+            _buildDetailRow(Icons.access_time, 'Time', formattedTime),
           ],
           const Divider(height: 24),
           _buildDetailRow(Icons.local_hospital_outlined, 'Clinic', clinicName),
           if (clinicAddress != null && clinicAddress.toString().isNotEmpty) ...[
             const Divider(height: 24),
-            _buildDetailRow(Icons.location_on_outlined, 'Address', clinicAddress.toString()),
+            _buildDetailRow(
+              Icons.location_on_outlined,
+              'Address',
+              clinicAddress.toString(),
+            ),
           ],
           if (clinicPhone != null && clinicPhone.toString().isNotEmpty) ...[
             const Divider(height: 24),
-            _buildDetailRow(Icons.phone_outlined, 'Phone', clinicPhone.toString()),
+            _buildDetailRow(
+              Icons.phone_outlined,
+              'Phone',
+              clinicPhone.toString(),
+            ),
           ],
           const Divider(height: 24),
           _buildDetailRow(Icons.info_outline, 'Status', status, isStatus: true),
           const Divider(height: 24),
-          _buildDetailRow(Icons.attach_money, 'Price', price == 'N/A' ? 'N/A' : '\$$price'),
+          _buildDetailRow(
+            Icons.attach_money,
+            'Price',
+            price == 'N/A' ? 'N/A' : '\$$price',
+          ),
           if (paymentMethod != null && paymentMethod.toString().isNotEmpty) ...[
             const Divider(height: 24),
-            _buildDetailRow(Icons.payment_outlined, 'Payment', paymentMethod.toString()),
+            _buildDetailRow(
+              Icons.payment_outlined,
+              'Payment',
+              paymentMethod.toString(),
+            ),
           ],
           if (paymentStatus != null && paymentStatus.toString().isNotEmpty) ...[
             const Divider(height: 24),
-            _buildDetailRow(Icons.check_circle_outline, 'Payment Status', paymentStatus.toString()),
+            _buildDetailRow(
+              Icons.check_circle_outline,
+              'Payment Status',
+              paymentStatus.toString(),
+            ),
           ],
-          if (scheduleNotes != null && scheduleNotes.toString().isNotEmpty && scheduleNotes.toString().toLowerCase() != 'no notes added') ...[
+          if (scheduleNotes != null &&
+              scheduleNotes.toString().isNotEmpty &&
+              scheduleNotes.toString().toLowerCase() != 'no notes added') ...[
             const Divider(height: 24),
-            _buildDetailRow(Icons.notes_outlined, 'Notes', scheduleNotes.toString()),
+            _buildDetailRow(
+              Icons.notes_outlined,
+              'Notes',
+              scheduleNotes.toString(),
+            ),
           ],
         ],
       ),
     );
   }
 
-  Widget _buildDetailRow(IconData icon, String label, String value, {bool isStatus = false}) {
+  Widget _buildDetailRow(
+    IconData icon,
+    String label,
+    String value, {
+    bool isStatus = false,
+  }) {
     Color valueColor = ColorManager.headlineText;
     if (isStatus) {
-      if (value.toLowerCase().contains('cancel')) valueColor = Colors.red;
-      else if (value.toLowerCase().contains('complete')) valueColor = Colors.green;
-      else valueColor = Colors.orange;
+      if (value.toLowerCase().contains('cancel')) {
+        valueColor = Colors.red;
+      } else if (value.toLowerCase().contains('complete'))
+        valueColor = Colors.green;
+      else
+        valueColor = Colors.orange;
     }
-    
+
     return Row(
       children: [
         Icon(icon, color: ColorManager.primary, size: 20),

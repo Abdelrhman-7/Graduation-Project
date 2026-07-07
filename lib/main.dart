@@ -13,6 +13,20 @@ import 'data/repository/shared_pref_controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Suppress image resource service errors globally (e.g., 404s for network images)
+  final originalOnError = FlutterError.onError;
+  FlutterError.onError = (FlutterErrorDetails details) {
+    if (details.library == 'image resource service' || details.exception.toString().contains('404')) {
+      return; // Silently ignore image loading errors
+    }
+    if (originalOnError != null) {
+      originalOnError(details);
+    } else {
+      FlutterError.presentError(details);
+    }
+  };
+
   final prefController = SharedPrefController();
   final bool isLoggedIn = await prefController.isLoggedIn();
   final String? role = await prefController.getRole();

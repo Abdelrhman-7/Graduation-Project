@@ -58,7 +58,6 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
   Future<void> fetchDoctors() async {
     emit(PatientBookingLoading());
     try {
-      await repository.chooseRole('Patient');
       final fetchedDoctors = await repository.getPatientDoctors();
       if (fetchedDoctors.isEmpty) {
         emit(
@@ -127,7 +126,6 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
   Future<void> fetchDoctorClinics(int doctorId) async {
     emit(PatientBookingLoading());
     try {
-      await repository.chooseRole('Patient');
       final clinics = await repository.getPatientDoctorClinics(doctorId);
 
       // Workaround: Load local duration/notes since backend does not return them
@@ -154,7 +152,6 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
   Future<void> fetchClinicSchedules(int clinicId, int doctorId) async {
     emit(PatientBookingLoading());
     try {
-      await repository.chooseRole('Patient');
       final schedules = await repository.getPatientClinicSchedules(
         clinicId: clinicId,
       );
@@ -426,8 +423,8 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
     int? serverAppointmentId;
     bool bookingSuccess = false;
 
+    String? caughtError;
     try {
-      await repository.chooseRole('Patient');
       final apiResult = await repository.apiManager.bookPatientAppointment(
         scheduleId: scheduleId,
         reasonForVisit: reasonForVisit,
@@ -465,6 +462,7 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
         }
       }
     } catch (e) {
+      caughtError = e.toString();
       print('❌ Booking API error: $e');
     }
 
@@ -485,7 +483,7 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
       return true;
     }
 
-    emit(PatientBookingError('Failed to book appointment.'));
+    emit(PatientBookingError(caughtError ?? 'Failed to book appointment.'));
     if (currentState is PatientBookingSchedulesSuccess) {
       emit(PatientBookingSchedulesSuccess(currentState.schedules));
     }
