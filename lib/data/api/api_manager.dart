@@ -1110,32 +1110,28 @@ class ApiManager {
       print('StripeToken: "$stripeToken"');
       print('===================');
 
-      // Pass Map directly to Dio — Dio handles JSON encoding internally.
-      // Passing a pre-encoded String can cause double-encoding issues.
-      final bodyMap = <String, dynamic>{
+      final formData = FormData.fromMap({
         'StripeToken': stripeToken,
         'CardNumber': cleanCardNumber,
         'CVV': cleanCvv,
         'ExpiryMonth': expMonth,
         'ExpiryYear': expYear,
         'CardHolderName': holderName,
-      };
-      print('Payment body JSON: ${jsonEncode(bodyMap)}');
+      });
 
       final response = await _dio.post(
         'Patient/AppointmentApi/PayAppointmentByCard/$appointmentId',
-        data: bodyMap,   // ← Map, not String — Dio serializes to JSON correctly
+        data: formData,
         options: Options(
-          contentType: 'application/json',
           validateStatus: (status) => true,
           sendTimeout: const Duration(seconds: 45),
           receiveTimeout: const Duration(seconds: 45),
         ),
       );
 
-      print(
-        'PayAppointmentByCard response: ${response.statusCode} - ${response.data}',
-      );
+      print(response.statusCode);
+      print(response.headers);
+      print(response.data);
 
       if (response.statusCode == 200 ||
           response.statusCode == 201 ||

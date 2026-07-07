@@ -119,22 +119,9 @@ class PatientHomeDashboardCubit extends Cubit<PatientHomeDashboardState> {
           if (status.contains('complet')) return false;
           return true;
         }).toList();
-        // Validate if the appointment still exists on the server!
-        while (upcoming.isNotEmpty) {
-          final potentialAppt = upcoming.first;
-          final bookingId = int.tryParse(potentialAppt['id']?.toString() ?? '0') ?? 0;
-          
-          if (bookingId > 0) {
-            final check = await _repository.getPatientAppointment(bookingId);
-            if (check != null && check.containsKey('error')) {
-              // The appointment is likely deleted/cancelled by the doctor
-              await LocalBookingStore.instance.deleteBooking(bookingId);
-              upcoming.removeAt(0);
-              continue; // Try the next one
-            }
-          }
-          nextAppt = potentialAppt;
-          break;
+        // No need to validate one by one with getPatientAppointment because repository.getPatientAppointments() already returns valid ones.
+        if (upcoming.isNotEmpty) {
+          nextAppt = upcoming.first;
         }
       } catch (e) {
         print('Error getting dashboard appointments: $e');
