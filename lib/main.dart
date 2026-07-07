@@ -23,7 +23,7 @@ void main() async {
       isLoggedIn: isLoggedIn,
       role: role,
       prefController: prefController,
-      apiManager: apiManager,
+      apiManager:    apiManager,
     ),
   );
 }
