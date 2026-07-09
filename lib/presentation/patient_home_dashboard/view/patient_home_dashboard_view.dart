@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:graduationproject/data/repository/repository.dart';
 import 'package:graduationproject/presentation/patient_home_dashboard/view/patient_home_dashboard_view_body.dart';
 import 'package:graduationproject/presentation/patient_home_dashboard/cubit/patient_home_dashboard_cubit.dart';
+import 'package:graduationproject/presentation/patient_schedule/cubit/patient_schedule_cubit.dart';
 
 class PatientHomeDashboardView extends StatefulWidget {
   const PatientHomeDashboardView({super.key});
@@ -25,8 +26,15 @@ class _PatientHomeDashboardViewState extends State<PatientHomeDashboardView>
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider.value(
-      value: _cubit,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider.value(value: _cubit),
+        BlocProvider(
+          create: (_) =>
+              PatientScheduleCubit(context.read<Repository>())
+                ..fetchAppointments(),
+        ),
+      ],
       child: Scaffold(
         body: SafeArea(
           child: _HomeRefreshWrapper(cubit: _cubit),

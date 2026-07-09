@@ -536,8 +536,8 @@ class Repository {
       patientEmail: email,
     );
 
-    // Fetch active bookings
-    final api = await apiManager.getPatientAllAppointments(currentPage: 1);
+    // Fetch active bookings using GetMyBookings (returns only current patient's bookings)
+    final api = await apiManager.getPatientAppointments();
 
     final localMaps = local.map((b) => b.toAppointmentMap()).toList();
 
@@ -716,22 +716,12 @@ class Repository {
           }
         } catch (_) {}
 
-        // Filter by patient email or name to prevent seeing other patients' appointments
-        bool matches = true;
-        if (currentEmail.isNotEmpty || currentName.isNotEmpty) {
-          final pEmail = mergedParsed.patientEmail?.toLowerCase() ?? '';
-          final pName = mergedParsed.patientName?.toLowerCase() ?? '';
-          
-          if (pEmail.isNotEmpty && currentEmail.isNotEmpty) {
-            matches = pEmail == currentEmail;
-          } else if (pName.isNotEmpty && currentName.isNotEmpty) {
-            matches = pName == currentName;
-          }
-        }
-        
-        if (matches) {
-          uniqueMaps.add(mergedParsed.toAppointmentMap());
-        }
+        // DEBUG: log what we're getting
+        print('[APPT FILTER] id=$id pEmail=${mergedParsed.patientEmail} pName=${mergedParsed.patientName} currentEmail=$currentEmail currentName=$currentName status=${mergedParsed.status}');
+
+        // The API endpoint (GetMyBookings) already returns appointments
+        // belonging to the authenticated patient — no need to filter by name/email here.
+        uniqueMaps.add(mergedParsed.toAppointmentMap());
       } else {
         uniqueMaps.add(item);
       }

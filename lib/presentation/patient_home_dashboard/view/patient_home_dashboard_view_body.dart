@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../../core/utils/time_formatter.dart';
-import '../../../../data/models/schudule/doctorModel.dart';
-import '../../../../core/utils/avatar_helper.dart';
 import '../../../../core/resources/string_manager.dart';
 import '../../patient_reviews/view/patient_reviews_view.dart';
 import '../../patient_profile/view/patient_profile_view.dart';
@@ -12,8 +9,8 @@ import '../widgets/patient_bottom_nav.dart';
 import '../widgets/patient_notifications_sheet.dart';
 import '../cubit/patient_home_dashboard_cubit.dart';
 import '../cubit/patient_home_dashboard_state.dart';
-import '../widgets/appointment_card.dart';
-import '../../patient_appointment_details/view/patient_appointment_details_view.dart';
+import '../../patient_schedule/cubit/patient_schedule_cubit.dart';
+import '../../patient_schedule/widgets/upcoming_appointments_section.dart';
 import '../../patient_schedule/view/patient_schedule_view.dart';
 import '../../patient_emergency/view/patient_emergency_view.dart';
 
@@ -50,9 +47,6 @@ class PatientHomeDashboardViewBody extends StatelessWidget {
             final unreadNotifications = state is PatientHomeDashboardSuccess
                 ? state.unreadNotifications
                 : 0;
-            final nextAppointment = state is PatientHomeDashboardSuccess
-                ? state.nextAppointment
-                : null;
             final heartRate = state is PatientHomeDashboardSuccess
                 ? state.heartRate
                 : '72';
@@ -63,6 +57,8 @@ class PatientHomeDashboardViewBody extends StatelessWidget {
             final medications = state is PatientHomeDashboardSuccess
                 ? state.medications
                 : [];
+
+            final scheduleState = context.watch<PatientScheduleCubit>().state;
 
             return Container(
               color: bg,
@@ -88,13 +84,13 @@ class PatientHomeDashboardViewBody extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              if (nextAppointment != null) ...[
+                              if (scheduleState is PatientScheduleSuccess) ...[
                                 Row(
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
-                                      'Next Appointment',
+                                      'My Appointments',
                                       style: _headingStyle(scale),
                                     ),
                                     TextButton(
@@ -119,121 +115,12 @@ class PatientHomeDashboardViewBody extends StatelessWidget {
                                   ],
                                 ),
                                 SizedBox(height: s(16)),
-                                Builder(
-                                  builder: (context) {
-                                    String resolveImageUrl(dynamic src) {
-                                      if (src == null) return '';
-                                      final s = src.toString().trim();
-                                      if (s.isEmpty) return '';
-                                      if (s.startsWith('http')) return s;
-                                      return 'http://clinicbook.runasp.net${s.startsWith('/') ? '' : '/'}$s';
-                                    }
-
-                                    final doctor = DoctorModel(
-                                      id:
-                                          int.tryParse(
-                                            (nextAppointment['doctorId'] ??
-                                                    (nextAppointment['doctor']
-                                                            is Map
-                                                        ? nextAppointment['doctor']['id']
-                                                        : null) ??
-                                                    0)
-                                                .toString(),
-                                          ) ??
-                                          0,
-                                      fullName:
-                                          nextAppointment['doctorName'] ??
-                                          (nextAppointment['doctor'] is Map
-                                              ? nextAppointment['doctor']['fullName']
-                                              : null) ??
-                                          'Unknown Doctor',
-                                      imageUrl: resolveImageUrl(
-                                        nextAppointment['doctorImageUrl'] ??
-                                            (nextAppointment['doctor'] is Map
-                                                ? (nextAppointment['doctor']['imageUrl'] ??
-                                                      nextAppointment['doctor']['profileImageUrl'] ??
-                                                      nextAppointment['doctor']['displayImageUrl'])
-                                                : null) ??
-                                            nextAppointment['imageUrl'] ??
-                                            nextAppointment['profileImageUrl'] ??
-                                            nextAppointment['displayImageUrl'],
-                                      ),
-                                    );
-
-                                    final timeStr =
-                                        (nextAppointment['timeSlot'] ??
-                                                nextAppointment['time'] ??
-                                                nextAppointment['startTime'] ??
-                                                'TBD')
-                                            .toString();
-
-                                    String formattedTime =
-                                        TimeFormatter.formatTime(timeStr);
-
-                                    return AppointmentCard(
-                                      doctorName: doctor.fullName,
-                                      specialty:
-                                          nextAppointment['specialty'] ??
-                                          (nextAppointment['doctor'] is Map
-                                              ? nextAppointment['doctor']['specialty']
-                                              : null) ??
-                                          'Specialty',
-                                      dateTime:
-                                          nextAppointment['bookingDate'] ??
-                                          nextAppointment['date'] ??
-                                          'Upcoming',
-                                      imagePath: AvatarHelper.getDoctorAvatar(
-                                        doctorId: doctor.id,
-                                        imageUrl: doctor.imageUrl,
-                                      ),
-                                      timeSlot: formattedTime,
-                                      bookingId:
-                                          int.tryParse(
-                                            nextAppointment['id']?.toString() ??
-                                                '0',
-                                          ) ??
-                                          0,
-                                      status:
-                                          (nextAppointment['status']
-                                                      ?.toString()
-                                                      .toLowerCase() ==
-                                                  'paid' ||
-                                              nextAppointment['paymentStatus']
-                                                      ?.toString()
-                                                      .toLowerCase() ==
-                                                  'paid')
-                                          ? 'Paid'
-                                          : (nextAppointment['status'] ??
-                                                'Pending'),
-                                      isViewOnly: true,
-                                      onDetails: () {
-                                        final bookingId =
-                                            int.tryParse(
-                                              nextAppointment['id']
-                                                      ?.toString() ??
-                                                  '0',
-                                            ) ??
-                                            0;
-                                        if (bookingId > 0) {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (_) =>
-                                                  PatientAppointmentDetailsView(
-                                                    bookingId: bookingId,
-                                                    initialData:
-                                                        Map<
-                                                          String,
-                                                          dynamic
-                                                        >.from(nextAppointment),
-                                                  ),
-                                            ),
-                                          );
-                                        }
-                                      },
-                                    );
-                                  },
+                                UpcomingAppointmentsSection(
+                                  appointments: scheduleState.upcomingAppointments,
                                 ),
+                                SizedBox(height: s(31)),
+                              ] else if (scheduleState is PatientScheduleLoading) ...[
+                                const Center(child: CircularProgressIndicator()),
                                 SizedBox(height: s(31)),
                               ],
                               Text(

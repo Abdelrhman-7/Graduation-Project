@@ -5,7 +5,6 @@ import '../../../../core/resources/string_manager.dart';
 
 class PatientScheduleHeader extends StatelessWidget {
   const PatientScheduleHeader({super.key});
-
   @override
   Widget build(BuildContext context) {
     return Container(
