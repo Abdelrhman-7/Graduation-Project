@@ -22,8 +22,8 @@ class PatientHomeDashboardSuccess extends PatientHomeDashboardState {
     required this.medications,
     this.unreadNotifications = 0,
     this.nextAppointment,
-    this.heartRate = '72',
-    this.bloodPressure = '120/80',
+    this.heartRate = '0',
+    this.bloodPressure = '0/0',
   });
 }
 

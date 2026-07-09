@@ -49,10 +49,10 @@ class PatientHomeDashboardViewBody extends StatelessWidget {
                 : 0;
             final heartRate = state is PatientHomeDashboardSuccess
                 ? state.heartRate
-                : '72';
+                : '0';
             final bloodPressure = state is PatientHomeDashboardSuccess
                 ? state.bloodPressure
-                : '120/80';
+                : '0/0';
 
             final medications = state is PatientHomeDashboardSuccess
                 ? state.medications
@@ -85,7 +85,7 @@ class PatientHomeDashboardViewBody extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               if (scheduleState is PatientScheduleSuccess) ...[
-                                Row(
+                                /* Row(
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
                                   children: [
@@ -113,14 +113,26 @@ class PatientHomeDashboardViewBody extends StatelessWidget {
                                       ),
                                     ),
                                   ],
-                                ),
+                                ),*/
                                 SizedBox(height: s(16)),
                                 UpcomingAppointmentsSection(
-                                  appointments: scheduleState.upcomingAppointments,
+                                  appointments:
+                                      scheduleState
+                                          .upcomingAppointments
+                                          .isNotEmpty
+                                      ? [
+                                          scheduleState
+                                              .upcomingAppointments
+                                              .last,
+                                        ]
+                                      : [],
                                 ),
                                 SizedBox(height: s(31)),
-                              ] else if (scheduleState is PatientScheduleLoading) ...[
-                                const Center(child: CircularProgressIndicator()),
+                              ] else if (scheduleState
+                                  is PatientScheduleLoading) ...[
+                                const Center(
+                                  child: CircularProgressIndicator(),
+                                ),
                                 SizedBox(height: s(31)),
                               ],
                               Text(

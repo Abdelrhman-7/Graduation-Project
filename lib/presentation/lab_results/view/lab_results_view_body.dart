@@ -8,6 +8,8 @@ import '../widgets/top_bar.dart';
 import '../widgets/health_metrics_history_sheet.dart';
 import '../../patient_home_dashboard/widgets/patient_bottom_nav.dart';
 import '../../patient_home_dashboard/view/patient_home_dashboard_view.dart';
+import '../../patient_home_dashboard/cubit/patient_home_dashboard_cubit.dart';
+import '../../patient_home_dashboard/cubit/patient_home_dashboard_state.dart';
 
 class LabResultsViewBody extends StatefulWidget {
   const LabResultsViewBody({super.key});
@@ -18,20 +20,41 @@ class LabResultsViewBody extends StatefulWidget {
 
 class _LabResultsViewBodyState extends State<LabResultsViewBody> {
   final _formKey = GlobalKey<FormState>();
-  
+
   final _systolicController = TextEditingController();
   final _diastolicController = TextEditingController();
   final _heartRateController = TextEditingController();
   final _bloodSugarController = TextEditingController();
   final _weightController = TextEditingController();
   final _notesController = TextEditingController();
-  
+
   bool _showHrWarning = false;
 
   @override
   void initState() {
     super.initState();
     _heartRateController.addListener(_checkWarnings);
+    // Pre-fill with existing data from the dashboard
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final dashState = context.read<PatientHomeDashboardCubit>().state;
+      if (dashState is PatientHomeDashboardSuccess) {
+        // Heart Rate
+        if (_heartRateController.text.isEmpty && dashState.heartRate != '0') {
+          _heartRateController.text = dashState.heartRate;
+        }
+        // Blood Pressure — split "120/80" into systolic/diastolic
+        final bp = dashState.bloodPressure;
+        if (bp.isNotEmpty && bp != '0/0' && bp != '0') {
+          final parts = bp.split('/');
+          if (parts.length == 2) {
+            if (_systolicController.text.isEmpty)
+              _systolicController.text = parts[0].trim();
+            if (_diastolicController.text.isEmpty)
+              _diastolicController.text = parts[1].trim();
+          }
+        }
+      }
+    });
   }
 
   void _checkWarnings() {
@@ -64,15 +87,15 @@ class _LabResultsViewBodyState extends State<LabResultsViewBody> {
   void _submit() {
     if (_formKey.currentState?.validate() ?? false) {
       context.read<LabResultsCubit>().submitHealthMetrics(
-            systolic: _systolicController.text,
-            diastolic: _diastolicController.text,
-            heartRate: _heartRateController.text,
-            bloodSugar: _bloodSugarController.text,
-            weight: _weightController.text,
-            notes: _notesController.text,
-            medTitle: _medTitleController.text,
-            medSubtitle: _medSubtitleController.text,
-          );
+        systolic: _systolicController.text,
+        diastolic: _diastolicController.text,
+        heartRate: _heartRateController.text,
+        bloodSugar: _bloodSugarController.text,
+        weight: _weightController.text,
+        notes: _notesController.text,
+        medTitle: _medTitleController.text,
+        medSubtitle: _medSubtitleController.text,
+      );
     }
   }
 
@@ -82,7 +105,7 @@ class _LabResultsViewBodyState extends State<LabResultsViewBody> {
       builder: (context, constraints) {
         final scale = (constraints.maxWidth / 390).clamp(0.88, 1.15);
         double s(double v) => v * scale;
-        
+
         return BlocConsumer<LabResultsCubit, LabResultsState>(
           listener: (context, state) {
             if (state is LabResultsSubmitSuccess) {
@@ -109,7 +132,7 @@ class _LabResultsViewBodyState extends State<LabResultsViewBody> {
           },
           builder: (context, state) {
             final isLoading = state is LabResultsSubmitLoading;
-            
+
             return Column(
               children: [
                 Expanded(
@@ -118,181 +141,196 @@ class _LabResultsViewBodyState extends State<LabResultsViewBody> {
                     child: Column(
                       children: [
                         LabResultsTopBar(
-                    scale: scale,
-                    onHistoryTap: () {
-                      showHealthMetricsHistorySheet(context);
-                    },
-                  ),
-                  Expanded(
-                    child: Form(
-                      key: _formKey,
-                      child: ListView(
-                        padding: EdgeInsets.all(s(24)),
-                        physics: const BouncingScrollPhysics(),
-                        children: [
-                          Text(
-                            'Enter Health Metrics',
-                            style: GoogleFonts.cairo(
-                              fontSize: s(22),
-                              fontWeight: FontWeight.w700,
-                              color: const Color(0xFF1E293B),
-                            ),
-                          ),
-                          SizedBox(height: s(8)),
-                          Text(
-                            'Keep track of your vitals for better monitoring.',
-                            style: GoogleFonts.cairo(
-                              fontSize: s(14),
-                              color: const Color(0xFF64748B),
-                            ),
-                          ),
-                          SizedBox(height: s(24)),
-                          
-                          // Blood Pressure
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildTextField(
-                                  label: 'Systolic (mmHg)',
-                                  hintText: 'e.g. 120',
-                                  controller: _systolicController,
-                                  keyboardType: TextInputType.number,
-                                  icon: Icons.monitor_heart_outlined,
-                                ),
-                              ),
-                              SizedBox(width: s(16)),
-                              Expanded(
-                                child: _buildTextField(
-                                  label: 'Diastolic (mmHg)',
-                                  hintText: 'e.g. 80',
-                                  controller: _diastolicController,
-                                  keyboardType: TextInputType.number,
-                                  icon: Icons.monitor_heart,
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: s(16)),
-                          
-                          // Heart Rate
-                          _buildTextField(
-                            label: 'Heart Rate (bpm)',
-                            hintText: 'e.g. 72',
-                            controller: _heartRateController,
-                            keyboardType: TextInputType.number,
-                            icon: Icons.favorite_border_rounded,
-                          ),
-                          if (_showHrWarning)
-                            Padding(
-                              padding: EdgeInsets.only(top: s(4), left: s(4)),
-                              child: Row(
-                                children: [
-                                  Icon(Icons.warning_amber_rounded, color: Colors.orange, size: s(16)),
-                                  SizedBox(width: s(4)),
-                                  Text(
-                                    'Heart rate is outside the normal range (60-100)',
-                                    style: GoogleFonts.cairo(fontSize: s(11), color: Colors.orange),
+                          scale: scale,
+                          onHistoryTap: () {
+                            showHealthMetricsHistorySheet(context);
+                          },
+                        ),
+                        Expanded(
+                          child: Form(
+                            key: _formKey,
+                            child: ListView(
+                              padding: EdgeInsets.all(s(24)),
+                              physics: const BouncingScrollPhysics(),
+                              children: [
+                                Text(
+                                  'Enter Health Metrics',
+                                  style: GoogleFonts.cairo(
+                                    fontSize: s(22),
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFF1E293B),
                                   ),
-                                ],
-                              ),
-                            ),
-                          SizedBox(height: s(16)),
-
-                          // Blood Sugar
-                          _buildTextField(
-                            label: 'Blood Sugar (mg/dL)',
-                            hintText: 'e.g. 95',
-                            controller: _bloodSugarController,
-                            keyboardType: TextInputType.number,
-                            icon: Icons.water_drop_outlined,
-                          ),
-                          SizedBox(height: s(16)),
-
-                          // Weight
-                          _buildTextField(
-                            label: 'Weight (kg)',
-                            hintText: 'e.g. 70.5',
-                            controller: _weightController,
-                            keyboardType: TextInputType.number,
-                            icon: Icons.monitor_weight_outlined,
-                          ),
-                          SizedBox(height: s(16)),
-
-                          // Notes
-                          _buildTextField(
-                            label: 'Notes (Optional)',
-                            hintText: 'e.g. Fasting, After meal',
-                            controller: _notesController,
-                            keyboardType: TextInputType.text,
-                            icon: Icons.notes_rounded,
-                            isRequired: false,
-                          ),
-                          SizedBox(height: s(24)),
-                          
-                          // Medications
-                          Text(
-                            'Current Medication (Optional)',
-                            style: GoogleFonts.cairo(
-                              fontSize: s(16),
-                              fontWeight: FontWeight.w600,
-                              color: const Color(0xFF1E293B),
-                            ),
-                          ),
-                          SizedBox(height: s(12)),
-                          _buildTextField(
-                            label: 'Medication Name',
-                            hintText: 'e.g. Amoxicillin',
-                            controller: _medTitleController,
-                            keyboardType: TextInputType.text,
-                            icon: Icons.medication_outlined,
-                            isRequired: false,
-                          ),
-                          SizedBox(height: s(12)),
-                          _buildTextField(
-                            label: 'Dosage & Instructions',
-                            hintText: 'e.g. 500mg • 1 pill/day',
-                            controller: _medSubtitleController,
-                            keyboardType: TextInputType.text,
-                            icon: Icons.info_outline,
-                            isRequired: false,
-                          ),
-                          SizedBox(height: s(32)),
-
-                          // Submit Button
-                          SizedBox(
-                            width: double.infinity,
-                            height: s(56),
-                            child: ElevatedButton(
-                              onPressed: isLoading ? null : _submit,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: ColorManager.primary,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(s(16)),
                                 ),
-                                elevation: 0,
-                              ),
-                              child: isLoading
-                                  ? const SizedBox(
-                                      width: 24,
-                                      height: 24,
-                                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                                    )
-                                  : Text(
-                                      'Save Metrics',
-                                      style: GoogleFonts.cairo(
-                                        fontSize: s(16),
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.white,
+                                SizedBox(height: s(8)),
+                                Text(
+                                  'Keep track of your vitals for better monitoring.',
+                                  style: GoogleFonts.cairo(
+                                    fontSize: s(14),
+                                    color: const Color(0xFF64748B),
+                                  ),
+                                ),
+                                SizedBox(height: s(24)),
+
+                                // Blood Pressure
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildTextField(
+                                        label: 'Systolic (mmHg)',
+                                        hintText: 'e.g. 120',
+                                        controller: _systolicController,
+                                        keyboardType: TextInputType.number,
+                                        icon: Icons.monitor_heart_outlined,
                                       ),
                                     ),
+                                    SizedBox(width: s(16)),
+                                    Expanded(
+                                      child: _buildTextField(
+                                        label: 'Diastolic (mmHg)',
+                                        hintText: 'e.g. 80',
+                                        controller: _diastolicController,
+                                        keyboardType: TextInputType.number,
+                                        icon: Icons.monitor_heart,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: s(16)),
+
+                                // Heart Rate
+                                _buildTextField(
+                                  label: 'Heart Rate (bpm)',
+                                  hintText: 'e.g. 72',
+                                  controller: _heartRateController,
+                                  keyboardType: TextInputType.number,
+                                  icon: Icons.favorite_border_rounded,
+                                ),
+                                if (_showHrWarning)
+                                  Padding(
+                                    padding: EdgeInsets.only(
+                                      top: s(4),
+                                      left: s(4),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.warning_amber_rounded,
+                                          color: Colors.orange,
+                                          size: s(16),
+                                        ),
+                                        SizedBox(width: s(4)),
+                                        Text(
+                                          'Heart rate is outside the normal range (60-100)',
+                                          style: GoogleFonts.cairo(
+                                            fontSize: s(11),
+                                            color: Colors.orange,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                SizedBox(height: s(16)),
+
+                                // Blood Sugar
+                                _buildTextField(
+                                  label: 'Blood Sugar (mg/dL)',
+                                  hintText: 'e.g. 95',
+                                  controller: _bloodSugarController,
+                                  keyboardType: TextInputType.number,
+                                  icon: Icons.water_drop_outlined,
+                                ),
+                                SizedBox(height: s(16)),
+
+                                // Weight
+                                _buildTextField(
+                                  label: 'Weight (kg)',
+                                  hintText: 'e.g. 70.5',
+                                  controller: _weightController,
+                                  keyboardType: TextInputType.number,
+                                  icon: Icons.monitor_weight_outlined,
+                                ),
+                                SizedBox(height: s(16)),
+
+                                // Notes
+                                _buildTextField(
+                                  label: 'Notes (Optional)',
+                                  hintText: 'e.g. Fasting, After meal',
+                                  controller: _notesController,
+                                  keyboardType: TextInputType.text,
+                                  icon: Icons.notes_rounded,
+                                  isRequired: false,
+                                ),
+                                SizedBox(height: s(24)),
+
+                                // Medications
+                                Text(
+                                  'Current Medication (Optional)',
+                                  style: GoogleFonts.cairo(
+                                    fontSize: s(16),
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFF1E293B),
+                                  ),
+                                ),
+                                SizedBox(height: s(12)),
+                                _buildTextField(
+                                  label: 'Medication Name',
+                                  hintText: 'e.g. Amoxicillin',
+                                  controller: _medTitleController,
+                                  keyboardType: TextInputType.text,
+                                  icon: Icons.medication_outlined,
+                                  isRequired: false,
+                                ),
+                                SizedBox(height: s(12)),
+                                _buildTextField(
+                                  label: 'Dosage & Instructions',
+                                  hintText: 'e.g. 500mg • 1 pill/day',
+                                  controller: _medSubtitleController,
+                                  keyboardType: TextInputType.text,
+                                  icon: Icons.info_outline,
+                                  isRequired: false,
+                                ),
+                                SizedBox(height: s(32)),
+
+                                // Submit Button
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: s(56),
+                                  child: ElevatedButton(
+                                    onPressed: isLoading ? null : _submit,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: ColorManager.primary,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          s(16),
+                                        ),
+                                      ),
+                                      elevation: 0,
+                                    ),
+                                    child: isLoading
+                                        ? const SizedBox(
+                                            width: 24,
+                                            height: 24,
+                                            child: CircularProgressIndicator(
+                                              color: Colors.white,
+                                              strokeWidth: 2,
+                                            ),
+                                          )
+                                        : Text(
+                                            'Save Metrics',
+                                            style: GoogleFonts.cairo(
+                                              fontSize: s(16),
+                                              fontWeight: FontWeight.w600,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                  ),
+                                ),
+                                SizedBox(height: s(32)),
+                              ],
                             ),
                           ),
-                          SizedBox(height: s(32)),
-                        ],
-                      ),
-                    ),
-                  ),
-                        ],
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -310,7 +348,7 @@ class _LabResultsViewBodyState extends State<LabResultsViewBody> {
     String? hintText,
     required TextEditingController controller,
     required TextInputType keyboardType,
-    required IconData icon,
+    IconData? icon,
     bool isRequired = true,
   }) {
     return TextFormField(

@@ -2,7 +2,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:graduationproject/data/models/booking/booking_model.dart';
 import 'package:graduationproject/data/repository/repository.dart';
 import 'package:graduationproject/data/repository/shared_pref_controller.dart';
-import 'package:graduationproject/data/local/local_booking_store.dart';
 import 'patient_home_dashboard_state.dart';
 
 class PatientHomeDashboardCubit extends Cubit<PatientHomeDashboardState> {
@@ -11,7 +10,7 @@ class PatientHomeDashboardCubit extends Cubit<PatientHomeDashboardState> {
   final SharedPrefController _sharedPrefController = SharedPrefController();
 
   PatientHomeDashboardCubit(this._repository)
-      : super(PatientHomeDashboardInitial());
+    : super(PatientHomeDashboardInitial());
 
   void getDashboardData({bool silent = false}) async {
     if (!silent) {
@@ -68,13 +67,26 @@ class PatientHomeDashboardCubit extends Cubit<PatientHomeDashboardState> {
       }
 
       final notifications = await _repository.getPatientNotifications();
-      final lastViewedId = await _sharedPrefController.getLastViewedNotificationId();
+      final lastViewedId = await _sharedPrefController
+          .getLastViewedNotificationId();
       int unreadCount = 0;
       for (final n in notifications) {
         if (n is Map<String, dynamic>) {
-          final idVal = n['id'] ?? n['Id'] ?? n['notificationId'] ?? n['NotificationId'] ?? 0;
-          final int id = idVal is int ? idVal : int.tryParse(idVal.toString()) ?? 0;
-          final isRead = n['isRead'] ?? n['IsRead'] ?? n['isViewed'] ?? n['IsViewed'] ?? false;
+          final idVal =
+              n['id'] ??
+              n['Id'] ??
+              n['notificationId'] ??
+              n['NotificationId'] ??
+              0;
+          final int id = idVal is int
+              ? idVal
+              : int.tryParse(idVal.toString()) ?? 0;
+          final isRead =
+              n['isRead'] ??
+              n['IsRead'] ??
+              n['isViewed'] ??
+              n['IsViewed'] ??
+              false;
           if (isRead == false && id > lastViewedId) {
             unreadCount++;
           }
@@ -91,14 +103,18 @@ class PatientHomeDashboardCubit extends Cubit<PatientHomeDashboardState> {
       dynamic nextAppt;
       try {
         final appointments = await _repository.getPatientAppointments();
-        
+
         // Inject doctor images into appointments
         try {
           final doctors = await _repository.getPatientDoctors();
           for (var appt in appointments) {
             if (appt is Map) {
               final docIdStr = appt['doctorId'] ?? appt['doctor']?['id'];
-              final docId = docIdStr != null ? (docIdStr is int ? docIdStr : int.tryParse(docIdStr.toString()) ?? 0) : 0;
+              final docId = docIdStr != null
+                  ? (docIdStr is int
+                        ? docIdStr
+                        : int.tryParse(docIdStr.toString()) ?? 0)
+                  : 0;
               if (docId != 0) {
                 try {
                   final doc = doctors.firstWhere((d) => d.id == docId);
@@ -112,7 +128,10 @@ class PatientHomeDashboardCubit extends Cubit<PatientHomeDashboardState> {
         } catch (_) {}
 
         final upcoming = appointments.where((a) {
-          final status = ((a is Map ? a['status'] : (a as dynamic).status) ?? '').toString().toLowerCase();
+          final status =
+              ((a is Map ? a['status'] : (a as dynamic).status) ?? '')
+                  .toString()
+                  .toLowerCase();
           if (status.contains('cancel')) return false;
           if (status.contains('reject')) return false;
           if (status.contains('denied')) return false;
@@ -130,15 +149,17 @@ class PatientHomeDashboardCubit extends Cubit<PatientHomeDashboardState> {
       final healthMetrics = await _repository.getPatientHealthMetrics();
       var meds = await _repository.getPatientMedications();
 
-      emit(PatientHomeDashboardSuccess(
-        userName: userName,
-        imageUrl: imageUrl,
-        unreadNotifications: unreadCount,
-        nextAppointment: nextAppt,
-        heartRate: healthMetrics['heartRate'] ?? '72',
-        bloodPressure: healthMetrics['bloodPressure'] ?? '120/80',
-        medications: meds,
-      ));
+      emit(
+        PatientHomeDashboardSuccess(
+          userName: userName,
+          imageUrl: imageUrl,
+          unreadNotifications: unreadCount,
+          nextAppointment: nextAppt,
+          heartRate: healthMetrics['heartRate'] ?? '0',
+          bloodPressure: healthMetrics['bloodPressure'] ?? '0/0',
+          medications: meds,
+        ),
+      );
     } catch (e) {
       // Fallback لو حصل خطأ
       try {
@@ -147,13 +168,26 @@ class PatientHomeDashboardCubit extends Cubit<PatientHomeDashboardState> {
         final storedImage = await _sharedPrefController.getImage();
         final userName = storedName ?? email?.split('@').first ?? 'User';
         final notifications = await _repository.getPatientNotifications();
-        final lastViewedId = await _sharedPrefController.getLastViewedNotificationId();
+        final lastViewedId = await _sharedPrefController
+            .getLastViewedNotificationId();
         int unreadCount = 0;
         for (final n in notifications) {
           if (n is Map<String, dynamic>) {
-            final idVal = n['id'] ?? n['Id'] ?? n['notificationId'] ?? n['NotificationId'] ?? 0;
-            final int id = idVal is int ? idVal : int.tryParse(idVal.toString()) ?? 0;
-            final isRead = n['isRead'] ?? n['IsRead'] ?? n['isViewed'] ?? n['IsViewed'] ?? false;
+            final idVal =
+                n['id'] ??
+                n['Id'] ??
+                n['notificationId'] ??
+                n['NotificationId'] ??
+                0;
+            final int id = idVal is int
+                ? idVal
+                : int.tryParse(idVal.toString()) ?? 0;
+            final isRead =
+                n['isRead'] ??
+                n['IsRead'] ??
+                n['isViewed'] ??
+                n['IsViewed'] ??
+                false;
             if (isRead == false && id > lastViewedId) {
               unreadCount++;
             }
@@ -169,7 +203,10 @@ class PatientHomeDashboardCubit extends Cubit<PatientHomeDashboardState> {
         try {
           final appointments = await _repository.getPatientAppointments();
           final upcoming = appointments.where((a) {
-            final status = ((a is Map ? a['status'] : (a as dynamic).status) ?? '').toString().toLowerCase();
+            final status =
+                ((a is Map ? a['status'] : (a as dynamic).status) ?? '')
+                    .toString()
+                    .toLowerCase();
             if (status.contains('cancel')) return false;
             if (status.contains('reject')) return false;
             if (status.contains('denied')) return false;
@@ -184,19 +221,20 @@ class PatientHomeDashboardCubit extends Cubit<PatientHomeDashboardState> {
         final healthMetrics = await _repository.getPatientHealthMetrics();
         var meds = await _repository.getPatientMedications();
 
-        emit(PatientHomeDashboardSuccess(
-          userName: userName,
-          imageUrl: storedImage,
-          unreadNotifications: unreadCount,
-          nextAppointment: nextAppt,
-          heartRate: healthMetrics['heartRate'] ?? '72',
-          bloodPressure: healthMetrics['bloodPressure'] ?? '120/80',
-          medications: meds,
-        ));
+        emit(
+          PatientHomeDashboardSuccess(
+            userName: userName,
+            imageUrl: storedImage,
+            unreadNotifications: unreadCount,
+            nextAppointment: nextAppt,
+            heartRate: healthMetrics['heartRate'] ?? '72',
+            bloodPressure: healthMetrics['bloodPressure'] ?? '120/80',
+            medications: meds,
+          ),
+        );
       } catch (_) {
         emit(PatientHomeDashboardError(e.toString()));
       }
     }
   }
 }
-

@@ -252,7 +252,29 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
 
     final name = patientName ?? await _prefs.getName() ?? 'Patient';
     final email = await _prefs.getEmail();
-    final patientImg = await _prefs.getImage();
+    // جيب صورة المريض من SharedPrefs، لو مش موجودة جيبها من الـ API
+    String? patientImg = await _prefs.getImage();
+    if (patientImg == null || patientImg.isEmpty) {
+      try {
+        await repository.apiManager.chooseRole('Patient');
+        final profile = await repository.apiManager.getPatientProfile();
+        if (profile != null) {
+          final raw = profile['displayImageUrl'] ??
+              profile['imageUrl'] ??
+              profile['ImageUrl'] ??
+              profile['profileImageUrl'] ??
+              profile['ProfileImageUrl'] ??
+              profile['imagePath'];
+          if (raw != null && raw.toString().trim().isNotEmpty) {
+            final s = raw.toString().trim();
+            patientImg = s.startsWith('http')
+                ? s
+                : 'http://clinicbook.runasp.net${s.startsWith('/') ? '' : '/'}$s';
+            await _prefs.saveImage(patientImg!);
+          }
+        }
+      } catch (_) {}
+    }
 
     // 1. حساب تاريخ وساعة الحجز بدقة
     DateTime targetDate = _getNextDayOfWeek(dayOfWeek ?? 'Sunday');

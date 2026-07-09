@@ -74,20 +74,40 @@ class UpNextCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    CircleAvatar(
-                      radius: s(24),
-                      backgroundColor: ColorManager.primary.withOpacity(0.1),
-                      backgroundImage: (appointment['patientImageUrl'] != null && appointment['patientImageUrl'].toString().isNotEmpty)
-                          ? NetworkImage(appointment['patientImageUrl'].toString())
-                          : null,
-                      child: (appointment['patientImageUrl'] == null || appointment['patientImageUrl'].toString().isEmpty)
-                          ? Icon(
-                              Icons.person,
-                              color: ColorManager.primary,
-                              size: s(24),
-                            )
-                          : null,
-                    ),
+                    Builder(builder: (_) {
+                      final rawUrl = appointment['patientImageUrl']?.toString().trim() ?? '';
+                      final String? imageUrl = rawUrl.isEmpty
+                          ? null
+                          : rawUrl.startsWith('http')
+                              ? rawUrl
+                              : 'http://clinicbook.runasp.net${rawUrl.startsWith('/') ? '' : '/'}$rawUrl';
+                      final String initial = (appointment['patientName']?.toString() ?? 'P')
+                          .trim()
+                          .toUpperCase()
+                          .characters
+                          .firstOrNull ?? 'P';
+                      if (imageUrl != null) {
+                        return CircleAvatar(
+                          radius: s(24),
+                          backgroundColor: ColorManager.primary.withOpacity(0.1),
+                          backgroundImage: NetworkImage(imageUrl),
+                          onBackgroundImageError: (_, __) {},
+                          child: null,
+                        );
+                      }
+                      return CircleAvatar(
+                        radius: s(24),
+                        backgroundColor: ColorManager.primary,
+                        child: Text(
+                          initial,
+                          style: GoogleFonts.cairo(
+                            fontSize: s(18),
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      );
+                    }),
                     SizedBox(width: s(12)),
                     Expanded(
                       child: Column(

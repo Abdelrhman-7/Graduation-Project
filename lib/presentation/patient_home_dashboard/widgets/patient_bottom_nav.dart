@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:graduationproject/presentation/patient_home_dashboard/view/patient_home_dashboard_view.dart';
 import '../../../../core/resources/string_manager.dart';
 import '../../patient_schedule/view/patient_schedule_view.dart';
 import '../../lab_results/view/lab_results_view.dart';
 import '../../patient_profile/view/patient_profile_view.dart';
+import '../cubit/patient_home_dashboard_cubit.dart';
 
 class PatientBottomNav extends StatelessWidget {
   const PatientBottomNav({super.key, this.currentIndex = 0});
@@ -65,9 +67,15 @@ class PatientBottomNav extends StatelessWidget {
               active: currentIndex == 2,
               onTap: () {
                 if (currentIndex != 2) {
+                  final dashCubit = context.read<PatientHomeDashboardCubit>();
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (_) => const LabResultsView()),
+                    MaterialPageRoute(
+                      builder: (_) => BlocProvider.value(
+                        value: dashCubit,
+                        child: const LabResultsView(),
+                      ),
+                    ),
                   );
                 }
               },

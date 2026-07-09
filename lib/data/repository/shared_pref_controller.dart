@@ -244,12 +244,12 @@ class SharedPrefController {
       final hrMatch = RegExp(r'"heartRate":\s*"([^"]+)"').firstMatch(latest);
       final bpMatch = RegExp(r'"bloodPressure":\s*"([^"]+)"').firstMatch(latest);
       
-      final hr = hrMatch?.group(1) ?? '72';
-      final bp = bpMatch?.group(1) ?? '120/80';
+      final hr = hrMatch?.group(1) ?? '0';
+      final bp = bpMatch?.group(1) ?? '0/0';
       return {'heartRate': hr, 'bloodPressure': bp};
     }
     
-    return {'heartRate': '72', 'bloodPressure': '120/80'};
+    return {'heartRate': '0', 'bloodPressure': '0/0'};
   }
 
   static const String _medicationsKey = 'patient_medications';

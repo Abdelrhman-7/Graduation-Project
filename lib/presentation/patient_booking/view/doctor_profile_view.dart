@@ -241,12 +241,6 @@ class _DoctorProfileViewState extends State<DoctorProfileView> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             _buildInfoRow(
-                              Icons.email_outlined,
-                              'Email',
-                              doctor.email ?? 'N/A',
-                            ),
-                            _buildDivider(),
-                            _buildInfoRow(
                               Icons.phone_outlined,
                               'Phone Number',
                               doctor.phoneNumber ?? 'N/A',
@@ -285,6 +279,7 @@ class _DoctorProfileViewState extends State<DoctorProfileView> {
                           ],
                         ),
                       ),
+
                       SizedBox(height: s(24)),
 
                       // Actions

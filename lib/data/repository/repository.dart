@@ -474,20 +474,8 @@ class Repository {
     final apiBookingsRaw = await apiManager.getDoctorAllAppointments(
       currentPage: 1,
     );
-    if (apiBookingsRaw.isNotEmpty) {
-      print('=== DEBUG DOCTOR APPOINTMENTS RAW DATA ===');
-      final first = apiBookingsRaw.first;
-      if (first is Map) {
-        first.forEach((k, v) {
-          if (v is Map) {
-            print('  [$k] (Map):');
-            v.forEach((nk, nv) => print('    -- [$nk]: $nv'));
-          } else {
-            print('  [$k]: $v');
-          }
-        });
-      }
-      print('=========================================');
+    if (apiBookingsRaw.isEmpty) {
+      print('[getDoctorAllBookings] API returned empty - using local store');
     }
     final apiBookings = apiBookingsRaw
         .whereType<Map<String, dynamic>>()
@@ -522,6 +510,12 @@ class Repository {
     }
     
     return local;
+  }
+
+  // Doctor: جلب تفاصيل حجز واحد (بيرجع بيانات أكتر منها صورة المريض)
+  Future<Map<String, dynamic>?> getDoctorAppointmentDetails(int id) async {
+    await chooseRole('Doctor');
+    return await apiManager.getDoctorAppointment(id);
   }
 
   // Patient: جلب مواعيد الباشنت
@@ -716,8 +710,6 @@ class Repository {
           }
         } catch (_) {}
 
-        // DEBUG: log what we're getting
-        print('[APPT FILTER] id=$id pEmail=${mergedParsed.patientEmail} pName=${mergedParsed.patientName} currentEmail=$currentEmail currentName=$currentName status=${mergedParsed.status}');
 
         // The API endpoint (GetMyBookings) already returns appointments
         // belonging to the authenticated patient — no need to filter by name/email here.

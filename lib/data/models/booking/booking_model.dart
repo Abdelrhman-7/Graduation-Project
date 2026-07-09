@@ -87,7 +87,7 @@ class BookingModel {
           patient['FullName'] as String? ??
           patient['name'] as String? ??
           patientName;
-      
+
       final rawPatientImg = patient['imageUrl'] ?? patient['ImageUrl'] ??
           patient['profileImageUrl'] ?? patient['ProfileImageUrl'] ??
           patient['displayImageUrl'] ?? patient['DisplayImageUrl'] ??

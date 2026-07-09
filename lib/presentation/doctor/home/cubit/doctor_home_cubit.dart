@@ -120,12 +120,41 @@ class DoctorHomeCubit extends Cubit<DoctorHomeState> {
 
       if (pendingBookings.isNotEmpty) {
         final next = pendingBookings.first;
+        // لو مفيش صورة للمريض، نجيب تفاصيل الحجز كامل من API
+        String? patientImg = next.patientImageUrl;
+        if ((patientImg == null || patientImg.isEmpty) && next.id > 0) {
+          try {
+            print('[IMG] fetching details for appointment id=${next.id}');
+            final details = await _repository.getDoctorAppointmentDetails(next.id);
+            print('[IMG] details response: $details');
+            if (details != null) {
+              String resolveImg(dynamic src) {
+                if (src == null) return '';
+                final s = src.toString().trim();
+                if (s.isEmpty) return '';
+                return s.startsWith('http') ? s : 'http://clinicbook.runasp.net${s.startsWith('/') ? '' : '/'}$s';
+              }
+              patientImg = resolveImg(
+                details['patientImageUrl'] ??
+                details['PatientImageUrl'] ??
+                details['patient']?['imageUrl'] ??
+                details['patient']?['ImageUrl'] ??
+                details['patient']?['profileImageUrl'] ??
+                details['patient']?['displayImageUrl'] ??
+                details['patient']?['image'] ??
+                details['patient']?['photo'],
+              );
+              if (patientImg!.isEmpty) patientImg = null;
+              print('[IMG] resolved patientImg: $patientImg');
+            }
+          } catch (e) { print('[IMG] error: $e'); }
+        }
         upNext = {
           'patientName': next.patientName,
           'time': next.startTime ?? next.time ?? 'Pending',
           'type': next.clinicName ?? 'New Booking',
           'status': 'Pending Approval',
-          'patientImageUrl': next.patientImageUrl,
+          'patientImageUrl': patientImg,
         };
       } else if (allBookings.isNotEmpty) {
         final next = allBookings.firstWhere(
