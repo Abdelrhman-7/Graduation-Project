@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../../core/resources/color_manager.dart';
+import '../../../../../core/utils/time_formatter.dart';
 import '../../../../../data/models/schudule/cliniceSchedual.dart';
 
 class ClinicListItem extends StatelessWidget {
@@ -87,7 +88,7 @@ class ClinicListItem extends StatelessWidget {
             _InfoRow(
               icon: Icons.access_time_rounded,
               text: (clinic.schedules != null && clinic.schedules!.isNotEmpty)
-                  ? "${clinic.schedules![0]['startTime'] ?? clinic.schedules![0]['StartTime'] ?? ''} - ${clinic.schedules![0]['endTime'] ?? clinic.schedules![0]['EndTime'] ?? ''}"
+                  ? "${TimeFormatter.formatTime(clinic.schedules![0]['startTime'] ?? clinic.schedules![0]['StartTime'])} - ${TimeFormatter.formatTime(clinic.schedules![0]['endTime'] ?? clinic.schedules![0]['EndTime'])}"
                   : "Duration: ${clinic.appointmentDuration} mins",
             ),
             if (clinic.nots.isNotEmpty) ...[
@@ -111,8 +112,8 @@ class ClinicListItem extends StatelessWidget {
               const SizedBox(height: 6),
               ...clinic.schedules!.map((s) {
                 final day = s['dayOfWeek'] ?? s['day'] ?? s['DayOfWeek'] ?? '';
-                final start = s['startTime'] ?? s['StartTime'] ?? '';
-                final end = s['endTime'] ?? s['EndTime'] ?? '';
+                final start = TimeFormatter.formatTime(s['startTime'] ?? s['StartTime']);
+                final end = TimeFormatter.formatTime(s['endTime'] ?? s['EndTime']);
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 4.0),
                   child: Row(

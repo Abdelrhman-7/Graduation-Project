@@ -98,17 +98,6 @@ class ProfileHeader extends StatelessWidget {
                     color: ColorManager.headlineText,
                   ),
                 ),
-
-                SizedBox(height: s(4)),
-
-                Text(
-                  '${AppStrings.patientId} $patientId',
-                  style: GoogleFonts.cairo(
-                    fontSize: s(14),
-                    fontWeight: FontWeight.w500,
-                    color: ColorManager.subtitleText,
-                  ),
-                ),
               ],
             ),
           ),

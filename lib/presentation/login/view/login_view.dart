@@ -33,7 +33,7 @@ class LoginView extends StatelessWidget {
               size: AppSize.s20,
             ),
           ),
-          onPressed: () => Navigator.maybePop(context),
+          onPressed: () => Navigator.pop(context),
         ),
       ),
       body: LoginViewBody(role: role),

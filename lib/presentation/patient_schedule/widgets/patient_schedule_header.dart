@@ -23,14 +23,7 @@ class PatientScheduleHeader extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          IconButton(
-            icon: const Icon(
-              Icons.arrow_back_ios,
-              size: 20,
-              color: Color(0xFF0F172A),
-            ),
-            onPressed: () => Navigator.pop(context),
-          ),
+          const SizedBox(width: 48),
           Text(
             AppStrings.appointments,
             style: GoogleFonts.cairo(
@@ -39,10 +32,7 @@ class PatientScheduleHeader extends StatelessWidget {
               color: ColorManager.headlineText,
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.more_vert, color: Color(0xFF0F172A)),
-            onPressed: () {},
-          ),
+          const SizedBox(width: 48),
         ],
       ),
     );

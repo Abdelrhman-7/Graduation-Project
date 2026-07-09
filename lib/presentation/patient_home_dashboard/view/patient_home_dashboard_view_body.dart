@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../../core/utils/time_formatter.dart';
 import '../../../../data/models/schudule/doctorModel.dart';
 import '../../../../core/utils/avatar_helper.dart';
 import '../../../../core/resources/string_manager.dart';
@@ -15,7 +16,6 @@ import '../widgets/appointment_card.dart';
 import '../../patient_appointment_details/view/patient_appointment_details_view.dart';
 import '../../patient_schedule/view/patient_schedule_view.dart';
 import '../../patient_emergency/view/patient_emergency_view.dart';
-import '../../../../core/utils/avatar_helper.dart';
 
 class PatientHomeDashboardViewBody extends StatelessWidget {
   const PatientHomeDashboardViewBody({super.key});
@@ -90,7 +90,8 @@ class PatientHomeDashboardViewBody extends StatelessWidget {
                             children: [
                               if (nextAppointment != null) ...[
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
                                       'Next Appointment',
@@ -101,7 +102,8 @@ class PatientHomeDashboardViewBody extends StatelessWidget {
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                            builder: (_) => const PatientScheduleView(),
+                                            builder: (_) =>
+                                                const PatientScheduleView(),
                                           ),
                                         );
                                       },
@@ -128,57 +130,56 @@ class PatientHomeDashboardViewBody extends StatelessWidget {
                                     }
 
                                     final doctor = DoctorModel(
-                                      id: int.tryParse((nextAppointment['doctorId'] ??
-                                              (nextAppointment['doctor'] is Map
-                                                  ? nextAppointment['doctor']['id']
-                                                  : null) ??
-                                              0).toString()) ?? 0,
-                                      fullName: nextAppointment['doctorName'] ??
+                                      id:
+                                          int.tryParse(
+                                            (nextAppointment['doctorId'] ??
+                                                    (nextAppointment['doctor']
+                                                            is Map
+                                                        ? nextAppointment['doctor']['id']
+                                                        : null) ??
+                                                    0)
+                                                .toString(),
+                                          ) ??
+                                          0,
+                                      fullName:
+                                          nextAppointment['doctorName'] ??
                                           (nextAppointment['doctor'] is Map
                                               ? nextAppointment['doctor']['fullName']
                                               : null) ??
                                           'Unknown Doctor',
                                       imageUrl: resolveImageUrl(
-                                          nextAppointment['doctorImageUrl'] ??
-                                          (nextAppointment['doctor'] is Map
-                                              ? (nextAppointment['doctor']['imageUrl'] ??
-                                                 nextAppointment['doctor']['profileImageUrl'] ??
-                                                 nextAppointment['doctor']['displayImageUrl'])
-                                              : null) ??
-                                          nextAppointment['imageUrl'] ??
-                                          nextAppointment['profileImageUrl'] ??
-                                          nextAppointment['displayImageUrl']),
+                                        nextAppointment['doctorImageUrl'] ??
+                                            (nextAppointment['doctor'] is Map
+                                                ? (nextAppointment['doctor']['imageUrl'] ??
+                                                      nextAppointment['doctor']['profileImageUrl'] ??
+                                                      nextAppointment['doctor']['displayImageUrl'])
+                                                : null) ??
+                                            nextAppointment['imageUrl'] ??
+                                            nextAppointment['profileImageUrl'] ??
+                                            nextAppointment['displayImageUrl'],
+                                      ),
                                     );
 
-                                    final timeStr = (nextAppointment['timeSlot'] ??
-                                        nextAppointment['time'] ??
-                                        nextAppointment['startTime'] ??
-                                        'TBD').toString();
-                                    
-                                    String formattedTime = timeStr;
-                                    if (formattedTime.isNotEmpty && formattedTime != 'TBD') {
-                                      try {
-                                        // Match any time-like string e.g. 18:00 or 18:00:00 or 2026-07-12T18:00:00
-                                        final RegExp timeRegex = RegExp(r'(\d{1,2}):(\d{2})(?::\d{2})?');
-                                        final match = timeRegex.firstMatch(formattedTime);
-                                        if (match != null) {
-                                          final int hour = int.parse(match.group(1)!);
-                                          final int min = int.parse(match.group(2)!);
-                                          final String period = hour >= 12 ? 'PM' : 'AM';
-                                          final int displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
-                                          formattedTime = '${displayHour.toString().padLeft(2, '0')}:${min.toString().padLeft(2, '0')} $period';
-                                        }
-                                      } catch (_) {}
-                                    }
+                                    final timeStr =
+                                        (nextAppointment['timeSlot'] ??
+                                                nextAppointment['time'] ??
+                                                nextAppointment['startTime'] ??
+                                                'TBD')
+                                            .toString();
+
+                                    String formattedTime =
+                                        TimeFormatter.formatTime(timeStr);
 
                                     return AppointmentCard(
                                       doctorName: doctor.fullName,
-                                      specialty: nextAppointment['specialty'] ??
+                                      specialty:
+                                          nextAppointment['specialty'] ??
                                           (nextAppointment['doctor'] is Map
                                               ? nextAppointment['doctor']['specialty']
                                               : null) ??
                                           'Specialty',
-                                      dateTime: nextAppointment['bookingDate'] ??
+                                      dateTime:
+                                          nextAppointment['bookingDate'] ??
                                           nextAppointment['date'] ??
                                           'Upcoming',
                                       imagePath: AvatarHelper.getDoctorAvatar(
@@ -186,21 +187,46 @@ class PatientHomeDashboardViewBody extends StatelessWidget {
                                         imageUrl: doctor.imageUrl,
                                       ),
                                       timeSlot: formattedTime,
-                                      bookingId: int.tryParse(nextAppointment['id']?.toString() ?? '0') ?? 0,
-                                      status: (nextAppointment['status']?.toString().toLowerCase() == 'paid' || nextAppointment['paymentStatus']?.toString().toLowerCase() == 'paid') 
-                                          ? 'Paid' 
-                                          : (nextAppointment['status'] ?? 'Pending'),
+                                      bookingId:
+                                          int.tryParse(
+                                            nextAppointment['id']?.toString() ??
+                                                '0',
+                                          ) ??
+                                          0,
+                                      status:
+                                          (nextAppointment['status']
+                                                      ?.toString()
+                                                      .toLowerCase() ==
+                                                  'paid' ||
+                                              nextAppointment['paymentStatus']
+                                                      ?.toString()
+                                                      .toLowerCase() ==
+                                                  'paid')
+                                          ? 'Paid'
+                                          : (nextAppointment['status'] ??
+                                                'Pending'),
                                       isViewOnly: true,
                                       onDetails: () {
-                                        final bookingId = int.tryParse(nextAppointment['id']?.toString() ?? '0') ?? 0;
+                                        final bookingId =
+                                            int.tryParse(
+                                              nextAppointment['id']
+                                                      ?.toString() ??
+                                                  '0',
+                                            ) ??
+                                            0;
                                         if (bookingId > 0) {
                                           Navigator.push(
                                             context,
                                             MaterialPageRoute(
-                                              builder: (_) => PatientAppointmentDetailsView(
-                                                bookingId: bookingId,
-                                                initialData: Map<String, dynamic>.from(nextAppointment),
-                                              ),
+                                              builder: (_) =>
+                                                  PatientAppointmentDetailsView(
+                                                    bookingId: bookingId,
+                                                    initialData:
+                                                        Map<
+                                                          String,
+                                                          dynamic
+                                                        >.from(nextAppointment),
+                                                  ),
                                             ),
                                           );
                                         }
@@ -291,7 +317,9 @@ class PatientHomeDashboardViewBody extends StatelessWidget {
                               SizedBox(height: s(16)),
                               if (medications.isEmpty)
                                 Padding(
-                                  padding: EdgeInsets.symmetric(vertical: s(12)),
+                                  padding: EdgeInsets.symmetric(
+                                    vertical: s(12),
+                                  ),
                                   child: Center(
                                     child: Text(
                                       'No current medications',
@@ -304,17 +332,29 @@ class PatientHomeDashboardViewBody extends StatelessWidget {
                                 )
                               else
                                 ...medications.map((med) {
-                                  final isRefill = med['badge'].toString().toLowerCase() == 'refill';
+                                  final isRefill =
+                                      med['badge'].toString().toLowerCase() ==
+                                      'refill';
                                   return Padding(
                                     padding: EdgeInsets.only(bottom: s(12)),
                                     child: _MedicationTile(
                                       scale: scale,
-                                      icon: isRefill ? Icons.assignment_outlined : Icons.medication_outlined,
-                                      iconBg: isRefill ? const Color(0xFFF1F5F9) : const Color(0xFFFEF2F2),
-                                      title: med['title']?.toString() ?? 'Medication',
-                                      subtitle: med['subtitle']?.toString() ?? '',
-                                      badge: med['badge']?.toString() ?? 'Active',
-                                      badgeColor: isRefill ? const Color(0xFF2563EB) : const Color(0xFF16A34A),
+                                      icon: isRefill
+                                          ? Icons.assignment_outlined
+                                          : Icons.medication_outlined,
+                                      iconBg: isRefill
+                                          ? const Color(0xFFF1F5F9)
+                                          : const Color(0xFFFEF2F2),
+                                      title:
+                                          med['title']?.toString() ??
+                                          'Medication',
+                                      subtitle:
+                                          med['subtitle']?.toString() ?? '',
+                                      badge:
+                                          med['badge']?.toString() ?? 'Active',
+                                      badgeColor: isRefill
+                                          ? const Color(0xFF2563EB)
+                                          : const Color(0xFF16A34A),
                                     ),
                                   );
                                 }),

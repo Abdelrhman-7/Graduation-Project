@@ -16,6 +16,8 @@ class _ResetPasswordDialogState extends State<ResetPasswordDialog> {
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  bool _obscureNewPassword = true;
+  bool _obscureConfirmPassword = true;
 
   @override
   Widget build(BuildContext context) {
@@ -35,15 +37,39 @@ class _ResetPasswordDialogState extends State<ResetPasswordDialog> {
               children: [
                 TextFormField(
                   controller: _newPasswordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(labelText: 'New Password'),
+                  obscureText: _obscureNewPassword,
+                  decoration: InputDecoration(
+                    labelText: 'New Password',
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureNewPassword ? Icons.visibility_off : Icons.visibility,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscureNewPassword = !_obscureNewPassword;
+                        });
+                      },
+                    ),
+                  ),
                   validator: (value) => value == null || value.isEmpty ? 'Required' : null,
                 ),
                 const SizedBox(height: 10),
                 TextFormField(
                   controller: _confirmPasswordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(labelText: 'Confirm New Password'),
+                  obscureText: _obscureConfirmPassword,
+                  decoration: InputDecoration(
+                    labelText: 'Confirm New Password',
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscureConfirmPassword = !_obscureConfirmPassword;
+                        });
+                      },
+                    ),
+                  ),
                   validator: (value) {
                     if (value == null || value.isEmpty) return 'Required';
                     if (value != _newPasswordController.text) return 'Passwords do not match';

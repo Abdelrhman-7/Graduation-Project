@@ -112,16 +112,34 @@ class _ManageDoctorsBody extends StatelessWidget {
                       children: [
                         Row(
                           children: [
-                            CircleAvatar(
-                              radius: 24,
-                              backgroundImage: doctor['imageUrl'] != null
-                                  ? NetworkImage(
-                                      'http://clinicbook.runasp.net${doctor['imageUrl']}',
-                                    )
-                                  : null,
-                              child: doctor['imageUrl'] == null
-                                  ? const Icon(Icons.person)
-                                  : null,
+                            Builder(
+                              builder: (context) {
+                                String getImageUrl(dynamic path) {
+                                  if (path == null || path.toString().isEmpty) {
+                                    return '';
+                                  }
+                                  String strPath = path.toString().replaceAll('\\', '/');
+                                  String finalUrl = '';
+                                  if (strPath.startsWith('http')) {
+                                    finalUrl = strPath;
+                                  } else if (strPath.startsWith('/')) {
+                                    finalUrl = 'http://clinicbook.runasp.net$strPath';
+                                  } else {
+                                    finalUrl = 'http://clinicbook.runasp.net/$strPath';
+                                  }
+                                  return finalUrl;
+                                }
+                                final imageUrl = getImageUrl(doctor['displayImageUrl']);
+                                return CircleAvatar(
+                                  radius: 24,
+                                  backgroundImage: imageUrl.isNotEmpty
+                                      ? NetworkImage(imageUrl)
+                                      : null,
+                                  child: imageUrl.isEmpty
+                                      ? const Icon(Icons.person)
+                                      : null,
+                                );
+                              },
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -171,8 +189,11 @@ class _ManageDoctorsBody extends StatelessWidget {
                         ),
                         const SizedBox(height: 12),
                         const Divider(),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                        Wrap(
+                          alignment: WrapAlignment.center,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: 4,
+                          runSpacing: 8,
                           children: [
                             ElevatedButton.icon(
                               style: ElevatedButton.styleFrom(

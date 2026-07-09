@@ -462,7 +462,12 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
         }
       }
     } catch (e) {
-      caughtError = e.toString();
+      final errorStr = e.toString().toLowerCase();
+      if (errorStr.contains('timeout')) {
+        caughtError = 'The server is taking too long to respond. Please check your connection or try again later.';
+      } else {
+        caughtError = 'Failed to book appointment. Please try again.';
+      }
       print('❌ Booking API error: $e');
     }
 
@@ -538,7 +543,15 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
         );
       }
     } catch (e) {
-      emit(PatientPaymentError(e.toString()));
+      final errorStr = e.toString().toLowerCase();
+      if (errorStr.contains('404')) {
+        emit(PatientPaymentError('Appointment not found on the server. Please check your schedule and try again.'));
+      } else if (errorStr.contains('timeout')) {
+        emit(PatientPaymentError('The server is taking too long to respond. Please try again later.'));
+      } else {
+        emit(PatientPaymentError('Payment failed. Please try again.'));
+      }
+      print('❌ Payment API error: $e');
     }
   }
 }

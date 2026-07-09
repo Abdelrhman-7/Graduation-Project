@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:graduationproject/data/models/booking/booking_model.dart';
 import '../../../../../core/resources/color_manager.dart';
+import '../../../../../core/utils/time_formatter.dart';
 
 class ClinicBookingsSheet extends StatelessWidget {
   final int clinicId;
@@ -114,8 +115,8 @@ class _BookingItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final timeLabel = booking.dayOfWeek != null
-        ? '${booking.dayOfWeek} ${booking.startTime ?? ''}'
-        : '${booking.date ?? 'No Date'}${booking.time != null ? ' at ${booking.time}' : ''}';
+        ? '${booking.dayOfWeek} ${TimeFormatter.formatTime(booking.startTime)}'
+        : '${booking.date ?? 'No Date'}${booking.time != null ? ' at ${TimeFormatter.formatTime(booking.time)}' : ''}';
 
     final isPending = booking.isPending;
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:graduationproject/core/utils/time_formatter.dart';
 import 'package:graduationproject/data/models/booking/booking_model.dart';
 import '../../../../../core/resources/color_manager.dart';
 import '../cubit/doctor_home_cubit.dart';
@@ -305,7 +306,7 @@ class _DoctorPatientBookingCard extends StatelessWidget {
           const SizedBox(height: 10),
           if (booking.dayOfWeek != null)
             Text(
-              '${booking.dayOfWeek} ${booking.startTime ?? ''}${booking.endTime != null ? ' - ${booking.endTime}' : ''}',
+              '${booking.dayOfWeek} ${TimeFormatter.formatTime(booking.startTime)}${booking.endTime != null ? ' - ${TimeFormatter.formatTime(booking.endTime)}' : ''}',
               style: GoogleFonts.cairo(fontSize: 13),
             ),
           if (booking.reasonForVisit != null) ...[

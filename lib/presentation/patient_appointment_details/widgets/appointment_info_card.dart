@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/resources/color_manager.dart';
+import '../../../../core/utils/time_formatter.dart';
 
 class AppointmentInfoCard extends StatelessWidget {
   final Map<String, dynamic> details;
@@ -27,20 +28,7 @@ class AppointmentInfoCard extends StatelessWidget {
     final clinicPhone = details['clinicPhoneNumber'];
     final paymentMethod = details['paymentMethod'];
 
-    String formattedTime = timeStr.toString();
-    if (formattedTime.isNotEmpty) {
-      try {
-        final RegExp timeRegex = RegExp(r'(\d{1,2}):(\d{2})(?::\d{2})?');
-        final match = timeRegex.firstMatch(formattedTime);
-        if (match != null) {
-          final int hour = int.parse(match.group(1)!);
-          final int min = int.parse(match.group(2)!);
-          final String period = hour >= 12 ? 'PM' : 'AM';
-          final int displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
-          formattedTime = '${displayHour.toString().padLeft(2, '0')}:${min.toString().padLeft(2, '0')} $period';
-        }
-      } catch (_) {}
-    }
+    String formattedTime = TimeFormatter.formatTime(timeStr.toString());
 
     final rawPayStatus = (details['paymentStatus'] ?? details['PaymentStatus'] ?? '').toString();
     // Show Paid if status is Paid OR paymentStatus says so

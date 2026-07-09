@@ -50,9 +50,23 @@ class _RateDoctorSheetState extends State<RateDoctorSheet> {
       if (reviews.isNotEmpty && mounted) {
         final review = reviews.first;
         setState(() {
-          existingReviewId = review['id'];
-          rating = review['rating'] ?? 0;
-          commentController.text = review['comment'] ?? '';
+          dynamic rawId;
+          // Dynamically search for ID
+          for (final key in review.keys) {
+            final k = key.toString().toLowerCase();
+            if ((k == 'id' || k.contains('reviewid')) && k != 'doctorid' && k != 'patientid') {
+              rawId = review[key];
+              break;
+            }
+          }
+          
+          existingReviewId = rawId is int ? rawId : int.tryParse(rawId?.toString() ?? '');
+          
+          // Fallback: if no ID found, assume the API uses doctorId for edit/delete
+          existingReviewId ??= widget.doctorId;
+
+          rating = (review['rating'] as num?)?.toInt() ?? 0;
+          commentController.text = review['comment'] ?? review['Comment'] ?? '';
         });
       }
     } catch (e) {

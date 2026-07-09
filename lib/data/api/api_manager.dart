@@ -1,5 +1,4 @@
 // ignore_for_file: avoid_print
-import 'dart:convert';
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
@@ -33,9 +32,9 @@ class ApiManager {
     final dio = Dio(
       BaseOptions(
         baseUrl: _baseUrl,
-        connectTimeout: const Duration(seconds: 60),
-        receiveTimeout: const Duration(minutes: 3),
-        sendTimeout: const Duration(minutes: 3),
+        connectTimeout: const Duration(seconds: 25),
+        receiveTimeout: const Duration(seconds: 25),
+        sendTimeout: const Duration(seconds: 25),
         headers: {'Accept': 'application/json', 'Connection': 'keep-alive'},
         responseType: ResponseType.json,
         followRedirects: false,
@@ -472,7 +471,8 @@ class ApiManager {
         return RegisterResponse(
           status: true,
           message: response.data is Map<String, dynamic>
-              ? (response.data['message']?.toString() ?? 'Registration successful')
+              ? (response.data['message']?.toString() ??
+                    'Registration successful')
               : response.data.toString(),
         );
       }
@@ -1099,7 +1099,9 @@ class ApiManager {
       final cleanCvv = cvv.trim();
       final expMonth = int.tryParse(expiryMonth.trim()) ?? 1;
       final expYear = int.tryParse(expiryYear.trim()) ?? DateTime.now().year;
-      final holderName = cardHolderName.trim().isNotEmpty ? cardHolderName.trim() : 'Card Holder';
+      final holderName = cardHolderName.trim().isNotEmpty
+          ? cardHolderName.trim()
+          : 'Card Holder';
 
       // Debug: print actual values before sending
       print('=== PAYMENT DEBUG ===');
@@ -1660,55 +1662,64 @@ class ApiManager {
     required String reasonForVisit,
     required String paymentMethod,
   }) async {
-    try {
-      final body = {
-        'reasonForVisit': reasonForVisit,
-        'paymentMethod': paymentMethod,
-      };
+    final body = {
+      'reasonForVisit': reasonForVisit,
+      'paymentMethod': paymentMethod,
+    };
 
-      print(
-        'Booking appointment: scheduleId=$scheduleId, reason=$reasonForVisit, payment=$paymentMethod',
-      );
+    print(
+      'Booking appointment: scheduleId=$scheduleId, reason=$reasonForVisit, payment=$paymentMethod',
+    );
 
-      final response = await _dio.post(
-        'Patient/BookingApi/BookAppointment/$scheduleId',
-        data: body,
-        options: Options(
-          contentType: 'application/json',
-          validateStatus: (status) => true,
-          sendTimeout: const Duration(seconds: 45),
-          receiveTimeout: const Duration(seconds: 45),
-        ),
-      );
+    const maxAttempts = 2;
+    for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        final response = await _dio.post(
+          'Patient/BookingApi/BookAppointment/$scheduleId',
+          data: body,
+          options: Options(
+            contentType: 'application/json',
+            validateStatus: (status) => true,
+            sendTimeout: const Duration(seconds: 45),
+            receiveTimeout: const Duration(seconds: 45),
+          ),
+        );
 
-      print(
-        'BookAppointment Response: ${response.statusCode} - ${response.data}',
-      );
+        print(
+          'BookAppointment Response: ${response.statusCode} - ${response.data}',
+        );
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return response.data;
-      } else {
-        String errorMessage = 'Failed to book appointment';
-        if (response.data is Map<String, dynamic>) {
-          final data = response.data as Map<String, dynamic>;
-          if (data.containsKey('message')) {
-            errorMessage = data['message'];
-          } else if (data.containsKey('errors')) {
-            errorMessage = data['errors'].toString();
-          } else if (data.containsKey('title')) {
-            errorMessage = data['title'];
-          } else {
-            errorMessage = response.data.toString();
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          return response.data;
+        } else {
+          String errorMessage = 'Failed to book appointment';
+          if (response.data is Map<String, dynamic>) {
+            final data = response.data as Map<String, dynamic>;
+            if (data.containsKey('message')) {
+              errorMessage = data['message'];
+            } else if (data.containsKey('errors')) {
+              errorMessage = data['errors'].toString();
+            } else if (data.containsKey('title')) {
+              errorMessage = data['title'];
+            } else {
+              errorMessage = response.data.toString();
+            }
+          } else if (response.data is String) {
+            errorMessage = response.data;
           }
-        } else if (response.data is String) {
-          errorMessage = response.data;
+          throw errorMessage;
         }
-        throw errorMessage;
+      } catch (e) {
+        final isTimeout = e.toString().toLowerCase().contains('timeout');
+        print('❌ Booking attempt $attempt/$maxAttempts failed: $e');
+        if (isTimeout && attempt < maxAttempts) {
+          print('🔄 Retrying booking (attempt ${attempt + 1})...');
+          continue;
+        }
+        rethrow;
       }
-    } catch (e) {
-      print('Failed to book patient appointment: $e');
-      rethrow;
     }
+    throw 'Failed to book appointment after $maxAttempts attempts.';
   }
 
   Future<dynamic> bookForOther(
@@ -2148,12 +2159,13 @@ class ApiManager {
     String confirmPassword,
   ) async {
     try {
+      final formData = FormData.fromMap({
+        'NewPassword': newPassword,
+        'ConfirmPassword': confirmPassword,
+      });
       final response = await _dio.post(
         'Admin/DoctorApi/ResetDoctorPassword/$doctorId',
-        data: {
-          'NewPassword': newPassword,
-          'ConfirmNewPassword': confirmPassword,
-        },
+        data: formData,
         options: Options(validateStatus: (status) => true),
       );
       if (response.statusCode == 200 || response.statusCode == 204) {
@@ -2513,12 +2525,13 @@ class ApiManager {
     String confirmPassword,
   ) async {
     try {
+      final formData = FormData.fromMap({
+        'NewPassword': newPassword,
+        'ConfirmPassword': confirmPassword,
+      });
       final response = await _dio.post(
         'Admin/PatientApi/ResetPatientPassword/$patientId',
-        data: {
-          'NewPassword': newPassword,
-          'ConfirmNewPassword': confirmPassword,
-        },
+        data: formData,
         options: Options(validateStatus: (status) => true),
       );
       if (response.statusCode == 200 || response.statusCode == 204) {

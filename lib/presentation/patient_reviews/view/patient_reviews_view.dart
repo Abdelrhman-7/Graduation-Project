@@ -7,8 +7,6 @@ import '../../patient_booking/view/doctor_profile_view.dart';
 import '../../patient_booking/cubit/patient_booking_cubit.dart';
 import '../../../../data/repository/repository.dart';
 import '../../../../core/resources/color_manager.dart';
-import '../../widgets/rate_doctor_sheet.dart';
-
 class PatientReviewsView extends StatelessWidget {
   const PatientReviewsView({super.key});
 
@@ -185,35 +183,6 @@ class _PatientReviewsViewBody extends StatelessWidget {
                             ],
                           ),
                         ),
-                        ElevatedButton.icon(
-                          onPressed: () {
-                            _showRateDoctorSheet(context, doctor.id);
-                          },
-                          icon: const Icon(
-                            Icons.edit_rounded,
-                            size: 16,
-                            color: Color(0xFFEAB308),
-                          ),
-                          label: Text(
-                            'Edit',
-                            style: GoogleFonts.cairo(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: const Color(0xFF334155),
-                            ),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFFEF9C3),
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                        ),
                       ],
                     ),
                   ),
@@ -227,14 +196,5 @@ class _PatientReviewsViewBody extends StatelessWidget {
     );
   }
 
-  void _showRateDoctorSheet(BuildContext context, int doctorId) {
-    RateDoctorSheet.show(
-      context,
-      doctorId,
-      onReviewSubmitted: () {
-        context.read<PatientReviewsCubit>().loadDoctors();
-      },
-    );
-  }
 }
 

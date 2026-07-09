@@ -9,7 +9,6 @@ import '../cubit/patient_profile_cubit.dart';
 import '../cubit/patient_profile_state.dart';
 import '../widgets/profile_header.dart';
 import '../widgets/stats_row.dart';
-import '../widgets/premium_card.dart';
 import '../widgets/menu_item.dart';
 import '../../widgets/custom_change_password_dialog.dart';
 
@@ -80,7 +79,6 @@ class PatientProfileViewBody extends StatelessWidget {
                               age: state.age,
                               bloodType: state.bloodType,
                             ),
-                            PremiumCareCard(scale: scale),
                             SizedBox(height: s(16)),
                             _buildSectionHeader(s, AppStrings.healthRecords),
                             ProfileMenuItem(

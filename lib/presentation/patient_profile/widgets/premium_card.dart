@@ -18,16 +18,6 @@ class PremiumCareCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: ColorManager.premiumCardBg,
         borderRadius: BorderRadius.circular(s(20)),
-        image: DecorationImage(
-          image: const NetworkImage(
-            'https://www.transparenttextures.com/patterns/cubes.png',
-          ),
-          opacity: 0.1,
-          colorFilter: ColorFilter.mode(
-            Colors.white.withValues(alpha: 0.1),
-            BlendMode.srcATop,
-          ),
-        ),
       ),
       child: Column(
         children: [
