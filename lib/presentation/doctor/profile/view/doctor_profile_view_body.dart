@@ -18,6 +18,7 @@ class DoctorProfileViewBody extends StatelessWidget {
   final String? imageUrl;
   final int? age;
   final int patientsCount;
+  final String? specialization;
 
   const DoctorProfileViewBody({
     super.key,
@@ -25,6 +26,7 @@ class DoctorProfileViewBody extends StatelessWidget {
     this.imageUrl,
     this.age,
     this.patientsCount = 0,
+    this.specialization,
   });
 
   @override
@@ -67,6 +69,7 @@ class DoctorProfileViewBody extends StatelessWidget {
                   imageUrl: imageUrl,
                   age: age,
                   patientsCount: patientsCount,
+                  specialization: specialization,
                   onEditTap: () {
                     Navigator.push(
                       context,

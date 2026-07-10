@@ -55,6 +55,7 @@ class _DoctorHomeViewBodyState extends State<DoctorHomeViewBody> {
                                 imageUrl: state.imageUrl,
                                 age: state.age,
                                 patientsCount: state.allBookings.where((b) => b.isApproved || (b.status?.toLowerCase().contains('completed') ?? false)).length,
+                                specialization: state.specialty,
                               ),
                             )
                           : _currentIndex == 0

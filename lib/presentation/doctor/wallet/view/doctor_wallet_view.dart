@@ -41,13 +41,16 @@ class _DoctorWalletViewState extends State<DoctorWalletView> {
       for (final b in allBookings) {
         final status = b.status?.toLowerCase() ?? '';
         final paymentMethod = b.paymentMethod?.toLowerCase() ?? '';
+        final rawPayStatusLower = (b.paymentStatus ?? '').toLowerCase().trim();
+        
         final isPaid =
-            status.contains('paid') ||
-            status.contains('complet') ||
-            status.contains('success') ||
+            rawPayStatusLower == 'paid' ||
+            rawPayStatusLower == 'completed' ||
+            rawPayStatusLower == 'success' ||
+            status.toLowerCase().trim() == 'paid' ||
             paymentMethod == 'card';
 
-        final price = b.price ?? 0.0;
+        final price = b.price ?? b.consultationPrice ?? 0.0;
 
         if (isPaid && price > 0) {
           calculatedBalance += price;

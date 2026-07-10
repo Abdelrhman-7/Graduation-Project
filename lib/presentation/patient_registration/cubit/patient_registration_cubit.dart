@@ -10,7 +10,7 @@ class PatientRegistrationCubit extends Cubit<PatientRegistrationState> {
     : super(PatientRegistrationInitial());
 
   String fullName = 'Abdo';
-  String email = 'wwwabdo77@gmail.com';
+  String email = 'abdo@gmail.com';
   String dateOfBirth = '';
   String phoneNumber = '01008765502';
   String address = 'cairo';

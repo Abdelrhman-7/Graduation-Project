@@ -9,6 +9,7 @@ class DoctorProfileHeader extends StatefulWidget {
   final int? age;
   final int patientsCount;
   final VoidCallback? onEditTap;
+  final String? specialization;
 
   const DoctorProfileHeader({
     super.key,
@@ -16,6 +17,7 @@ class DoctorProfileHeader extends StatefulWidget {
     this.imageUrl,
     this.age,
     this.patientsCount = 0,
+    this.specialization,
     this.onEditTap,
   });
 
@@ -111,38 +113,45 @@ class _DoctorProfileHeaderState extends State<DoctorProfileHeader> {
         ),
         const SizedBox(height: 16),
         const SizedBox(height: 16),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              widget.name,
-              style: GoogleFonts.cairo(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: ColorManager.headlineText,
-              ),
-            ),
-            const SizedBox(width: 8),
-            GestureDetector(
-              onTap: widget.onEditTap,
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: ColorManager.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.edit_outlined,
-                  color: ColorManager.primary,
-                  size: 20,
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(
+                  widget.name,
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.cairo(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: ColorManager.headlineText,
+                  ),
                 ),
               ),
-            ),
-          ],
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: widget.onEditTap,
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: ColorManager.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.edit_outlined,
+                    color: ColorManager.primary,
+                    size: 20,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 4),
         Text(
-          "Cardiologist • MD, FACC",
+          widget.specialization ?? "Doctor",
           style: GoogleFonts.cairo(
             fontSize: 14,
             fontWeight: FontWeight.w500,
@@ -153,7 +162,10 @@ class _DoctorProfileHeaderState extends State<DoctorProfileHeader> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            _buildStatItem("Age", widget.age != null ? "${widget.age} years" : "N/A"),
+            _buildStatItem(
+              "Age",
+              widget.age != null ? "${widget.age} years" : "N/A",
+            ),
             _buildStatItem("Patients", "${widget.patientsCount}"),
             _buildStatItem("Rating", "$averageRating/5 ($reviewCount)"),
           ],

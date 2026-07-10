@@ -30,7 +30,7 @@ class _AdminHomeViewState extends State<AdminHomeView> {
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
-              await SharedPrefController().clear();
+              await SharedPrefController().logout();
               Navigator.pushAndRemoveUntil(
                 // ignore: use_build_context_synchronously
                 context,

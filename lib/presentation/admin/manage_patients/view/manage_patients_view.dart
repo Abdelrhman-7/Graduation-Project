@@ -98,7 +98,7 @@ class _ManagePatientsBody extends StatelessWidget {
                     DateTime.parse(
                       lockoutEndVal.toString(),
                     ).isAfter(DateTime.now());
-                final lockStatus = isLocked ? 'Locked' : 'Unlocked';
+                final lockStatus = isLocked ? 'Blocked' : 'Active';
 
                 return Card(
                   margin: const EdgeInsets.symmetric(
@@ -225,29 +225,54 @@ class _ManagePatientsBody extends StatelessWidget {
                             const SizedBox(width: 8),
                             ElevatedButton.icon(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: isLocked
-                                    ? const Color(0xFF28A745)
-                                    : const Color(0xFF6C757D), // Green or Gray
+                                backgroundColor: const Color(0xFF28A745), // Green
                                 foregroundColor: Colors.white,
+                                disabledBackgroundColor: Colors.grey[300],
+                                disabledForegroundColor: Colors.grey[600],
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 8,
                                   vertical: 0,
                                 ),
                                 minimumSize: const Size(0, 32),
                               ),
-                              icon: Icon(
-                                isLocked ? Icons.lock_open : Icons.lock,
-                                size: 16,
+                              icon: const Icon(Icons.lock_open, size: 16),
+                              label: const Text(
+                                'Unblock',
+                                style: TextStyle(fontSize: 12),
                               ),
-                              label: Text(
-                                isLocked ? 'Unlock' : 'Lock',
-                                style: const TextStyle(fontSize: 12),
+                              onPressed: !isLocked
+                                  ? null
+                                  : () {
+                                      context
+                                          .read<ManagePatientsCubit>()
+                                          .togglePatientLock(patientId);
+                                    },
+                            ),
+                            const SizedBox(width: 8),
+                            ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFDC3545), // Red
+                                foregroundColor: Colors.white,
+                                disabledBackgroundColor: Colors.grey[300],
+                                disabledForegroundColor: Colors.grey[600],
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 0,
+                                ),
+                                minimumSize: const Size(0, 32),
                               ),
-                              onPressed: () {
-                                context
-                                    .read<ManagePatientsCubit>()
-                                    .togglePatientLock(patientId);
-                              },
+                              icon: const Icon(Icons.lock, size: 16),
+                              label: const Text(
+                                'Block',
+                                style: TextStyle(fontSize: 12),
+                              ),
+                              onPressed: isLocked
+                                  ? null
+                                  : () {
+                                      context
+                                          .read<ManagePatientsCubit>()
+                                          .togglePatientLock(patientId);
+                                    },
                             ),
                             const SizedBox(width: 8),
                             ElevatedButton.icon(

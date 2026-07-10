@@ -31,12 +31,13 @@ class AppointmentInfoCard extends StatelessWidget {
     String formattedTime = TimeFormatter.formatTime(timeStr.toString());
 
     final rawPayStatus = (details['paymentStatus'] ?? details['PaymentStatus'] ?? '').toString();
+    final rawPayStatusLower = rawPayStatus.toLowerCase().trim();
     // Show Paid if status is Paid OR paymentStatus says so
     final isPaid =
-        rawPayStatus.toLowerCase().contains('paid') ||
-        rawPayStatus.toLowerCase().contains('complet') ||
-        rawPayStatus.toLowerCase().contains('success') ||
-        status.toString().toLowerCase() == 'paid';
+        rawPayStatusLower == 'paid' ||
+        rawPayStatusLower == 'completed' ||
+        rawPayStatusLower == 'success' ||
+        status.toString().toLowerCase().trim() == 'paid';
     final paymentStatus = isPaid
         ? 'Paid'
         : (rawPayStatus.isNotEmpty ? rawPayStatus : 'Unpaid');

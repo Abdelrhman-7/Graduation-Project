@@ -50,12 +50,12 @@ class _DoctorRegisterFormState extends State<DoctorRegisterForm> {
   void initState() {
     super.initState();
     _fullName = TextEditingController();
-    _email = TextEditingController();
+    _email = TextEditingController(text: 'abdo@gmail.com');
     _phone = TextEditingController();
     _address = TextEditingController();
     _aboutMe = TextEditingController();
-    _password = TextEditingController();
-    _confirmPassword = TextEditingController();
+    _password = TextEditingController(text: '01008765502Abdo@');
+    _confirmPassword = TextEditingController(text: '01008765502Abdo@');
     _dob = TextEditingController();
   }
 

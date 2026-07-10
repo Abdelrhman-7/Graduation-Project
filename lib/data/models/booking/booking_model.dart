@@ -20,6 +20,8 @@ class BookingModel {
   final String? createdAt;
   final bool notificationUnread;
   final double? price;
+  final double? consultationPrice;
+  final String? paymentStatus;
 
   BookingModel({
     required this.id,
@@ -43,6 +45,8 @@ class BookingModel {
     this.createdAt,
     this.notificationUnread = false,
     this.price,
+    this.consultationPrice,
+    this.paymentStatus,
   });
 
   static int _parseId(Map<String, dynamic> json) {
@@ -215,6 +219,8 @@ class BookingModel {
       notificationUnread: json['notificationUnread'] == true ||
           json['NotificationUnread'] == true,
       price: json['price'] != null ? double.tryParse(json['price'].toString()) : null,
+      consultationPrice: json['consultationPrice'] != null ? double.tryParse(json['consultationPrice'].toString()) : null,
+      paymentStatus: json['paymentStatus'] as String? ?? json['PaymentStatus'] as String?,
     );
   }
 
@@ -242,6 +248,8 @@ class BookingModel {
       'createdAt': createdAt,
       'notificationUnread': notificationUnread,
       'price': price,
+      'consultationPrice': consultationPrice,
+      'paymentStatus': paymentStatus,
     };
   }
 
@@ -279,6 +287,8 @@ class BookingModel {
       createdAt: createdAt,
       notificationUnread: notificationUnread ?? this.notificationUnread,
       price: price,
+      consultationPrice: consultationPrice,
+      paymentStatus: paymentStatus,
     );
   }
 
@@ -300,7 +310,9 @@ class BookingModel {
       'timeSlot': timeLabel ?? '',
       'status': status,
       'price': price,
+      'consultationPrice': consultationPrice,
       'paymentMethod': paymentMethod,
+      'paymentStatus': paymentStatus,
       'patientName': patientName,
       'patientEmail': patientEmail,
     };

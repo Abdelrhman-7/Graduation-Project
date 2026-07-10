@@ -107,7 +107,11 @@ class _NotificationItem extends StatelessWidget {
   String _formatDate(String? rawDate) {
     if (rawDate == null || rawDate.isEmpty) return '';
     try {
-      final dt = DateTime.parse(rawDate).toLocal();
+      String raw = rawDate;
+      if (!raw.endsWith('Z')) {
+        raw += 'Z';
+      }
+      final dt = DateTime.parse(raw).toLocal();
       return DateFormat('MMM d, yyyy - h:mm a').format(dt);
     } catch (_) {
       return rawDate;
