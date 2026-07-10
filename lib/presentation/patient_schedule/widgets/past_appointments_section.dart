@@ -31,11 +31,33 @@ class PastAppointmentsSection extends StatelessWidget {
           _buildEmptyState()
         else
           ...appointments.map((appt) {
+            String rawDocName = (appt['realDoctorName'] ?? appt['doctorName'] ?? '').toString();
+            if (rawDocName.isEmpty) {
+              rawDocName = (appt['DoctorName'] ?? '').toString();
+            }
+            if (rawDocName.isEmpty) {
+              rawDocName = (appt['doctorFullName'] ?? '').toString();
+            }
+            if (rawDocName.isEmpty) {
+              rawDocName = (appt['DoctorFullName'] ?? '').toString();
+            }
+            if (rawDocName.isEmpty) {
+              rawDocName = (appt['doctor']?['fullName'] ?? '').toString();
+            }
+            if (rawDocName.isEmpty) {
+              rawDocName = (appt['doctor']?['name'] ?? '').toString();
+            }
+            if (rawDocName.isEmpty) {
+              rawDocName = (appt['schedule']?['doctor']?['fullName'] ?? '').toString();
+            }
+            if (rawDocName.isEmpty) {
+              rawDocName = (appt['schedule']?['doctor']?['name'] ?? '').toString();
+            }
+
             final doctorName =
-                appt['doctorName'] ??
-                appt['doctor']?['fullName'] ??
-                appt['doctor']?['name'] ??
-                'Unknown Doctor';
+                (rawDocName.isEmpty || rawDocName == 'null')
+                    ? 'Unknown Doctor'
+                    : rawDocName;
             final specialty =
                 appt['specialty'] ??
                 appt['doctor']?['specialty'] ??

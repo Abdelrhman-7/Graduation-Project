@@ -305,6 +305,7 @@ class _NotificationItem extends StatelessWidget {
                             amount: 0,
                             doctorName: n.doctorName ?? '',
                             clinicName: n.clinicName ?? '',
+                            doctorId: n.doctorId ?? 0,
                             cubit: cubit,
                           ),
                         ),

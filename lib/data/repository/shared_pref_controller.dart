@@ -7,6 +7,7 @@ class SharedPrefController {
   static const String _nameKey = 'user_name';
   static const String _imageKey = 'user_image';
   static const String _roleKey = 'user_role';
+  static const String _doctorUserIdKey = 'doctor_user_id';
 
   Future<bool> isLoggedIn() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -74,6 +75,7 @@ class SharedPrefController {
     await prefs.remove(_imageKey);
     await prefs.remove('auth_cookies');
     await prefs.remove(_roleKey);
+    await prefs.remove(_doctorUserIdKey);
   }
 
   Future<void> saveRole(String role) async {
@@ -142,38 +144,58 @@ class SharedPrefController {
     return prefs.getInt(_lastViewedDoctorNotificationIdKey) ?? 0;
   }
 
+  // --- Doctor User ID (يتحفظ وقت الـ login لكل دكتور) ---
+  Future<void> saveDoctorUserId(int id) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_doctorUserIdKey, id);
+  }
+
+  Future<int?> getDoctorUserId() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.containsKey(_doctorUserIdKey) ? prefs.getInt(_doctorUserIdKey) : null;
+  }
+
   // --- Doctor Wallet Integration ---
+  // الـ key بيتبني على doctorId عشان كل دكتور يبقى عنده محفظة خاصة بيه
   static const String _doctorWalletBalanceKey = 'doctor_wallet_balance';
   static const String _doctorWalletTransactionsKey =
       'doctor_wallet_transactions';
 
-  Future<double> getDoctorWalletBalance({String? doctorName}) async {
+  /// يبني الـ key الخاص بالرصيد بناءً على doctorId
+  String _walletBalanceKey(int doctorId) =>
+      '${_doctorWalletBalanceKey}_id_$doctorId';
+
+  /// يبني الـ key الخاص بالمعاملات بناءً على doctorId
+  String _walletTxKey(int doctorId) =>
+      '${_doctorWalletTransactionsKey}_id_$doctorId';
+
+  Future<double> getDoctorWalletBalance({int? doctorId}) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final name = doctorName ?? await getName();
-    final key = name != null && name.isNotEmpty ? '${_doctorWalletBalanceKey}_$name' : _doctorWalletBalanceKey;
-    return prefs.getDouble(key) ?? 0.0;
+    final id = doctorId ?? await getDoctorUserId();
+    if (id == null || id <= 0) return 0.0;
+    return prefs.getDouble(_walletBalanceKey(id)) ?? 0.0;
   }
 
-  Future<void> saveDoctorWalletBalance(double balance, {String? doctorName}) async {
+  Future<void> saveDoctorWalletBalance(double balance, {int? doctorId}) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final name = doctorName ?? await getName();
-    final key = name != null && name.isNotEmpty ? '${_doctorWalletBalanceKey}_$name' : _doctorWalletBalanceKey;
-    await prefs.setDouble(key, balance);
+    final id = doctorId ?? await getDoctorUserId();
+    if (id == null || id <= 0) return;
+    await prefs.setDouble(_walletBalanceKey(id), balance);
   }
 
-  Future<void> addToDoctorWalletBalance(double amount, {String? doctorName}) async {
+  Future<void> addToDoctorWalletBalance(double amount, {int? doctorId}) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final name = doctorName ?? await getName();
-    final key = name != null && name.isNotEmpty ? '${_doctorWalletBalanceKey}_$name' : _doctorWalletBalanceKey;
-    final double currentBalance = prefs.getDouble(key) ?? 0.0;
-    await prefs.setDouble(key, currentBalance + amount);
+    final id = doctorId ?? await getDoctorUserId();
+    if (id == null || id <= 0) return;
+    final double currentBalance = prefs.getDouble(_walletBalanceKey(id)) ?? 0.0;
+    await prefs.setDouble(_walletBalanceKey(id), currentBalance + amount);
   }
 
-  Future<List<String>> getDoctorWalletTransactions({String? doctorName}) async {
+  Future<List<String>> getDoctorWalletTransactions({int? doctorId}) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final name = doctorName ?? await getName();
-    final key = name != null && name.isNotEmpty ? '${_doctorWalletTransactionsKey}_$name' : _doctorWalletTransactionsKey;
-    return prefs.getStringList(key) ?? [];
+    final id = doctorId ?? await getDoctorUserId();
+    if (id == null || id <= 0) return [];
+    return prefs.getStringList(_walletTxKey(id)) ?? [];
   }
 
   Future<void> addDoctorWalletTransaction({
@@ -181,16 +203,16 @@ class SharedPrefController {
     required String patientName,
     required double amount,
     required String date,
-    String? doctorName,
+    int? doctorId,
   }) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final name = doctorName ?? await getName();
-    final key = name != null && name.isNotEmpty ? '${_doctorWalletTransactionsKey}_$name' : _doctorWalletTransactionsKey;
-    final List<String> currentTx = prefs.getStringList(key) ?? [];
+    final id = doctorId ?? await getDoctorUserId();
+    if (id == null || id <= 0) return;
+    final List<String> currentTx = prefs.getStringList(_walletTxKey(id)) ?? [];
     final String txJson =
         '{"appointmentId": $appointmentId, "patientName": "$patientName", "amount": $amount, "date": "$date"}';
     currentTx.insert(0, txJson); // Insert at the top to show latest first
-    await prefs.setStringList(key, currentTx);
+    await prefs.setStringList(_walletTxKey(id), currentTx);
   }
 
   Future<void> saveClinicLocalData(

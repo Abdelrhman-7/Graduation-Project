@@ -148,12 +148,16 @@ class Repository {
         final isPaidLocally = local.status?.toLowerCase() == 'paid';
 
         // Calculate next occurrence of dayOfWeek as the display date
-        String resolvedDate = local.date ?? local.createdAt ?? DateTime.now().toIso8601String();
+        String resolvedDate =
+            local.date ?? local.createdAt ?? DateTime.now().toIso8601String();
         if (local.dayOfWeek != null && local.dayOfWeek!.isNotEmpty) {
           final dayNames = {
-            'monday': DateTime.monday, 'tuesday': DateTime.tuesday,
-            'wednesday': DateTime.wednesday, 'thursday': DateTime.thursday,
-            'friday': DateTime.friday, 'saturday': DateTime.saturday,
+            'monday': DateTime.monday,
+            'tuesday': DateTime.tuesday,
+            'wednesday': DateTime.wednesday,
+            'thursday': DateTime.thursday,
+            'friday': DateTime.friday,
+            'saturday': DateTime.saturday,
             'sunday': DateTime.sunday,
           };
           final targetWeekday = dayNames[local.dayOfWeek!.toLowerCase().trim()];
@@ -162,7 +166,8 @@ class Repository {
             int diff = targetWeekday - now.weekday;
             if (diff < 0) diff += 7;
             final nextDate = now.add(Duration(days: diff));
-            resolvedDate = '${nextDate.year}-${nextDate.month.toString().padLeft(2, '0')}-${nextDate.day.toString().padLeft(2, '0')}';
+            resolvedDate =
+                '${nextDate.year}-${nextDate.month.toString().padLeft(2, '0')}-${nextDate.day.toString().padLeft(2, '0')}';
           }
         }
 
@@ -195,28 +200,34 @@ class Repository {
       // Lift dayOfWeek/startTime/endTime to top level always
       final dayOfWeek = schedule['dayOfWeek'] ?? schedule['DayOfWeek'];
       final startTime = schedule['startTime'] ?? schedule['StartTime'];
-      final endTime   = schedule['endTime']   ?? schedule['EndTime'];
+      final endTime = schedule['endTime'] ?? schedule['EndTime'];
       result['dayOfWeek'] ??= dayOfWeek;
       result['startTime'] ??= startTime;
-      result['endTime']   ??= endTime;
+      result['endTime'] ??= endTime;
 
       // Build bookingDate and timeSlot if missing at top level
-      if ((result['bookingDate'] == null || result['bookingDate'].toString().isEmpty) &&
+      if ((result['bookingDate'] == null ||
+              result['bookingDate'].toString().isEmpty) &&
           (result['date'] == null || result['date'].toString().isEmpty)) {
         if (dayOfWeek != null) {
           final dayNames = {
-            'monday': DateTime.monday, 'tuesday': DateTime.tuesday,
-            'wednesday': DateTime.wednesday, 'thursday': DateTime.thursday,
-            'friday': DateTime.friday, 'saturday': DateTime.saturday,
+            'monday': DateTime.monday,
+            'tuesday': DateTime.tuesday,
+            'wednesday': DateTime.wednesday,
+            'thursday': DateTime.thursday,
+            'friday': DateTime.friday,
+            'saturday': DateTime.saturday,
             'sunday': DateTime.sunday,
           };
-          final targetWeekday = dayNames[dayOfWeek.toString().toLowerCase().trim()] ?? DateTime.sunday;
+          final targetWeekday =
+              dayNames[dayOfWeek.toString().toLowerCase().trim()] ??
+              DateTime.sunday;
           final now = DateTime.now();
           int diff = targetWeekday - now.weekday;
           if (diff < 0) diff += 7;
-          
+
           var nextDate = now.add(Duration(days: diff));
-          
+
           // Check if time has already passed today
           if (diff == 0) {
             try {
@@ -225,11 +236,15 @@ class Repository {
               final cleanTime = sTime.toString().trim().toLowerCase();
               bool isPm = cleanTime.contains('pm');
               bool isAm = cleanTime.contains('am');
-              final numberPart = cleanTime.replaceAll(RegExp(r'[a-z]'), '').trim();
+              final numberPart = cleanTime
+                  .replaceAll(RegExp(r'[a-z]'), '')
+                  .trim();
               final parts = numberPart.split(':');
               if (parts.isNotEmpty) {
                 int hour = int.tryParse(parts[0]) ?? 0;
-                int minute = parts.length > 1 ? (int.tryParse(parts[1]) ?? 0) : 0;
+                int minute = parts.length > 1
+                    ? (int.tryParse(parts[1]) ?? 0)
+                    : 0;
                 if (isPm && hour < 12) hour += 12;
                 if (isAm && hour == 12) hour = 0;
                 startMins = hour * 60 + minute;
@@ -240,10 +255,12 @@ class Repository {
               }
             } catch (_) {}
           }
-          result['bookingDate'] = '${nextDate.year}-${nextDate.month.toString().padLeft(2, '0')}-${nextDate.day.toString().padLeft(2, '0')}';
+          result['bookingDate'] =
+              '${nextDate.year}-${nextDate.month.toString().padLeft(2, '0')}-${nextDate.day.toString().padLeft(2, '0')}';
         }
         if (dayOfWeek != null || startTime != null) {
-          result['timeSlot'] = result['timeSlot'] ?? '$dayOfWeek $startTime'.trim();
+          result['timeSlot'] =
+              result['timeSlot'] ?? '$dayOfWeek $startTime'.trim();
         }
       }
 
@@ -251,8 +268,11 @@ class Repository {
       final schedDoc = schedule['doctor'] ?? schedule['Doctor'];
       if (schedDoc is Map) {
         // Lift doctor name if missing
-        result['doctorName'] ??= schedDoc['fullName'] ?? schedDoc['FullName'] ??
-            schedDoc['name'] ?? schedDoc['Name'];
+        result['doctorName'] ??=
+            schedDoc['fullName'] ??
+            schedDoc['FullName'] ??
+            schedDoc['name'] ??
+            schedDoc['Name'];
         // Resolve doctor image URL
         String resolveImg(dynamic src) {
           if (src == null) return '';
@@ -261,10 +281,14 @@ class Repository {
           if (s.startsWith('http')) return s;
           return 'http://clinicbook.runasp.net${s.startsWith('/') ? '' : '/'}$s';
         }
+
         final imgUrl = resolveImg(
-          schedDoc['imageUrl'] ?? schedDoc['ImageUrl'] ??
-          schedDoc['profileImageUrl'] ?? schedDoc['ProfileImageUrl'] ??
-          schedDoc['displayImageUrl'] ?? schedDoc['DisplayImageUrl'],
+          schedDoc['imageUrl'] ??
+              schedDoc['ImageUrl'] ??
+              schedDoc['profileImageUrl'] ??
+              schedDoc['ProfileImageUrl'] ??
+              schedDoc['displayImageUrl'] ??
+              schedDoc['DisplayImageUrl'],
         );
         if (imgUrl.isNotEmpty) {
           result['doctorImageUrl'] ??= imgUrl;
@@ -282,8 +306,12 @@ class Repository {
       if (clinic is Map) {
         result['clinicName'] ??= clinic['name'] ?? clinic['Name'];
         result['clinicAddress'] ??= clinic['address'] ?? clinic['Address'];
-        result['clinicPhoneNumber'] ??= clinic['phoneNumber'] ?? clinic['PhoneNumber'] ?? clinic['phone'];
-        result['consultationPrice'] ??= clinic['consultationPrice'] ?? clinic['ConsultationPrice'] ?? clinic['price'];
+        result['clinicPhoneNumber'] ??=
+            clinic['phoneNumber'] ?? clinic['PhoneNumber'] ?? clinic['phone'];
+        result['consultationPrice'] ??=
+            clinic['consultationPrice'] ??
+            clinic['ConsultationPrice'] ??
+            clinic['price'];
       }
     }
 
@@ -484,7 +512,7 @@ class Repository {
     final clinics = await getAllClinics();
     final clinicIds = clinics.map((c) => c.id).whereType<int>().toSet();
     final local = await LocalBookingStore.instance.getAllForClinics(clinicIds);
-    
+
     if (apiBookings.isNotEmpty) {
       final mergedBookings = apiBookings.map((apiBooking) {
         try {
@@ -497,7 +525,7 @@ class Repository {
           return apiBooking;
         }
       }).toList();
-      
+
       // Add any local bookings that are NOT in apiBookings (e.g. rejected duplicates)
       final apiIds = apiBookings.map((b) => b.id).toSet();
       for (final localBooking in local) {
@@ -505,10 +533,10 @@ class Repository {
           mergedBookings.add(localBooking);
         }
       }
-      
+
       return mergedBookings;
     }
-    
+
     return local;
   }
 
@@ -576,7 +604,7 @@ class Repository {
           if (seenIds.contains(id)) continue;
           seenIds.add(id);
         }
-        
+
         // Enrich raw item: pull date/time/clinic from nested 'schedule' if missing at top level
         final rawItem = Map<String, dynamic>.from(item);
         final sched = rawItem['schedule'] ?? rawItem['Schedule'];
@@ -586,38 +614,55 @@ class Repository {
           rawItem['startTime'] ??= sched['startTime'] ?? sched['StartTime'];
           rawItem['endTime'] ??= sched['endTime'] ?? sched['EndTime'];
           // Pull booking date from appointment fields, or fallback to calculating next weekday date
-          final apptDate = rawItem['bookingDate'] ?? rawItem['date'] ?? rawItem['BookingDate'] ?? rawItem['appointmentDate'] ?? rawItem['scheduledDate'];
-          if (apptDate != null && apptDate.toString().isNotEmpty && !apptDate.toString().contains('0001')) {
+          final apptDate =
+              rawItem['bookingDate'] ??
+              rawItem['date'] ??
+              rawItem['BookingDate'] ??
+              rawItem['appointmentDate'] ??
+              rawItem['scheduledDate'];
+          if (apptDate != null &&
+              apptDate.toString().isNotEmpty &&
+              !apptDate.toString().contains('0001')) {
             rawItem['bookingDate'] = apptDate;
           } else {
             final day = sched['dayOfWeek'] ?? sched['DayOfWeek'];
             if (day != null) {
               final dayNames = {
-                'monday': DateTime.monday, 'tuesday': DateTime.tuesday,
-                'wednesday': DateTime.wednesday, 'thursday': DateTime.thursday,
-                'friday': DateTime.friday, 'saturday': DateTime.saturday,
+                'monday': DateTime.monday,
+                'tuesday': DateTime.tuesday,
+                'wednesday': DateTime.wednesday,
+                'thursday': DateTime.thursday,
+                'friday': DateTime.friday,
+                'saturday': DateTime.saturday,
                 'sunday': DateTime.sunday,
               };
-              final targetWeekday = dayNames[day.toString().toLowerCase().trim()] ?? DateTime.sunday;
+              final targetWeekday =
+                  dayNames[day.toString().toLowerCase().trim()] ??
+                  DateTime.sunday;
               final now = DateTime.now();
               int diff = targetWeekday - now.weekday;
               if (diff < 0) diff += 7;
-              
+
               var nextDate = now.add(Duration(days: diff));
-              
+
               // Check if time has already passed today
               if (diff == 0) {
                 try {
-                  final sTime = sched['startTime'] ?? sched['StartTime'] ?? '09:00';
+                  final sTime =
+                      sched['startTime'] ?? sched['StartTime'] ?? '09:00';
                   int startMins = 0;
                   final cleanTime = sTime.toString().trim().toLowerCase();
                   bool isPm = cleanTime.contains('pm');
                   bool isAm = cleanTime.contains('am');
-                  final numberPart = cleanTime.replaceAll(RegExp(r'[a-z]'), '').trim();
+                  final numberPart = cleanTime
+                      .replaceAll(RegExp(r'[a-z]'), '')
+                      .trim();
                   final parts = numberPart.split(':');
                   if (parts.isNotEmpty) {
                     int hour = int.tryParse(parts[0]) ?? 0;
-                    int minute = parts.length > 1 ? (int.tryParse(parts[1]) ?? 0) : 0;
+                    int minute = parts.length > 1
+                        ? (int.tryParse(parts[1]) ?? 0)
+                        : 0;
                     if (isPm && hour < 12) hour += 12;
                     if (isAm && hour == 12) hour = 0;
                     startMins = hour * 60 + minute;
@@ -628,16 +673,25 @@ class Repository {
                   }
                 } catch (_) {}
               }
-              rawItem['bookingDate'] = '${nextDate.year}-${nextDate.month.toString().padLeft(2, '0')}-${nextDate.day.toString().padLeft(2, '0')}';
+              rawItem['bookingDate'] =
+                  '${nextDate.year}-${nextDate.month.toString().padLeft(2, '0')}-${nextDate.day.toString().padLeft(2, '0')}';
             } else {
-              rawItem['bookingDate'] = sched['bookingDate'] ?? sched['BookingDate'] ?? sched['date'] ?? sched['Date'];
+              rawItem['bookingDate'] =
+                  sched['bookingDate'] ??
+                  sched['BookingDate'] ??
+                  sched['date'] ??
+                  sched['Date'];
             }
           }
           // Pull clinic info from schedule
           final schedClinic = sched['clinic'] ?? sched['Clinic'];
           if (schedClinic is Map) {
-            rawItem['clinicName'] ??= schedClinic['name'] ?? schedClinic['Name'];
-            rawItem['consultationPrice'] ??= schedClinic['consultationPrice'] ?? schedClinic['ConsultationPrice'] ?? schedClinic['price'];
+            rawItem['clinicName'] ??=
+                schedClinic['name'] ?? schedClinic['Name'];
+            rawItem['consultationPrice'] ??=
+                schedClinic['consultationPrice'] ??
+                schedClinic['ConsultationPrice'] ??
+                schedClinic['price'];
           }
           // Pull doctor image URL from schedule.doctor
           final schedDoc = sched['doctor'] ?? sched['Doctor'];
@@ -649,11 +703,17 @@ class Repository {
               if (s.startsWith('http')) return s;
               return 'http://clinicbook.runasp.net${s.startsWith('/') ? '' : '/'}$s';
             }
+
             final imgUrl = resolveImg(
-              schedDoc['imageUrl'] ?? schedDoc['ImageUrl'] ??
-              schedDoc['profileImageUrl'] ?? schedDoc['ProfileImageUrl'] ??
-              schedDoc['displayImageUrl'] ?? schedDoc['DisplayImageUrl'] ??
-              schedDoc['image'] ?? schedDoc['photo'] ?? schedDoc['photoUrl'],
+              schedDoc['imageUrl'] ??
+                  schedDoc['ImageUrl'] ??
+                  schedDoc['profileImageUrl'] ??
+                  schedDoc['ProfileImageUrl'] ??
+                  schedDoc['displayImageUrl'] ??
+                  schedDoc['DisplayImageUrl'] ??
+                  schedDoc['image'] ??
+                  schedDoc['photo'] ??
+                  schedDoc['photoUrl'],
             );
             if (imgUrl.isNotEmpty) {
               rawItem['doctorImageUrl'] ??= imgUrl;
@@ -666,35 +726,51 @@ class Repository {
             }
             // Also lift doctor name if missing
             rawItem['doctorName'] ??=
-                schedDoc['fullName'] ?? schedDoc['FullName'] ??
-                schedDoc['name'] ?? schedDoc['Name'];
+                schedDoc['fullName'] ??
+                schedDoc['FullName'] ??
+                schedDoc['name'] ??
+                schedDoc['Name'];
           }
         }
         // Also pull clinic info directly from appointment if nested
         final apptClinic = rawItem['clinic'] ?? rawItem['Clinic'];
         if (apptClinic is Map) {
           rawItem['clinicName'] ??= apptClinic['name'] ?? apptClinic['Name'];
-          rawItem['consultationPrice'] ??= apptClinic['consultationPrice'] ?? apptClinic['ConsultationPrice'] ?? apptClinic['price'];
+          rawItem['consultationPrice'] ??=
+              apptClinic['consultationPrice'] ??
+              apptClinic['ConsultationPrice'] ??
+              apptClinic['price'];
         }
 
         final parsed = BookingModel.fromJson(rawItem);
-        
+
         // Merge local data to preserve paymentMethod and Paid status
         BookingModel mergedParsed = parsed;
         try {
-          final localData = localMaps.firstWhere((l) => l['id'] == id, orElse: () => <String, dynamic>{});
+          final localData = localMaps.firstWhere(
+            (l) => l['id'] == id,
+            orElse: () => <String, dynamic>{},
+          );
           if (localData.isNotEmpty) {
-            final localBooking = BookingModel.fromJson(Map<String, dynamic>.from(localData));
+            final localBooking = BookingModel.fromJson(
+              Map<String, dynamic>.from(localData),
+            );
             // If locally marked as Paid, preserve that status (API may not update it yet)
-            final effectiveStatus = (localBooking.status?.toLowerCase() == 'paid')
+            final effectiveStatus =
+                (localBooking.status?.toLowerCase() == 'paid')
                 ? 'Paid'
                 : parsed.status;
-            
-            final safeDoctorName = (parsed.doctorName != null && parsed.doctorName!.isNotEmpty && parsed.doctorName != 'Doctor' && parsed.doctorName != 'Unknown Doctor')
+
+            final safeDoctorName =
+                (parsed.doctorName != null &&
+                    parsed.doctorName!.isNotEmpty &&
+                    parsed.doctorName != 'Doctor' &&
+                    parsed.doctorName != 'Unknown Doctor')
                 ? parsed.doctorName
                 : localBooking.doctorName;
-                
-            final safeClinicName = (parsed.clinicName != null && parsed.clinicName!.isNotEmpty)
+
+            final safeClinicName =
+                (parsed.clinicName != null && parsed.clinicName!.isNotEmpty)
                 ? parsed.clinicName
                 : localBooking.clinicName;
 
@@ -703,13 +779,16 @@ class Repository {
               doctorName: safeDoctorName,
               clinicName: safeClinicName,
               // API date/time always takes priority — only use local as fallback
-              date: (parsed.date != null && parsed.date!.isNotEmpty) ? parsed.date : localBooking.date,
-              time: (parsed.time != null && parsed.time!.isNotEmpty) ? parsed.time : localBooking.time,
+              date: (parsed.date != null && parsed.date!.isNotEmpty)
+                  ? parsed.date
+                  : localBooking.date,
+              time: (parsed.time != null && parsed.time!.isNotEmpty)
+                  ? parsed.time
+                  : localBooking.time,
               status: effectiveStatus,
             );
           }
         } catch (_) {}
-
 
         // The API endpoint (GetMyBookings) already returns appointments
         // belonging to the authenticated patient — no need to filter by name/email here.
@@ -728,9 +807,9 @@ class Repository {
       }
       uniqueMaps.add(local);
     }
-    
+
     return uniqueMaps.where((item) {
-      // Allow all appointments. The UI (UpcomingAppointmentsSection) 
+      // Allow all appointments. The UI (UpcomingAppointmentsSection)
       // already handles empty or missing doctor names gracefully.
       return true;
     }).toList();
@@ -1155,7 +1234,9 @@ class Repository {
     return await prefs.getHealthMetrics();
   }
 
-  Future<void> savePatientMedications(List<Map<String, dynamic>> medications) async {
+  Future<void> savePatientMedications(
+    List<Map<String, dynamic>> medications,
+  ) async {
     final prefs = SharedPrefController();
     await prefs.saveMedications(medications);
   }

@@ -22,16 +22,12 @@ class _DoctorRegisterFormState extends State<DoctorRegisterForm> {
   final _formKey = GlobalKey<FormState>();
 
   final _fullNameController = TextEditingController();
-  final _emailController = TextEditingController(text: "abdo85@gmail.com");
+  final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _addressController = TextEditingController();
   final _aboutMeController = TextEditingController();
-  final _passwordController = TextEditingController(
-    text: '01008765502Abdo@',
-  );
-  final _confirmPasswordController = TextEditingController(
-    text: '01008765502Abdo@',
-  );
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   final _dobController = TextEditingController();
 
   String? _gender;

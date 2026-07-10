@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:graduationproject/data/models/booking/booking_model.dart';
+import 'package:graduationproject/data/models/schudule/doctorModel.dart';
 import 'package:graduationproject/data/repository/repository.dart';
 import 'package:graduationproject/data/repository/shared_pref_controller.dart';
 import 'patient_home_dashboard_state.dart';
@@ -115,13 +116,42 @@ class PatientHomeDashboardCubit extends Cubit<PatientHomeDashboardState> {
                         ? docIdStr
                         : int.tryParse(docIdStr.toString()) ?? 0)
                   : 0;
+              DoctorModel? matchedDoc;
               if (docId != 0) {
                 try {
-                  final doc = doctors.firstWhere((d) => d.id == docId);
-                  if (doc.imageUrl != null && doc.imageUrl!.isNotEmpty) {
-                    appt['doctorImageUrl'] = doc.imageUrl;
-                  }
+                  matchedDoc = doctors.firstWhere((d) => d.id == docId);
                 } catch (_) {}
+              } else {
+                final apptClinic =
+                    (appt['clinicName'] ?? appt['specialty'] ?? '')
+                        .toString()
+                        .toLowerCase()
+                        .trim();
+                if (apptClinic.isNotEmpty) {
+                  try {
+                    matchedDoc = doctors.firstWhere((d) {
+                      final dDept = (d.departmentName ?? '')
+                          .toLowerCase()
+                          .trim();
+                      final dDesc = (d.departmentDescription ?? '')
+                          .toLowerCase()
+                          .trim();
+                      return (dDept.isNotEmpty && dDept == apptClinic) ||
+                          (dDesc.isNotEmpty && dDesc == apptClinic);
+                    });
+                  } catch (_) {}
+                }
+              }
+
+              if (matchedDoc != null) {
+                if (matchedDoc.imageUrl != null &&
+                    matchedDoc.imageUrl!.isNotEmpty) {
+                  appt['doctorImageUrl'] = matchedDoc.imageUrl;
+                }
+                if (matchedDoc.fullName.isNotEmpty &&
+                    matchedDoc.fullName != 'Doctor') {
+                  appt['realDoctorName'] = matchedDoc.fullName;
+                }
               }
             }
           }
@@ -149,6 +179,7 @@ class PatientHomeDashboardCubit extends Cubit<PatientHomeDashboardState> {
       final healthMetrics = await _repository.getPatientHealthMetrics();
       var meds = await _repository.getPatientMedications();
 
+      if (isClosed) return;
       emit(
         PatientHomeDashboardSuccess(
           userName: userName,
@@ -221,6 +252,7 @@ class PatientHomeDashboardCubit extends Cubit<PatientHomeDashboardState> {
         final healthMetrics = await _repository.getPatientHealthMetrics();
         var meds = await _repository.getPatientMedications();
 
+        if (isClosed) return;
         emit(
           PatientHomeDashboardSuccess(
             userName: userName,
@@ -233,6 +265,7 @@ class PatientHomeDashboardCubit extends Cubit<PatientHomeDashboardState> {
           ),
         );
       } catch (_) {
+        if (isClosed) return;
         emit(PatientHomeDashboardError(e.toString()));
       }
     }

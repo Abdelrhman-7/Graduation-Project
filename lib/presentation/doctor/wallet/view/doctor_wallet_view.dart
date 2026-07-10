@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/resources/color_manager.dart';
 import '../../../../data/repository/shared_pref_controller.dart';
+import '../../../../data/api/api_manager.dart';
+import '../../../../data/repository/repository.dart';
 
 class DoctorWalletView extends StatefulWidget {
   const DoctorWalletView({super.key});
@@ -27,25 +29,74 @@ class _DoctorWalletViewState extends State<DoctorWalletView> {
   Future<void> _loadWalletData() async {
     setState(() => _isLoading = true);
     try {
-      final balance = await _prefs.getDoctorWalletBalance();
-      final txStrings = await _prefs.getDoctorWalletTransactions();
+      final api = await ApiManager.create();
+      final repo = Repository(api);
       
-      final List<Map<String, dynamic>> decodedTxs = [];
+      // Fetch bookings from API
+      final allBookings = await repo.getDoctorAllBookings();
+      
+      double calculatedBalance = 0.0;
+      final List<Map<String, dynamic>> apiTxs = [];
+      
+      for (final b in allBookings) {
+        final status = b.status?.toLowerCase() ?? '';
+        final paymentMethod = b.paymentMethod?.toLowerCase() ?? '';
+        final isPaid = status.contains('paid') || status.contains('complet') || status.contains('success') || paymentMethod == 'card';
+        
+        final price = b.price ?? 0.0;
+        
+        if (isPaid && price > 0) {
+          calculatedBalance += price;
+          apiTxs.add({
+            'appointmentId': b.id,
+            'patientName': b.patientName,
+            'amount': price,
+            'date': b.date ?? b.createdAt ?? DateTime.now().toIso8601String(),
+            'isDeposit': true,
+          });
+        }
+      }
+
+      // Read local withdrawals (negative amounts)
+      final txStrings = await _prefs.getDoctorWalletTransactions();
+      double totalWithdrawn = 0.0;
+      final List<Map<String, dynamic>> localTxs = [];
+      
       for (final txStr in txStrings) {
         try {
           final decoded = json.decode(txStr);
           if (decoded is Map<String, dynamic>) {
-            decodedTxs.add(decoded);
+            final amt = (decoded['amount'] as num?)?.toDouble() ?? 0.0;
+            if (amt < 0) {
+              totalWithdrawn += amt.abs();
+              decoded['isDeposit'] = false;
+              localTxs.add(decoded);
+            }
           }
         } catch (_) {}
       }
+      
+      double finalBalance = calculatedBalance - totalWithdrawn;
+      if (finalBalance < 0) finalBalance = 0.0;
+
+      final List<Map<String, dynamic>> allTxs = [];
+      allTxs.addAll(apiTxs);
+      allTxs.addAll(localTxs);
+      
+      // Sort by date descending
+      allTxs.sort((a, b) {
+        final dateA = DateTime.tryParse(a['date'] ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final dateB = DateTime.tryParse(b['date'] ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
+        return dateB.compareTo(dateA);
+      });
 
       setState(() {
-        _balance = balance;
-        _transactions = decodedTxs;
+        _balance = finalBalance;
+        _transactions = allTxs;
         _isLoading = false;
       });
-    } catch (_) {
+    } catch (e) {
+      print('Wallet Error: $e');
       setState(() => _isLoading = false);
     }
   }
@@ -150,7 +201,7 @@ class _DoctorWalletViewState extends State<DoctorWalletView> {
                       
                       Navigator.pop(context);
                       
-                      // Process locally
+                      // Process locally using doctorId as unique key
                       await _prefs.addToDoctorWalletBalance(-toWithdraw);
                       await _prefs.addDoctorWalletTransaction(
                         appointmentId: DateTime.now().millisecondsSinceEpoch,

@@ -17,6 +17,7 @@ class PaymentCardView extends StatefulWidget {
   final double amount;
   final String doctorName;
   final String clinicName;
+  final int doctorId; // معرف الدكتور الفريد للمحفظة
   final PatientBookingCubit cubit;
 
   const PaymentCardView({
@@ -25,6 +26,7 @@ class PaymentCardView extends StatefulWidget {
     required this.amount,
     required this.doctorName,
     required this.clinicName,
+    required this.doctorId,
     required this.cubit,
   });
 
@@ -220,7 +222,7 @@ class _PaymentCardViewState extends State<PaymentCardView>
       expiryMonth: month,
       expiryYear: year,
       cvv: _cvvController.text.trim(),
-      doctorName: widget.doctorName,
+      doctorId: widget.doctorId,
     );
   }
 

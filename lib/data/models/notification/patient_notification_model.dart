@@ -9,6 +9,7 @@ class PatientNotificationModel {
   final String? clinicName;
   final String? status;
   final int? appointmentId;
+  final int? doctorId; // معرف الدكتور للمحفظة
 
   PatientNotificationModel({
     required this.id,
@@ -21,6 +22,7 @@ class PatientNotificationModel {
     this.clinicName,
     this.status,
     this.appointmentId,
+    this.doctorId,
   });
 
   factory PatientNotificationModel.fromJson(Map<String, dynamic> json) {
@@ -66,6 +68,15 @@ class PatientNotificationModel {
       appointmentId = rawApptId is int ? rawApptId : int.tryParse(rawApptId.toString());
     }
 
+    // Extract doctorId from multiple possible sources
+    int? doctorId;
+    final rawDoctorId = json['doctorId'] ??
+        json['DoctorId'] ??
+        (booking is Map ? (booking['doctorId'] ?? booking['DoctorId']) : null);
+    if (rawDoctorId != null) {
+      doctorId = rawDoctorId is int ? rawDoctorId : int.tryParse(rawDoctorId.toString());
+    }
+
     return PatientNotificationModel(
       id: id,
       title: json['title'] as String? ??
@@ -88,6 +99,7 @@ class PatientNotificationModel {
       clinicName: clinicName,
       status: status,
       appointmentId: appointmentId,
+      doctorId: doctorId,
     );
   }
 

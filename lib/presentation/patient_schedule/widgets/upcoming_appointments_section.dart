@@ -41,38 +41,49 @@ class UpcomingAppointmentsSection extends StatelessWidget {
           _buildEmptyState()
         else
           ...appointments.map((appt) {
-            String rawDocName = (appt['doctorName'] ?? '').toString();
-            if (rawDocName == 'Doctor' || rawDocName.isEmpty) {
+            String rawDocName = (appt['realDoctorName'] ?? appt['doctorName'] ?? '').toString();
+            if (rawDocName.isEmpty) {
               rawDocName = (appt['DoctorName'] ?? '').toString();
             }
-            if (rawDocName == 'Doctor' || rawDocName.isEmpty) {
+            if (rawDocName.isEmpty) {
               rawDocName = (appt['doctorFullName'] ?? '').toString();
             }
-            if (rawDocName == 'Doctor' || rawDocName.isEmpty) {
+            if (rawDocName.isEmpty) {
               rawDocName = (appt['DoctorFullName'] ?? '').toString();
             }
-            if (rawDocName == 'Doctor' || rawDocName.isEmpty) {
+            if (rawDocName.isEmpty) {
               rawDocName = (appt['doctor']?['fullName'] ?? '').toString();
             }
-            if (rawDocName == 'Doctor' || rawDocName.isEmpty) {
+            if (rawDocName.isEmpty) {
               rawDocName = (appt['doctor']?['name'] ?? '').toString();
             }
-            if (rawDocName == 'Doctor' || rawDocName.isEmpty) {
+            if (rawDocName.isEmpty) {
               rawDocName = (appt['doctor']?['userName'] ?? '').toString();
             }
-            if (rawDocName == 'Doctor' || rawDocName.isEmpty) {
+            if (rawDocName.isEmpty) {
               rawDocName = (appt['doctor']?['UserName'] ?? '').toString();
             }
-            if (rawDocName == 'Doctor' || rawDocName.isEmpty) {
+            if (rawDocName.isEmpty) {
+              rawDocName = (appt['schedule']?['doctor']?['fullName'] ?? '').toString();
+            }
+            if (rawDocName.isEmpty) {
+              rawDocName = (appt['schedule']?['doctor']?['name'] ?? '').toString();
+            }
+            if (rawDocName.isEmpty) {
+              rawDocName = (appt['schedule']?['doctor']?['userName'] ?? '').toString();
+            }
+            if (rawDocName.isEmpty) {
               rawDocName = (appt['userName'] ?? '').toString();
             }
-            if (rawDocName == 'Doctor' || rawDocName.isEmpty) {
+            if (rawDocName.isEmpty) {
               rawDocName = (appt['UserName'] ?? '').toString();
             }
 
-            final doctorName = (rawDocName == 'Doctor' || rawDocName.isEmpty)
+            final doctorName =
+                (rawDocName.isEmpty || rawDocName == 'null')
                 ? 'Unknown Doctor'
                 : rawDocName;
+
             final specialty =
                 appt['specialty'] ??
                 appt['doctor']?['specialty'] ??
@@ -94,22 +105,29 @@ class UpcomingAppointmentsSection extends StatelessWidget {
                 appt['date'] ??
                 appt['scheduledDate'] ??
                 '';
-            final timeStr = (appt['timeSlot'] ??
-                appt['time'] ??
-                appt['startTime'] ??
-                '10:00 AM').toString();
+            final timeStr =
+                (appt['timeSlot'] ??
+                        appt['time'] ??
+                        appt['startTime'] ??
+                        '10:00 AM')
+                    .toString();
 
             String timeSlot = timeStr;
             if (timeSlot.isNotEmpty && timeSlot != '10:00 AM') {
               try {
-                final RegExp timeRegex = RegExp(r'(\d{1,2}):(\d{2})(?::\d{2})?');
+                final RegExp timeRegex = RegExp(
+                  r'(\d{1,2}):(\d{2})(?::\d{2})?',
+                );
                 final match = timeRegex.firstMatch(timeSlot);
                 if (match != null) {
                   final int hour = int.parse(match.group(1)!);
                   final int min = int.parse(match.group(2)!);
                   final String period = hour >= 12 ? 'PM' : 'AM';
-                  final int displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
-                  timeSlot = '${displayHour.toString().padLeft(2, '0')}:${min.toString().padLeft(2, '0')} $period';
+                  final int displayHour = hour > 12
+                      ? hour - 12
+                      : (hour == 0 ? 12 : hour);
+                  timeSlot =
+                      '${displayHour.toString().padLeft(2, '0')}:${min.toString().padLeft(2, '0')} $period';
                 }
               } catch (_) {}
             }
@@ -143,9 +161,16 @@ class UpcomingAppointmentsSection extends StatelessWidget {
                   appt['schedule']?['doctor']?['profileImageUrl'] ??
                   appt['schedule']?['doctor']?['displayImageUrl'],
             );
-            final doctorId = appt['doctorId'] is int
-                ? appt['doctorId'] as int
-                : int.tryParse(appt['doctorId']?.toString() ?? '') ?? 0;
+            final rawDocId =
+                appt['doctorId'] ??
+                appt['DoctorId'] ??
+                appt['doctor']?['id'] ??
+                appt['doctor']?['Id'] ??
+                appt['schedule']?['doctorId'] ??
+                appt['schedule']?['doctor']?['id'];
+            final doctorId = rawDocId is int
+                ? rawDocId
+                : int.tryParse(rawDocId?.toString() ?? '') ?? 0;
 
             final doctor = DoctorModel(
               id: doctorId,
@@ -310,6 +335,7 @@ class UpcomingAppointmentsSection extends StatelessWidget {
                             amount: amount,
                             doctorName: doctorName.toString(),
                             clinicName: clinicNameForPay,
+                            doctorId: doctorId,
                             cubit: bookingCubit,
                           ),
                         ),
@@ -374,11 +400,10 @@ class UpcomingAppointmentsSection extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) =>
-                          PatientAppointmentDetailsView(
-                            bookingId: bookingId,
-                            initialData: Map<String, dynamic>.from(appt),
-                          ),
+                      builder: (_) => PatientAppointmentDetailsView(
+                        bookingId: bookingId,
+                        initialData: Map<String, dynamic>.from(appt),
+                      ),
                     ),
                   );
                 }

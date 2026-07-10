@@ -526,7 +526,7 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
     required String expiryMonth,
     required String expiryYear,
     required String cvv,
-    String? doctorName,
+    int? doctorId, // معرف الدكتور الفريد للمحفظة
   }) async {
     emit(PatientPaymentProcessing());
     try {
@@ -542,13 +542,13 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
       final message = result['message']?.toString() ?? '';
       if (success) {
         final patientName = await _prefs.getName() ?? 'Patient';
-        await _prefs.addToDoctorWalletBalance(amount, doctorName: doctorName);
+        await _prefs.addToDoctorWalletBalance(amount, doctorId: doctorId);
         await _prefs.addDoctorWalletTransaction(
           appointmentId: appointmentId,
           patientName: patientName,
           amount: amount,
           date: DateTime.now().toIso8601String(),
-          doctorName: doctorName,
+          doctorId: doctorId,
         );
         // Mark the appointment as Paid locally so it moves to Past in the schedule
         await LocalBookingStore.instance.updateStatus(appointmentId, 'Paid');

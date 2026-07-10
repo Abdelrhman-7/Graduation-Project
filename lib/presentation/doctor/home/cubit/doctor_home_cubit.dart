@@ -71,6 +71,19 @@ class DoctorHomeCubit extends Cubit<DoctorHomeState> {
           if (apiImageUrl != null && apiImageUrl.isNotEmpty) {
             await _sharedPrefController.saveImage(apiImageUrl);
           }
+
+          // حفظ الـ doctorId عشان كل دكتور يبقى عنده محفظة خاصة بيه
+          final rawDoctorId = profile['id'] ?? profile['Id'] ??
+              profile['doctorId'] ?? profile['DoctorId'] ??
+              profile['userId'] ?? profile['UserId'];
+          if (rawDoctorId != null) {
+            final parsedId = rawDoctorId is int
+                ? rawDoctorId
+                : int.tryParse(rawDoctorId.toString());
+            if (parsedId != null && parsedId > 0) {
+              await _sharedPrefController.saveDoctorUserId(parsedId);
+            }
+          }
         }
       } catch (e) {
         print('Error refreshing doctor profile in Home Cubit: $e');
