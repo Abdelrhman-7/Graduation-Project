@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/resources/color_manager.dart';
 import '../../../core/resources/values_manager.dart';
 import '../../role_selection/cubit/role_selection_state.dart';
+import '../../role_selection/view/role_selection_view.dart';
 import '../widgets/login_view_body.dart';
 
 class LoginView extends StatelessWidget {
@@ -33,7 +34,18 @@ class LoginView extends StatelessWidget {
               size: AppSize.s20,
             ),
           ),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            } else {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const RoleSelectionView(isLogin: true),
+                ),
+              );
+            }
+          },
         ),
       ),
       body: LoginViewBody(role: role),

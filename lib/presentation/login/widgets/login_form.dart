@@ -31,10 +31,10 @@ class _LoginFormState extends State<LoginForm> {
   void initState() {
     super.initState();
     if (widget.role == UserRole.doctor) {
-      _emailController = TextEditingController(text: "abdelrhmanalaa8888@gmail.com");
-      _passwordController = TextEditingController(text: 'Ab123456789#');
+      _emailController = TextEditingController(text: 'abdo@gmail.com');
+      _passwordController = TextEditingController(text: '01008765502Abdo@');
     } else {
-      _emailController = TextEditingController(text: 'wwwabdo77@gmail.com');
+      _emailController = TextEditingController(text: 'abdo77@gmail.com');
       _passwordController = TextEditingController(text: '01008765502Abdo@');
     }
   }

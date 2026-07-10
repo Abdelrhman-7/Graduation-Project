@@ -1,4 +1,4 @@
-part of 'registergoctor_cubit.dart';
+part of 'doctor_register_cubit.dart';
 
 sealed class DoctorRegisterState {}
 
@@ -12,6 +12,6 @@ final class DoctorRegisterSuccess extends DoctorRegisterState {
 }
 
 final class DoctorRegisterError extends DoctorRegisterState {
-  final String errorMessage;
-  DoctorRegisterError({required this.errorMessage});
+  final String message;
+  DoctorRegisterError({required this.message});
 }

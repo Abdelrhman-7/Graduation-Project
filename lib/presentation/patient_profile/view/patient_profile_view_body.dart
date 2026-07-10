@@ -14,7 +14,6 @@ import '../../widgets/custom_change_password_dialog.dart';
 
 class PatientProfileViewBody extends StatelessWidget {
   const PatientProfileViewBody({super.key});
-
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -43,9 +42,9 @@ class PatientProfileViewBody extends StatelessWidget {
                 const SnackBar(content: Text('Password changed successfully!')),
               );
             } else if (state is PatientProfilePasswordChangeError) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.message)),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text(state.message)));
             }
           },
           buildWhen: (prev, curr) =>
@@ -120,15 +119,25 @@ class PatientProfileViewBody extends StatelessWidget {
                                   context: context,
                                   builder: (ctx) => AlertDialog(
                                     title: const Text('Delete Account'),
-                                    content: const Text('Are you sure you want to delete your account? This action cannot be undone.'),
+                                    content: const Text(
+                                      'Are you sure you want to delete your account? This action cannot be undone.',
+                                    ),
                                     actions: [
-                                      TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(ctx),
+                                        child: const Text('Cancel'),
+                                      ),
                                       TextButton(
                                         onPressed: () {
                                           Navigator.pop(ctx);
-                                          context.read<PatientProfileCubit>().deleteAccount();
+                                          context
+                                              .read<PatientProfileCubit>()
+                                              .deleteAccount();
                                         },
-                                        child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                                        child: const Text(
+                                          'Delete',
+                                          style: TextStyle(color: Colors.red),
+                                        ),
                                       ),
                                     ],
                                   ),

@@ -3,8 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:graduationproject/core/resources/color_manager.dart';
 import 'package:graduationproject/core/resources/values_manager.dart';
 import 'package:graduationproject/data/api/api_manager.dart';
-import 'package:graduationproject/presentation/doctor/register%20screen/cubit/registergoctor_cubit.dart';
-import 'package:graduationproject/presentation/doctor/register%20screen/widget/doctor_register_form.dart';
+import 'package:graduationproject/presentation/doctor/register%20screen/cubit/doctor_register_cubit.dart';
+import 'package:graduationproject/presentation/doctor/register%20screen/widgets/doctor_register_form.dart';
 
 class DoctorRegisterView extends StatelessWidget {
   const DoctorRegisterView({super.key});
@@ -12,7 +12,7 @@ class DoctorRegisterView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => RegisterDoctorCubit(context.read<ApiManager>()),
+      create: (context) => DoctorRegisterCubit(context.read<ApiManager>()),
       child: Scaffold(
         backgroundColor: ColorManager.white,
         appBar: AppBar(

@@ -457,10 +457,11 @@ class ApiManager {
         isDoctor
             ? 'Identity/AccountApi/RegisterDoctor'
             : 'Identity/AccountApi/RegisterPatient',
-
         data: formData,
-
-        options: Options(contentType: 'multipart/form-data'),
+        options: Options(
+          contentType: 'multipart/form-data',
+          validateStatus: (status) => true, // handle all status codes manually
+        ),
       );
 
       print(

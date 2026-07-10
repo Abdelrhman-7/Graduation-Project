@@ -38,10 +38,10 @@ class _PaymentCardViewState extends State<PaymentCardView>
     with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
 
-  final _cardHolderController = TextEditingController();
-  final _cardNumberController = TextEditingController();
-  final _expiryController = TextEditingController(); // MM/YY
-  final _cvvController = TextEditingController();
+  final _cardHolderController = TextEditingController(text: 'Abdo');
+  final _cardNumberController = TextEditingController(text: '4242 4242 4242 4242');
+  final _expiryController = TextEditingController(text: '12/34'); // MM/YY
+  final _cvvController = TextEditingController(text: '567');
 
   final ValueNotifier<String> _cardNumberNotifier = ValueNotifier<String>('');
   final ValueNotifier<String> _cardHolderNotifier = ValueNotifier<String>('');
