@@ -93,7 +93,7 @@ class _AdminEditDoctorViewState extends State<AdminEditDoctorView> {
                           backgroundImage: _imagePath != null
                               ? AssetImage(_imagePath!)
                               : (widget.doctor['imageUrl'] != null
-                                  ? NetworkImage('http://clinicbook.runasp.net${widget.doctor['imageUrl']}')
+                                  ? NetworkImage('http://mediconnect.somee.com${widget.doctor['imageUrl']}')
                                   : null) as ImageProvider?,
                           child: _imagePath == null && widget.doctor['imageUrl'] == null
                               ? const Icon(Icons.person, size: 50)

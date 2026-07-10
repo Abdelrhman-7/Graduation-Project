@@ -120,7 +120,7 @@ class _AdminPatientDetailsViewState extends State<AdminPatientDetailsView> {
                   radius: 50,
                   backgroundImage: currentPatient['imageUrl'] != null
                       ? NetworkImage(
-                          'http://clinicbook.runasp.net${currentPatient['imageUrl']}',
+                          'http://mediconnect.somee.com${currentPatient['imageUrl']}',
                         )
                       : null,
                   child: currentPatient['imageUrl'] == null

@@ -338,19 +338,27 @@ class _TopBar extends StatelessWidget {
             },
             child: Stack(
               children: [
-                CircleAvatar(
-                  radius: 20 * scale,
-                  backgroundColor: const Color(0xFFE2E8F0),
-                  backgroundImage: (imageUrl != null && imageUrl!.isNotEmpty)
-                      ? NetworkImage(imageUrl!) as ImageProvider
-                      : null,
-                  child: (imageUrl == null || imageUrl!.isEmpty)
-                      ? Icon(
-                          Icons.person,
-                          size: 20 * scale,
-                          color: const Color(0xFF64748B),
-                        )
-                      : null,
+                ClipOval(
+                  child: Container(
+                    width: 40 * scale,
+                    height: 40 * scale,
+                    color: const Color(0xFFE2E8F0),
+                    child: (imageUrl != null && imageUrl!.isNotEmpty)
+                        ? Image.network(
+                            imageUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Icon(
+                              Icons.person,
+                              size: 20 * scale,
+                              color: const Color(0xFF64748B),
+                            ),
+                          )
+                        : Icon(
+                            Icons.person,
+                            size: 20 * scale,
+                            color: const Color(0xFF64748B),
+                          ),
+                  ),
                 ),
                 Positioned(
                   right: 0,

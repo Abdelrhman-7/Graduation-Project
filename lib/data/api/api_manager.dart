@@ -23,7 +23,7 @@ class ApiManager {
   // Both implement the CookieJar interface.
   final CookieJar _cookieJar;
 
-  // static const String _baseUrl = 'http://clinicbook.runasp.net/api/';
+  // static const String _baseUrl = 'http://mediconnect.somee.com/api/';
   static const String _baseUrl = 'http://mediconnect.somee.com/api/';
 
   ApiManager._internal(this._dio, this._cookieJar);
@@ -2776,7 +2776,7 @@ class ApiManager {
   // ============================================================
 
   Future<bool> deletePatientImage() async {
-    return _deleteRequest('Patient/ProfileApi/DeleteImage');
+    return _deleteRequest('Patient/ProfileApi/DeleteProfileImage');
   }
 
   Future<bool> deletePatientAccount() async {

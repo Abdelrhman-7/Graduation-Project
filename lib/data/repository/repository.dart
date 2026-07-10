@@ -71,9 +71,7 @@ class Repository {
 
       request: RegisterRequest(
         fullName: fullName,
-
         userName: fullName.replaceAll(' ', ''),
-
         email: email,
         password: password,
         confirmPassword: password,
@@ -279,7 +277,7 @@ class Repository {
           final s = src.toString().trim();
           if (s.isEmpty) return '';
           if (s.startsWith('http')) return s;
-          return 'http://clinicbook.runasp.net${s.startsWith('/') ? '' : '/'}$s';
+          return 'http://mediconnect.somee.com${s.startsWith('/') ? '' : '/'}$s';
         }
 
         final imgUrl = resolveImg(
@@ -701,7 +699,7 @@ class Repository {
               final s = src.toString().trim();
               if (s.isEmpty) return '';
               if (s.startsWith('http')) return s;
-              return 'http://clinicbook.runasp.net${s.startsWith('/') ? '' : '/'}$s';
+              return 'http://mediconnect.somee.com${s.startsWith('/') ? '' : '/'}$s';
             }
 
             final imgUrl = resolveImg(
@@ -721,7 +719,7 @@ class Repository {
               if (rawItem['doctor'] is Map) {
                 (rawItem['doctor'] as Map)['imageUrl'] ??= imgUrl;
               } else {
-                rawItem['doctor'] = Map<String, dynamic>.from(schedDoc as Map);
+                rawItem['doctor'] = Map<String, dynamic>.from(schedDoc);
               }
             }
             // Also lift doctor name if missing

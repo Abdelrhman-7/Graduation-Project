@@ -42,7 +42,7 @@ class DoctorHomeCubit extends Cubit<DoctorHomeState> {
             final raw = rawImage.toString();
             apiImageUrl = raw.startsWith('http')
                 ? raw
-                : 'http://clinicbook.runasp.net$raw';
+                : 'http://mediconnect.somee.com$raw';
           }
 
           final dobString = profile['dateOfBirth'] ?? profile['DateOfBirth'];
@@ -145,7 +145,7 @@ class DoctorHomeCubit extends Cubit<DoctorHomeState> {
                 if (src == null) return '';
                 final s = src.toString().trim();
                 if (s.isEmpty) return '';
-                return s.startsWith('http') ? s : 'http://clinicbook.runasp.net${s.startsWith('/') ? '' : '/'}$s';
+                return s.startsWith('http') ? s : 'http://mediconnect.somee.com${s.startsWith('/') ? '' : '/'}$s';
               }
               patientImg = resolveImg(
                 details['patientImageUrl'] ??

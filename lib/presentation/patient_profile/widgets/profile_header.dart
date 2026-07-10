@@ -37,20 +37,26 @@ class ProfileHeader extends StatelessWidget {
                   shape: BoxShape.circle,
                   border: Border.all(color: ColorManager.primary, width: s(2)),
                   color: const Color(0xFFE2E8F0),
-                  image: imageUrl != null && imageUrl!.isNotEmpty
-                      ? DecorationImage(
-                          image: NetworkImage(imageUrl!),
-                          fit: BoxFit.cover,
-                        )
-                      : null,
                 ),
-                child: imageUrl == null || imageUrl!.isEmpty
-                    ? Icon(
+                child: imageUrl != null && imageUrl!.isNotEmpty
+                    ? ClipOval(
+                        child: Image.network(
+                          imageUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Icon(
+                              Icons.person_rounded,
+                              size: s(40),
+                              color: const Color(0xFF64748B),
+                            );
+                          },
+                        ),
+                      )
+                    : Icon(
                         Icons.person_rounded,
                         size: s(40),
                         color: const Color(0xFF64748B),
-                      )
-                    : null,
+                      ),
               ),
               Positioned(
                 right: 0,

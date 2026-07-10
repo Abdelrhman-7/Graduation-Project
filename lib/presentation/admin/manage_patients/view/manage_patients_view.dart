@@ -127,9 +127,9 @@ class _ManagePatientsBody extends StatelessWidget {
                                   if (strPath.startsWith('http')) {
                                     finalUrl = strPath;
                                   } else if (strPath.startsWith('/')) {
-                                    finalUrl = 'http://clinicbook.runasp.net$strPath';
+                                    finalUrl = 'http://mediconnect.somee.com$strPath';
                                   } else {
-                                    finalUrl = 'http://clinicbook.runasp.net/$strPath';
+                                    finalUrl = 'http://mediconnect.somee.com/$strPath';
                                   }
                                   return finalUrl;
                                 }

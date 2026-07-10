@@ -592,19 +592,27 @@ class _DoctorCardWithRatingState extends State<_DoctorCardWithRating> {
                     ),
                     shape: BoxShape.circle,
                   ),
-                  child: CircleAvatar(
-                    radius: s(30),
-                    backgroundImage: widget.avatarUrl.isNotEmpty
-                        ? NetworkImage(widget.avatarUrl)
-                        : null,
-                    backgroundColor: const Color(0xFFEFF6FF),
-                    child: widget.avatarUrl.isEmpty
-                        ? Icon(
-                            Icons.person,
-                            color: const Color(0xFF137FEC),
-                            size: s(30),
-                          )
-                        : null,
+                  child: ClipOval(
+                    child: Container(
+                      width: s(60),
+                      height: s(60),
+                      color: const Color(0xFFEFF6FF),
+                      child: widget.avatarUrl.isNotEmpty
+                          ? Image.network(
+                              widget.avatarUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) => Icon(
+                                Icons.person,
+                                color: const Color(0xFF137FEC),
+                                size: s(30),
+                              ),
+                            )
+                          : Icon(
+                              Icons.person,
+                              color: const Color(0xFF137FEC),
+                              size: s(30),
+                            ),
+                    ),
                   ),
                 ),
                 SizedBox(width: s(16)),

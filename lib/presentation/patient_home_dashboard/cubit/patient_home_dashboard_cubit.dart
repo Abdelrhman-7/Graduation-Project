@@ -44,7 +44,7 @@ class PatientHomeDashboardCubit extends Cubit<PatientHomeDashboardState> {
           final raw = rawImage.toString();
           imageUrl = raw.startsWith('http')
               ? raw
-              : 'http://clinicbook.runasp.net$raw';
+              : 'http://mediconnect.somee.com$raw';
           // احفظ الصورة في SharedPrefs عشان تبقى متاحة في كل مكان
           await _sharedPrefController.saveImage(imageUrl);
         }

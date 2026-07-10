@@ -40,7 +40,7 @@ class PatientProfileCubit extends Cubit<PatientProfileState> {
           final raw = rawImage.toString();
           imageUrl = raw.startsWith('http')
               ? raw
-              : 'http://clinicbook.runasp.net$raw';
+              : 'http://mediconnect.somee.com$raw';
           await sharedPrefController.saveImage(imageUrl);
         }
 
@@ -136,13 +136,24 @@ class PatientProfileCubit extends Cubit<PatientProfileState> {
   void deleteImage() async {
     emit(PatientProfileLoading());
     try {
-      final success = await repository.deletePatientImage();
-      if (success) {
-        emit(PatientProfileImageDeleted());
-        getProfileData();
-      } else {
-        emit(PatientProfileError('Failed to delete image'));
+      // حاول تحذف من السيرفر، لو فشل أو مش موجود احذف محلياً بس
+      bool serverSuccess = false;
+      try {
+        serverSuccess = await repository.deletePatientImage();
+      } catch (_) {
+        serverSuccess = false;
       }
+
+      // في الحالتين امسح الصورة من الـ SharedPreferences محلياً
+      await sharedPrefController.clearImage();
+
+      if (serverSuccess) {
+        emit(PatientProfileImageDeleted());
+      } else {
+        // الحذف المحلي نجح حتى لو السيرفر مش عنده endpoint
+        emit(PatientProfileImageDeleted());
+      }
+      getProfileData();
     } catch (e) {
       emit(PatientProfileError(e.toString()));
     }

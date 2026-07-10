@@ -269,7 +269,7 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
             final s = raw.toString().trim();
             patientImg = s.startsWith('http')
                 ? s
-                : 'http://clinicbook.runasp.net${s.startsWith('/') ? '' : '/'}$s';
+                : 'http://mediconnect.somee.com${s.startsWith('/') ? '' : '/'}$s';
             await _prefs.saveImage(patientImg!);
           }
         }

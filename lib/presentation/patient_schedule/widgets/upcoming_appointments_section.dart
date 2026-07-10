@@ -141,7 +141,7 @@ class UpcomingAppointmentsSection extends StatelessWidget {
               final s = src.toString().trim();
               if (s.isEmpty) return '';
               if (s.startsWith('http')) return s;
-              return 'http://clinicbook.runasp.net${s.startsWith('/') ? '' : '/'}$s';
+              return 'http://mediconnect.somee.com${s.startsWith('/') ? '' : '/'}$s';
             }
 
             final doctorImageUrl = resolveImageUrl(

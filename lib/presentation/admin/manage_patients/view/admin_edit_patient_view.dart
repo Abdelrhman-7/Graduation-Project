@@ -86,7 +86,7 @@ class _AdminEditPatientViewState extends State<AdminEditPatientView> {
                           backgroundImage: _imagePath != null
                               ? AssetImage(_imagePath!)
                               : (widget.patient['imageUrl'] != null
-                                  ? NetworkImage('http://clinicbook.runasp.net${widget.patient['imageUrl']}')
+                                  ? NetworkImage('http://mediconnect.somee.com${widget.patient['imageUrl']}')
                                   : null) as ImageProvider?,
                           child: _imagePath == null && widget.patient['imageUrl'] == null
                               ? const Icon(Icons.person, size: 50)

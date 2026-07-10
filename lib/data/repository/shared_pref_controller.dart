@@ -66,6 +66,12 @@ class SharedPrefController {
     return prefs.getString(_imageKey);
   }
 
+  Future<void> clearImage() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_imageKey);
+  }
+
+
   Future<void> logout() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_isLoggedInKey, false);

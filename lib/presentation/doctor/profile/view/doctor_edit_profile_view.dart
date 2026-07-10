@@ -100,7 +100,7 @@ class _DoctorEditProfileViewState extends State<DoctorEditProfileView> {
               setState(() {
                 _currentImageUrl = raw.startsWith('http')
                     ? raw
-                    : 'http://clinicbook.runasp.net$raw';
+                    : 'http://mediconnect.somee.com$raw';
               });
             }
           }

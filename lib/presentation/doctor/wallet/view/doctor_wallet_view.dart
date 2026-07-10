@@ -31,20 +31,24 @@ class _DoctorWalletViewState extends State<DoctorWalletView> {
     try {
       final api = await ApiManager.create();
       final repo = Repository(api);
-      
+
       // Fetch bookings from API
       final allBookings = await repo.getDoctorAllBookings();
-      
+
       double calculatedBalance = 0.0;
       final List<Map<String, dynamic>> apiTxs = [];
-      
+
       for (final b in allBookings) {
         final status = b.status?.toLowerCase() ?? '';
         final paymentMethod = b.paymentMethod?.toLowerCase() ?? '';
-        final isPaid = status.contains('paid') || status.contains('complet') || status.contains('success') || paymentMethod == 'card';
-        
+        final isPaid =
+            status.contains('paid') ||
+            status.contains('complet') ||
+            status.contains('success') ||
+            paymentMethod == 'card';
+
         final price = b.price ?? 0.0;
-        
+
         if (isPaid && price > 0) {
           calculatedBalance += price;
           apiTxs.add({
@@ -61,7 +65,7 @@ class _DoctorWalletViewState extends State<DoctorWalletView> {
       final txStrings = await _prefs.getDoctorWalletTransactions();
       double totalWithdrawn = 0.0;
       final List<Map<String, dynamic>> localTxs = [];
-      
+
       for (final txStr in txStrings) {
         try {
           final decoded = json.decode(txStr);
@@ -75,18 +79,22 @@ class _DoctorWalletViewState extends State<DoctorWalletView> {
           }
         } catch (_) {}
       }
-      
+
       double finalBalance = calculatedBalance - totalWithdrawn;
       if (finalBalance < 0) finalBalance = 0.0;
 
       final List<Map<String, dynamic>> allTxs = [];
       allTxs.addAll(apiTxs);
       allTxs.addAll(localTxs);
-      
+
       // Sort by date descending
       allTxs.sort((a, b) {
-        final dateA = DateTime.tryParse(a['date'] ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
-        final dateB = DateTime.tryParse(b['date'] ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final dateA =
+            DateTime.tryParse(a['date'] ?? '') ??
+            DateTime.fromMillisecondsSinceEpoch(0);
+        final dateB =
+            DateTime.tryParse(b['date'] ?? '') ??
+            DateTime.fromMillisecondsSinceEpoch(0);
         return dateB.compareTo(dateA);
       });
 
@@ -162,7 +170,9 @@ class _DoctorWalletViewState extends State<DoctorWalletView> {
                   const SizedBox(height: 24),
                   TextFormField(
                     controller: amountController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     style: GoogleFonts.cairo(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
@@ -176,7 +186,10 @@ class _DoctorWalletViewState extends State<DoctorWalletView> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(color: ColorManager.primary, width: 2),
+                        borderSide: const BorderSide(
+                          color: ColorManager.primary,
+                          width: 2,
+                        ),
                       ),
                     ),
                     validator: (value) {
@@ -197,10 +210,12 @@ class _DoctorWalletViewState extends State<DoctorWalletView> {
                   ElevatedButton(
                     onPressed: () async {
                       if (!formKey.currentState!.validate()) return;
-                      final toWithdraw = double.parse(amountController.text.trim());
-                      
+                      final toWithdraw = double.parse(
+                        amountController.text.trim(),
+                      );
+
                       Navigator.pop(context);
-                      
+
                       // Process locally using doctorId as unique key
                       await _prefs.addToDoctorWalletBalance(-toWithdraw);
                       await _prefs.addDoctorWalletTransaction(
@@ -209,11 +224,13 @@ class _DoctorWalletViewState extends State<DoctorWalletView> {
                         amount: -toWithdraw,
                         date: DateTime.now().toIso8601String(),
                       );
-                      
+
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('Successfully requested withdrawal of \$${toWithdraw.toStringAsFixed(2)} EGP'),
+                            content: Text(
+                              'Successfully requested withdrawal of \$${toWithdraw.toStringAsFixed(2)} EGP',
+                            ),
                             backgroundColor: ColorManager.primary,
                           ),
                         );
@@ -272,7 +289,10 @@ class _DoctorWalletViewState extends State<DoctorWalletView> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: ColorManager.primary),
+            icon: const Icon(
+              Icons.refresh_rounded,
+              color: ColorManager.primary,
+            ),
             onPressed: _loadWalletData,
           ),
         ],
@@ -292,10 +312,7 @@ class _DoctorWalletViewState extends State<DoctorWalletView> {
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
-                          colors: [
-                            Color(0xFF0F172A),
-                            Color(0xFF1E293B),
-                          ],
+                          colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
@@ -345,10 +362,16 @@ class _DoctorWalletViewState extends State<DoctorWalletView> {
                             children: [
                               Expanded(
                                 child: OutlinedButton(
-                                  onPressed: _balance > 0 ? _showWithdrawDialog : null,
+                                  onPressed: _balance > 0
+                                      ? _showWithdrawDialog
+                                      : null,
                                   style: OutlinedButton.styleFrom(
-                                    side: const BorderSide(color: Colors.white30),
-                                    padding: const EdgeInsets.symmetric(vertical: 14),
+                                    side: const BorderSide(
+                                      color: Colors.white30,
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 14,
+                                    ),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(16),
                                     ),
@@ -358,7 +381,9 @@ class _DoctorWalletViewState extends State<DoctorWalletView> {
                                     style: GoogleFonts.cairo(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w600,
-                                      color: _balance > 0 ? Colors.white : Colors.white38,
+                                      color: _balance > 0
+                                          ? Colors.white
+                                          : Colors.white38,
                                     ),
                                   ),
                                 ),
@@ -369,7 +394,7 @@ class _DoctorWalletViewState extends State<DoctorWalletView> {
                       ),
                     ),
                     const SizedBox(height: 32),
-                    
+
                     // --- TRANSACTION HISTORY TITLE ---
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -401,7 +426,9 @@ class _DoctorWalletViewState extends State<DoctorWalletView> {
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(24),
-                              border: Border.all(color: ColorManager.borderColor),
+                              border: Border.all(
+                                color: ColorManager.borderColor,
+                              ),
                             ),
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -422,7 +449,9 @@ class _DoctorWalletViewState extends State<DoctorWalletView> {
                                 ),
                                 const SizedBox(height: 8),
                                 Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 32,
+                                  ),
                                   child: Text(
                                     'Payments made by patients via card will be displayed here.',
                                     style: GoogleFonts.cairo(
@@ -439,17 +468,22 @@ class _DoctorWalletViewState extends State<DoctorWalletView> {
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
                             itemCount: _transactions.length,
-                            separatorBuilder: (context, index) => const SizedBox(height: 12),
+                            separatorBuilder: (context, index) =>
+                                const SizedBox(height: 12),
                             itemBuilder: (context, index) {
                               final tx = _transactions[index];
-                              final patientName = tx['patientName'] ?? 'Patient';
-                              final double amount = (tx['amount'] as num?)?.toDouble() ?? 0.0;
+                              final patientName =
+                                  tx['patientName'] ?? 'Patient';
+                              final double amount =
+                                  (tx['amount'] as num?)?.toDouble() ?? 0.0;
                               final dateStr = tx['date'] ?? '';
-                              
+
                               DateTime? parsedDate = DateTime.tryParse(dateStr);
                               String formattedDate = dateStr;
                               if (parsedDate != null) {
-                                formattedDate = DateFormat('MMM dd, yyyy - hh:mm a').format(parsedDate);
+                                formattedDate = DateFormat(
+                                  'MMM dd, yyyy - hh:mm a',
+                                ).format(parsedDate);
                               }
 
                               final isDeposit = amount > 0;
@@ -459,7 +493,9 @@ class _DoctorWalletViewState extends State<DoctorWalletView> {
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(color: ColorManager.borderColor),
+                                  border: Border.all(
+                                    color: ColorManager.borderColor,
+                                  ),
                                 ),
                                 child: Row(
                                   children: [
@@ -484,7 +520,8 @@ class _DoctorWalletViewState extends State<DoctorWalletView> {
                                     const SizedBox(width: 16),
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Text(
                                             patientName,
@@ -510,7 +547,9 @@ class _DoctorWalletViewState extends State<DoctorWalletView> {
                                       style: GoogleFonts.cairo(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w700,
-                                        color: isDeposit ? Colors.green[700] : Colors.red[700],
+                                        color: isDeposit
+                                            ? Colors.green[700]
+                                            : Colors.red[700],
                                       ),
                                     ),
                                   ],

@@ -80,7 +80,7 @@ class UpNextCard extends StatelessWidget {
                           ? null
                           : rawUrl.startsWith('http')
                               ? rawUrl
-                              : 'http://clinicbook.runasp.net${rawUrl.startsWith('/') ? '' : '/'}$rawUrl';
+                              : 'http://mediconnect.somee.com${rawUrl.startsWith('/') ? '' : '/'}$rawUrl';
                       final String initial = (appointment['patientName']?.toString() ?? 'P')
                           .trim()
                           .toUpperCase()

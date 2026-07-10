@@ -77,7 +77,7 @@ class ClinicModel {
     if (rawImageUrl != null && rawImageUrl.isNotEmpty) {
       if (!rawImageUrl.startsWith('http')) {
         rawImageUrl =
-            'http://clinicbook.runasp.net${rawImageUrl.startsWith('/') ? '' : '/'}$rawImageUrl';
+            'http://mediconnect.somee.com${rawImageUrl.startsWith('/') ? '' : '/'}$rawImageUrl';
       }
     }
 

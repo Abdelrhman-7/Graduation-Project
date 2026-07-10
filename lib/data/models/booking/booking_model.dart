@@ -97,7 +97,7 @@ class BookingModel {
         final s = rawPatientImg.toString().trim();
         patientImageUrl = s.startsWith('http')
             ? s
-            : 'http://clinicbook.runasp.net${s.startsWith('/') ? '' : '/'}$s';
+            : 'http://mediconnect.somee.com${s.startsWith('/') ? '' : '/'}$s';
       }
     }
 
@@ -110,7 +110,7 @@ class BookingModel {
         final s = rawPatientImg.toString().trim();
         patientImageUrl = s.startsWith('http')
             ? s
-            : 'http://clinicbook.runasp.net${s.startsWith('/') ? '' : '/'}$s';
+            : 'http://mediconnect.somee.com${s.startsWith('/') ? '' : '/'}$s';
       }
     }
 
@@ -148,7 +148,7 @@ class BookingModel {
       final s = rawImg.toString().trim();
       resolvedImageUrl = s.startsWith('http')
           ? s
-          : 'http://clinicbook.runasp.net${s.startsWith('/') ? '' : '/'}$s';
+          : 'http://mediconnect.somee.com${s.startsWith('/') ? '' : '/'}$s';
     }
     // Also check inside doctor/schedule.doctor
     if (resolvedImageUrl == null) {
@@ -162,7 +162,7 @@ class BookingModel {
         final s = src.toString().trim();
         resolvedImageUrl = s.startsWith('http')
             ? s
-            : 'http://clinicbook.runasp.net${s.startsWith('/') ? '' : '/'}$s';
+            : 'http://mediconnect.somee.com${s.startsWith('/') ? '' : '/'}$s';
       }
     }
 

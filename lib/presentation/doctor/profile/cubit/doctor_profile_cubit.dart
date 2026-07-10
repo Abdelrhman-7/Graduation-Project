@@ -105,7 +105,7 @@ class DoctorProfileCubit extends Cubit<DoctorProfileState> {
               final raw = rawImage.toString();
               final fullUrl = raw.startsWith('http')
                   ? raw
-                  : 'http://clinicbook.runasp.net$raw';
+                  : 'http://mediconnect.somee.com$raw';
               await sharedPrefController.saveImage(fullUrl);
               print('=== Saved new image after edit: $fullUrl ===');
             }
