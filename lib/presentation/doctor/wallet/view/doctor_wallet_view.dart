@@ -41,18 +41,17 @@ class _DoctorWalletViewState extends State<DoctorWalletView> {
       for (final b in allBookings) {
         final status = b.status?.toLowerCase() ?? '';
         final paymentMethod = b.paymentMethod?.toLowerCase() ?? '';
-        final rawPayStatusLower = (b.paymentStatus ?? '').toLowerCase().trim();
         
-        final isPaid =
-            rawPayStatusLower == 'paid' ||
-            rawPayStatusLower == 'completed' ||
-            rawPayStatusLower == 'success' ||
-            status.toLowerCase().trim() == 'paid' ||
-            paymentMethod == 'card';
+        // التحقق من أن الدفع تم أونلاين فقط
+        final isOnlinePayment = paymentMethod.contains('online') || paymentMethod == 'card' || paymentMethod == 'visa';
+        
+        // التحقق من أن الحجز مقبول أو مكتمل (وليس معلق أو مرفوض)
+        final isBookingValid = b.isApproved || status.contains('complet') || status.contains('paid');
 
         final price = b.price ?? b.consultationPrice ?? 0.0;
 
-        if (isPaid && price > 0) {
+        // الرصيد يُحسب فقط إذا كان الدفع أونلاين والحجز مقبول
+        if (isOnlinePayment && isBookingValid && price > 0) {
           calculatedBalance += price;
           apiTxs.add({
             'appointmentId': b.id,

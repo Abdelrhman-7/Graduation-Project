@@ -109,27 +109,16 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
       'clinicName': widget.clinic.name,
       'doctorName': widget.doctor.fullName,
       'doctorImageUrl': widget.doctor.imageUrl,
-      'dayOfWeek': (widget.schedule['dayOfWeek'] ?? widget.schedule['day'])?.toString(),
+      'dayOfWeek': (widget.schedule['dayOfWeek'] ?? widget.schedule['day'])
+          ?.toString(),
       'startTime': widget.schedule['startTime']?.toString(),
       'endTime': widget.schedule['endTime']?.toString(),
       'appointmentDuration': durationMinutes.toString(),
       'price': double.tryParse(widget.clinic.consultationPrice.toString()),
     };
-    print('🔥🚀🔥🚀🔥🚀 [BOOKING DATA] START 🔥🚀🔥🚀🔥🚀');
-    print('====> scheduleId: ${bookingData['scheduleId']}');
-    print('====> reasonForVisit: ${bookingData['reasonForVisit']}');
-    print('====> paymentMethod: ${bookingData['paymentMethod']}');
-    print('====> doctorId: ${bookingData['doctorId']}');
-    print('====> clinicId: ${bookingData['clinicId']}');
-    print('====> clinicName: ${bookingData['clinicName']}');
-    print('====> doctorName: ${bookingData['doctorName']}');
-    print('====> doctorImageUrl: ${bookingData['doctorImageUrl']}');
-    print('====> dayOfWeek: ${bookingData['dayOfWeek']}');
-    print('====> startTime: ${bookingData['startTime']}');
-    print('====> endTime: ${bookingData['endTime']}');
-    print('====> appointmentDuration: ${bookingData['appointmentDuration']}');
-    print('====> price: ${bookingData['price']}');
-    print('🔥🚀🔥🚀🔥🚀 [BOOKING DATA] END 🔥🚀🔥🚀🔥🚀');
+    print('--------- 📋 Data Sent From UI ---------');
+    print(bookingData);
+    print('----------------------------------------');
 
     await widget.cubit.bookPatientAppointment(
       scheduleId: widget.scheduleId,

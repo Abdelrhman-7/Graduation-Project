@@ -107,6 +107,7 @@ class DoctorHomeCubit extends Cubit<DoctorHomeState> {
       List<DoctorNotificationModel> notifications = [];
       try {
         allBookings = await _repository.getDoctorAllBookings();
+        await _fetchMissingImages(allBookings);
         pendingBookings = allBookings.where((b) => b.isPending).toList();
       } catch (e) {
         print('Failed to load bookings: $e');
@@ -128,45 +129,6 @@ class DoctorHomeCubit extends Cubit<DoctorHomeState> {
             .length;
       } catch (e) {
         print('Failed to load doctor notifications: $e');
-      }
-
-      // جلب الصور الناقصة لكل الحجوزات كحل مؤقت لحين تعديل السيرفر
-      for (int i = 0; i < pendingBookings.length; i++) {
-        if ((pendingBookings[i].patientImageUrl == null ||
-                pendingBookings[i].patientImageUrl!.isEmpty) &&
-            pendingBookings[i].id > 0) {
-          try {
-            final details = await _repository.getDoctorAppointmentDetails(
-              pendingBookings[i].id,
-            );
-            if (details != null) {
-              String resolveImg(dynamic src) {
-                if (src == null) return '';
-                final s = src.toString().trim();
-                if (s.isEmpty) return '';
-                return s.startsWith('http')
-                    ? s
-                    : 'http://mediconnect.somee.com${s.startsWith('/') ? '' : '/'}$s';
-              }
-
-              String img = resolveImg(
-                details['patientDisplayImageUrl'] ??
-                    details['PatientDisplayImageUrl'] ??
-                    details['patientImageUrl'] ??
-                    details['PatientImageUrl'] ??
-                    details['patient']?['imageUrl'] ??
-                    details['patient']?['profileImageUrl'] ??
-                    details['patient']?['displayImageUrl'] ??
-                    details['patient']?['image'],
-              );
-              if (img.isNotEmpty) {
-                pendingBookings[i] = pendingBookings[i].copyWith(
-                  patientImageUrl: img,
-                );
-              }
-            }
-          } catch (_) {}
-        }
       }
 
       final patientRequests = pendingBookings
@@ -229,6 +191,7 @@ class DoctorHomeCubit extends Cubit<DoctorHomeState> {
             .whereType<Map<String, dynamic>>()
             .map((b) => BookingModel.fromJson(b))
             .toList();
+        await _fetchMissingImages(historyBookings);
       } catch (e) {
         print('Failed to load doctor history bookings: $e');
       }
@@ -265,6 +228,8 @@ class DoctorHomeCubit extends Cubit<DoctorHomeState> {
 
     try {
       final allBookings = await _repository.getDoctorAllBookings();
+      await _fetchMissingImages(allBookings);
+      
       final pendingBookings = allBookings.where((b) => b.isPending).toList();
       final patientRequests = pendingBookings
           .map((b) => b.toRequestMap())
@@ -277,6 +242,7 @@ class DoctorHomeCubit extends Cubit<DoctorHomeState> {
             .whereType<Map<String, dynamic>>()
             .map((b) => BookingModel.fromJson(b))
             .toList();
+        await _fetchMissingImages(historyBookings);
       } catch (e) {
         print('Failed to load doctor history bookings in refresh: $e');
       }
@@ -471,6 +437,44 @@ class DoctorHomeCubit extends Cubit<DoctorHomeState> {
     }
 
     emit(current.copyWith(unreadNotifications: 0));
+  }
+
+  void updateUnreadNotifications(int count) {
+    final current = state;
+    if (current is DoctorHomeSuccess) {
+      emit(current.copyWith(unreadNotifications: count));
+    }
+  }
+
+  Future<void> _fetchMissingImages(List<BookingModel> bookings) async {
+    for (int i = 0; i < bookings.length; i++) {
+      if ((bookings[i].patientImageUrl == null || bookings[i].patientImageUrl!.isEmpty) && bookings[i].id > 0) {
+        try {
+          final details = await _repository.getDoctorAppointmentDetails(bookings[i].id);
+          if (details != null) {
+            String resolveImg(dynamic src) {
+              if (src == null) return '';
+              final s = src.toString().trim();
+              if (s.isEmpty) return '';
+              return s.startsWith('http') ? s : 'http://mediconnect.somee.com${s.startsWith('/') ? '' : '/'}$s';
+            }
+            String img = resolveImg(
+              details['patientDisplayImageUrl'] ??
+              details['PatientDisplayImageUrl'] ??
+              details['patientImageUrl'] ??
+              details['PatientImageUrl'] ??
+              details['patient']?['imageUrl'] ??
+              details['patient']?['profileImageUrl'] ??
+              details['patient']?['displayImageUrl'] ??
+              details['patient']?['image'],
+            );
+            if (img.isNotEmpty) {
+              bookings[i] = bookings[i].copyWith(patientImageUrl: img);
+            }
+          }
+        } catch (_) {}
+      }
+    }
   }
 
   Future<bool> discardNotification(int notificationId) async {

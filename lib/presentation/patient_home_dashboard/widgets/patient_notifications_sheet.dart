@@ -290,48 +290,6 @@ class _NotificationItem extends StatelessWidget {
                   ),
                 ),
               ],
-              // ── زر Pay Now يظهر فقط لما الحجز مقبول وعندنا appointmentId ──
-              if (n.isApproved && n.appointmentId != null) ...[
-                const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      final cubit = PatientBookingCubit(repository);
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => PaymentCardView(
-                            appointmentId: n.appointmentId!,
-                            amount: 0,
-                            doctorName: n.doctorName ?? '',
-                            clinicName: n.clinicName ?? '',
-                            doctorId: n.doctorId ?? 0,
-                            cubit: cubit,
-                          ),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.payment_rounded, size: 16),
-                    label: Text(
-                      'Pay Now',
-                      style: GoogleFonts.cairo(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF059669),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 10, horizontal: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                  ),
-                ),
-              ],
             ],
           ),
         ),
