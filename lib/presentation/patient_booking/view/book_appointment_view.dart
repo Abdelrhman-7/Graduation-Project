@@ -85,8 +85,12 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
 
     // Parse duration: prefer schedule duration if valid (>0), fallback to clinic duration
     int durationMinutes = 30;
-    final rawSchedDur = widget.schedule['appointmentDuration'] ?? widget.schedule['AppointmentDuration'];
-    final schedDur = rawSchedDur != null ? parseMinutes(rawSchedDur.toString()) : 0;
+    final rawSchedDur =
+        widget.schedule['appointmentDuration'] ??
+        widget.schedule['AppointmentDuration'];
+    final schedDur = rawSchedDur != null
+        ? parseMinutes(rawSchedDur.toString())
+        : 0;
     if (schedDur > 0) {
       durationMinutes = schedDur;
     } else {
@@ -95,6 +99,37 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
         durationMinutes = clinicDur;
       }
     }
+
+    final bookingData = {
+      'scheduleId': widget.scheduleId,
+      'reasonForVisit': _reasonController.text.trim(),
+      'paymentMethod': _paymentMethod,
+      'doctorId': widget.doctor.id,
+      'clinicId': widget.clinic.id,
+      'clinicName': widget.clinic.name,
+      'doctorName': widget.doctor.fullName,
+      'doctorImageUrl': widget.doctor.imageUrl,
+      'dayOfWeek': (widget.schedule['dayOfWeek'] ?? widget.schedule['day'])?.toString(),
+      'startTime': widget.schedule['startTime']?.toString(),
+      'endTime': widget.schedule['endTime']?.toString(),
+      'appointmentDuration': durationMinutes.toString(),
+      'price': double.tryParse(widget.clinic.consultationPrice.toString()),
+    };
+    print('🔥🚀🔥🚀🔥🚀 [BOOKING DATA] START 🔥🚀🔥🚀🔥🚀');
+    print('====> scheduleId: ${bookingData['scheduleId']}');
+    print('====> reasonForVisit: ${bookingData['reasonForVisit']}');
+    print('====> paymentMethod: ${bookingData['paymentMethod']}');
+    print('====> doctorId: ${bookingData['doctorId']}');
+    print('====> clinicId: ${bookingData['clinicId']}');
+    print('====> clinicName: ${bookingData['clinicName']}');
+    print('====> doctorName: ${bookingData['doctorName']}');
+    print('====> doctorImageUrl: ${bookingData['doctorImageUrl']}');
+    print('====> dayOfWeek: ${bookingData['dayOfWeek']}');
+    print('====> startTime: ${bookingData['startTime']}');
+    print('====> endTime: ${bookingData['endTime']}');
+    print('====> appointmentDuration: ${bookingData['appointmentDuration']}');
+    print('====> price: ${bookingData['price']}');
+    print('🔥🚀🔥🚀🔥🚀 [BOOKING DATA] END 🔥🚀🔥🚀🔥🚀');
 
     await widget.cubit.bookPatientAppointment(
       scheduleId: widget.scheduleId,
@@ -105,7 +140,8 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
       clinicName: widget.clinic.name,
       doctorName: widget.doctor.fullName,
       doctorImageUrl: widget.doctor.imageUrl,
-      dayOfWeek: (widget.schedule['dayOfWeek'] ?? widget.schedule['day'])?.toString(),
+      dayOfWeek: (widget.schedule['dayOfWeek'] ?? widget.schedule['day'])
+          ?.toString(),
       startTime: widget.schedule['startTime']?.toString(),
       endTime: widget.schedule['endTime']?.toString(),
       appointmentDuration: durationMinutes.toString(),
@@ -123,7 +159,11 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: const Color(0xFF0F172A), size: s(24)),
+            icon: Icon(
+              Icons.arrow_back,
+              color: const Color(0xFF0F172A),
+              size: s(24),
+            ),
             onPressed: () => Navigator.pop(context),
           ),
           centerTitle: true,
@@ -162,7 +202,10 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
 
               return SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
-                padding: EdgeInsets.symmetric(horizontal: s(16), vertical: s(8)),
+                padding: EdgeInsets.symmetric(
+                  horizontal: s(16),
+                  vertical: s(8),
+                ),
                 child: Form(
                   key: _formKey,
                   child: Column(
@@ -250,7 +293,8 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
                     ),
                   ),
                 ],
-                if (widget.doctor.aboutMe != null && widget.doctor.aboutMe!.isNotEmpty) ...[
+                if (widget.doctor.aboutMe != null &&
+                    widget.doctor.aboutMe!.isNotEmpty) ...[
                   SizedBox(height: s(6)),
                   Text(
                     widget.doctor.aboutMe!,
@@ -271,9 +315,13 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
   }
 
   Widget _buildClinicScheduleSummary() {
-    final day = (widget.schedule['dayOfWeek'] ?? widget.schedule['day'] ?? 'Unknown Day').toString();
+    final day =
+        (widget.schedule['dayOfWeek'] ??
+                widget.schedule['day'] ??
+                'Unknown Day')
+            .toString();
     final start = (widget.schedule['startTime'] ?? 'N/A').toString();
-    
+
     // Helper to parse minutes from any duration string format
     int parseMinutes(String val) {
       final cleaned = val.toLowerCase().trim();
@@ -294,12 +342,17 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
     }
 
     // Check if endTime is provided by backend
-    final backendEndTime = widget.schedule['endTime'] ?? widget.schedule['EndTime'];
-    
+    final backendEndTime =
+        widget.schedule['endTime'] ?? widget.schedule['EndTime'];
+
     // Parse duration: prefer schedule duration if valid (>0), fallback to clinic duration
     int durationMinutes = 0;
-    final rawSchedDur = widget.schedule['appointmentDuration'] ?? widget.schedule['AppointmentDuration'];
-    final schedDur = rawSchedDur != null ? parseMinutes(rawSchedDur.toString()) : 0;
+    final rawSchedDur =
+        widget.schedule['appointmentDuration'] ??
+        widget.schedule['AppointmentDuration'];
+    final schedDur = rawSchedDur != null
+        ? parseMinutes(rawSchedDur.toString())
+        : 0;
     if (schedDur > 0) {
       durationMinutes = schedDur;
     } else {
@@ -322,7 +375,7 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
         return null;
       }
     }
-    
+
     // Calculate End Time (Start Time + Duration)
     String calculateEndTime(String startTime, int durationMins) {
       try {
@@ -350,22 +403,26 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
         final endMins = timeToMinutes(end);
         if (startMins != null && endMins != null) {
           durationMinutes = endMins - startMins;
-          if (durationMinutes < 0) durationMinutes += 24 * 60; // Handle over-midnight
+          if (durationMinutes < 0)
+            durationMinutes += 24 * 60; // Handle over-midnight
         }
       }
     } else {
       if (durationMinutes == 0) durationMinutes = 30; // ultimate fallback
       end = calculateEndTime(start, durationMinutes);
     }
-    
+
     final duration = durationMinutes > 0 ? '$durationMinutes minutes' : 'N/A';
 
     final displayStart = _formatTime(start);
     final displayEnd = _formatTime(end);
-    
+
     // Parse Notes
     String notes = '';
-    final schedNotes = (widget.schedule['notes'] ?? widget.schedule['nots'] ?? '').toString().trim();
+    final schedNotes =
+        (widget.schedule['notes'] ?? widget.schedule['nots'] ?? '')
+            .toString()
+            .trim();
     if (schedNotes.isNotEmpty && schedNotes != 'No notes added') {
       notes = schedNotes;
     } else {
@@ -394,7 +451,11 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
         children: [
           Row(
             children: [
-              Icon(Icons.local_hospital_rounded, size: s(20), color: const Color(0xFF10B981)),
+              Icon(
+                Icons.local_hospital_rounded,
+                size: s(20),
+                color: const Color(0xFF10B981),
+              ),
               SizedBox(width: s(8)),
               Expanded(
                 child: Text(
@@ -409,9 +470,19 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
             ],
           ),
           SizedBox(height: s(8)),
-          _buildItemRow(Icons.location_on_rounded, 'Address: ${widget.clinic.address}'),
-          _buildItemRow(Icons.phone_rounded, 'Phone: ${widget.clinic.phoneNumber}'),
-          _buildItemRow(Icons.payments_rounded, 'Consultation Price: \$${widget.clinic.consultationPrice}.00 EGP', textColor: const Color(0xFFEA580C)),
+          _buildItemRow(
+            Icons.location_on_rounded,
+            'Address: ${widget.clinic.address}',
+          ),
+          _buildItemRow(
+            Icons.phone_rounded,
+            'Phone: ${widget.clinic.phoneNumber}',
+          ),
+          _buildItemRow(
+            Icons.payments_rounded,
+            'Consultation Price: \$${widget.clinic.consultationPrice}.00 EGP',
+            textColor: const Color(0xFFEA580C),
+          ),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 10),
             child: Divider(height: 1, color: Color(0xFFF1F5F9)),
@@ -419,18 +490,22 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
           _buildItemRow(Icons.calendar_today_rounded, () {
             // Calculate next occurrence of this weekday
             final dayNames = {
-              'monday': DateTime.monday, 'tuesday': DateTime.tuesday,
-              'wednesday': DateTime.wednesday, 'thursday': DateTime.thursday,
-              'friday': DateTime.friday, 'saturday': DateTime.saturday,
+              'monday': DateTime.monday,
+              'tuesday': DateTime.tuesday,
+              'wednesday': DateTime.wednesday,
+              'thursday': DateTime.thursday,
+              'friday': DateTime.friday,
+              'saturday': DateTime.saturday,
               'sunday': DateTime.sunday,
             };
-            final targetWeekday = dayNames[day.toLowerCase().trim()] ?? DateTime.sunday;
+            final targetWeekday =
+                dayNames[day.toLowerCase().trim()] ?? DateTime.sunday;
             final now = DateTime.now();
             int diff = targetWeekday - now.weekday;
             if (diff < 0) diff += 7;
-            
+
             var nextDate = now.add(Duration(days: diff));
-            
+
             if (diff == 0) {
               try {
                 // Parse start time (e.g. "10:00 AM" or "10:00:00")
@@ -438,16 +513,20 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
                 final cleanTime = start.trim().toLowerCase();
                 bool isPm = cleanTime.contains('pm');
                 bool isAm = cleanTime.contains('am');
-                final numberPart = cleanTime.replaceAll(RegExp(r'[a-z]'), '').trim();
+                final numberPart = cleanTime
+                    .replaceAll(RegExp(r'[a-z]'), '')
+                    .trim();
                 final parts = numberPart.split(':');
                 if (parts.isNotEmpty) {
                   int hour = int.tryParse(parts[0]) ?? 0;
-                  int minute = parts.length > 1 ? (int.tryParse(parts[1]) ?? 0) : 0;
+                  int minute = parts.length > 1
+                      ? (int.tryParse(parts[1]) ?? 0)
+                      : 0;
                   if (isPm && hour < 12) hour += 12;
                   if (isAm && hour == 12) hour = 0;
                   startMins = hour * 60 + minute;
                 }
-                
+
                 int nowMins = now.hour * 60 + now.minute;
                 if (startMins <= nowMins) {
                   // Time has passed today, move to next week
@@ -455,12 +534,29 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
                 }
               } catch (_) {}
             }
-            
-            final months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-            final dateStr = '${months[nextDate.month - 1]} ${nextDate.day}, ${nextDate.year}';
+
+            final months = [
+              'Jan',
+              'Feb',
+              'Mar',
+              'Apr',
+              'May',
+              'Jun',
+              'Jul',
+              'Aug',
+              'Sep',
+              'Oct',
+              'Nov',
+              'Dec',
+            ];
+            final dateStr =
+                '${months[nextDate.month - 1]} ${nextDate.day}, ${nextDate.year}';
             return 'Day: $day, $dateStr';
           }()),
-          _buildItemRow(Icons.access_time_rounded, 'Time Range: $displayStart - $displayEnd'),
+          _buildItemRow(
+            Icons.access_time_rounded,
+            'Time Range: $displayStart - $displayEnd',
+          ),
           _buildItemRow(Icons.hourglass_bottom_rounded, 'Duration: $duration'),
           if (notes.isNotEmpty) ...[
             _buildItemRow(Icons.info_outline_rounded, 'Notes: $notes'),
@@ -525,7 +621,10 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
             maxLines: 4,
             maxLength: 500,
             enabled: !isLoading,
-            style: GoogleFonts.cairo(fontSize: s(13), color: const Color(0xFF334155)),
+            style: GoogleFonts.cairo(
+              fontSize: s(13),
+              color: const Color(0xFF334155),
+            ),
             decoration: InputDecoration(
               hintText: 'e.g. headache, follow-up for diabetes',
               hintStyle: GoogleFonts.cairo(color: const Color(0xFF94A3B8)),
@@ -541,7 +640,10 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(s(12)),
-                borderSide: const BorderSide(color: Color(0xFF137FEC), width: 1.5),
+                borderSide: const BorderSide(
+                  color: Color(0xFF137FEC),
+                  width: 1.5,
+                ),
               ),
               contentPadding: EdgeInsets.all(s(12)),
             ),
@@ -569,7 +671,13 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
             children: [
               Expanded(
                 child: RadioListTile<String>(
-                  title: Text('Pay Online', style: GoogleFonts.cairo(fontSize: s(13), fontWeight: FontWeight.w600)),
+                  title: Text(
+                    'Pay Online',
+                    style: GoogleFonts.cairo(
+                      fontSize: s(13),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                   value: 'Pay Online',
                   groupValue: _paymentMethod,
                   onChanged: isLoading
@@ -587,7 +695,13 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
               ),
               Expanded(
                 child: RadioListTile<String>(
-                  title: Text('Pay at Clinic', style: GoogleFonts.cairo(fontSize: s(13), fontWeight: FontWeight.w600)),
+                  title: Text(
+                    'Pay at Clinic',
+                    style: GoogleFonts.cairo(
+                      fontSize: s(13),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                   value: 'Pay at Clinic',
                   groupValue: _paymentMethod,
                   onChanged: isLoading
@@ -650,7 +764,10 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
                 ? SizedBox(
                     width: s(20),
                     height: s(20),
-                    child: const CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                    child: const CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
                   )
                 : Text(
                     'Confirm Booking',
@@ -666,7 +783,8 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
   }
 
   Widget _buildSuccessView() {
-    final day = (widget.schedule['dayOfWeek'] ?? widget.schedule['day'] ?? '').toString();
+    final day = (widget.schedule['dayOfWeek'] ?? widget.schedule['day'] ?? '')
+        .toString();
     final start = _formatTime((widget.schedule['startTime'] ?? '').toString());
     final end = _formatTime((widget.schedule['endTime'] ?? '').toString());
     final isOnlinePayment = _paymentMethod == 'Pay Online';
@@ -721,14 +839,25 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
             ),
             child: Column(
               children: [
-                _buildSummaryItem('Doctor', 'Dr. ${widget.doctor.fullName}', isBold: true),
-                _buildSummaryItem('Specialty', widget.doctor.departmentName ?? 'Medical Specialist'),
+                _buildSummaryItem(
+                  'Doctor',
+                  'Dr. ${widget.doctor.fullName}',
+                  isBold: true,
+                ),
+                _buildSummaryItem(
+                  'Specialty',
+                  widget.doctor.departmentName ?? 'Medical Specialist',
+                ),
                 _buildSummaryItem('Clinic', widget.clinic.name, isBold: true),
                 _buildSummaryItem('Address', widget.clinic.address),
                 _buildSummaryItem('Day', day),
                 _buildSummaryItem('Time', '$start - $end'),
                 _buildSummaryItem('Payment', _paymentMethod),
-                _buildSummaryItem('Price', '\$${widget.clinic.consultationPrice}.00 EGP', textColor: const Color(0xFFEA580C)),
+                _buildSummaryItem(
+                  'Price',
+                  '\$${widget.clinic.consultationPrice}.00 EGP',
+                  textColor: const Color(0xFFEA580C),
+                ),
               ],
             ),
           ),
@@ -745,8 +874,11 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.info_outline_rounded,
-                      color: Color(0xFF2563EB), size: 22),
+                  const Icon(
+                    Icons.info_outline_rounded,
+                    color: Color(0xFF2563EB),
+                    size: 22,
+                  ),
                   SizedBox(width: s(10)),
                   Expanded(
                     child: Text(
@@ -769,7 +901,9 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
             child: ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const PatientScheduleView()),
+                  MaterialPageRoute(
+                    builder: (_) => const PatientScheduleView(),
+                  ),
                   (route) => false,
                 );
               },
@@ -786,7 +920,9 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
                 ),
               ),
               child: Text(
-                isOnlinePayment ? 'Pay Later — Go to Schedule' : 'Go to Schedule',
+                isOnlinePayment
+                    ? 'Pay Later — Go to Schedule'
+                    : 'Go to Schedule',
                 style: GoogleFonts.cairo(
                   fontSize: s(14),
                   fontWeight: FontWeight.w700,
@@ -799,7 +935,12 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
     );
   }
 
-  Widget _buildSummaryItem(String label, String value, {bool isBold = false, Color? textColor}) {
+  Widget _buildSummaryItem(
+    String label,
+    String value, {
+    bool isBold = false,
+    Color? textColor,
+  }) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: s(4)),
       child: Row(
@@ -840,7 +981,9 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(s(20))),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(s(20)),
+              ),
               title: Text(
                 'Rate Doctor',
                 style: GoogleFonts.cairo(
@@ -866,7 +1009,9 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
                     children: List.generate(5, (index) {
                       return IconButton(
                         icon: Icon(
-                          index < rating ? Icons.star_rounded : Icons.star_border_rounded,
+                          index < rating
+                              ? Icons.star_rounded
+                              : Icons.star_border_rounded,
                           color: const Color(0xFFEAB308),
                           size: s(32),
                         ),
@@ -915,25 +1060,37 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(
-                                  errorMessage == null ? 'Review submitted!' : errorMessage,
+                                  errorMessage == null
+                                      ? 'Review submitted!'
+                                      : errorMessage,
                                   style: GoogleFonts.cairo(),
                                 ),
-                                backgroundColor: errorMessage == null ? const Color(0xFF22C55E) : const Color(0xFFEF4444),
+                                backgroundColor: errorMessage == null
+                                    ? const Color(0xFF22C55E)
+                                    : const Color(0xFFEF4444),
                               ),
                             );
                           }
                         },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF137FEC),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(s(8))),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(s(8)),
+                    ),
                   ),
                   child: isSubmitting
                       ? SizedBox(
                           width: s(16),
                           height: s(16),
-                          child: const CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          child: const CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
                         )
-                      : Text('Submit', style: GoogleFonts.cairo(color: Colors.white)),
+                      : Text(
+                          'Submit',
+                          style: GoogleFonts.cairo(color: Colors.white),
+                        ),
                 ),
               ],
             );

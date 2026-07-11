@@ -106,7 +106,8 @@ class BookingModel {
     }
 
     if (patientImageUrl == null) {
-      final rawPatientImg = json['patientImageUrl'] ?? json['PatientImageUrl'] ??
+      final rawPatientImg = json['patientDisplayImageUrl'] ?? json['PatientDisplayImageUrl'] ??
+          json['patientImageUrl'] ?? json['PatientImageUrl'] ??
           json['patientImage'] ?? json['PatientImage'] ??
           json['patientImagePath'] ?? json['patientImagePath'] ??
           json['imagePath'] ?? json['ImagePath'];

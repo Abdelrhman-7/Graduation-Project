@@ -1672,10 +1672,12 @@ class ApiManager {
     required int scheduleId,
     required String reasonForVisit,
     required String paymentMethod,
+    String? patientImageUrl,
   }) async {
     final body = {
       'reasonForVisit': reasonForVisit,
       'paymentMethod': paymentMethod,
+      if (patientImageUrl != null) 'patientImageUrl': patientImageUrl,
     };
 
     print(

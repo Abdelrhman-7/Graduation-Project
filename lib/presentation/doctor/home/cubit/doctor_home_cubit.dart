@@ -22,17 +22,20 @@ class DoctorHomeCubit extends Cubit<DoctorHomeState> {
       try {
         final profile = await _repository.getDoctorProfile();
         if (profile != null) {
-          apiName = profile['fullName'] ??
+          apiName =
+              profile['fullName'] ??
               profile['FullName'] ??
               profile['name'] ??
               profile['Name'];
-          specialty = profile['departmentName'] as String? ??
+          specialty =
+              profile['departmentName'] as String? ??
               profile['DepartmentName'] as String? ??
               (profile['department'] is Map
                   ? (profile['department'] as Map)['name'] as String?
                   : null) ??
               specialty;
-          final rawImage = profile['displayImageUrl'] ??
+          final rawImage =
+              profile['displayImageUrl'] ??
               profile['imageUrl'] ??
               profile['ImageUrl'] ??
               profile['profileImageUrl'] ??
@@ -51,13 +54,14 @@ class DoctorHomeCubit extends Cubit<DoctorHomeState> {
               final dob = DateTime.parse(dobString.toString());
               final today = DateTime.now();
               int age = today.year - dob.year;
-              if (today.month < dob.month || (today.month == dob.month && today.day < dob.day)) {
+              if (today.month < dob.month ||
+                  (today.month == dob.month && today.day < dob.day)) {
                 age--;
               }
               doctorAge = age;
             } catch (_) {}
           }
-          
+
           if (doctorAge == null) {
             final ageVal = profile['age'] ?? profile['Age'];
             if (ageVal != null) {
@@ -73,9 +77,13 @@ class DoctorHomeCubit extends Cubit<DoctorHomeState> {
           }
 
           // حفظ الـ doctorId عشان كل دكتور يبقى عنده محفظة خاصة بيه
-          final rawDoctorId = profile['id'] ?? profile['Id'] ??
-              profile['doctorId'] ?? profile['DoctorId'] ??
-              profile['userId'] ?? profile['UserId'];
+          final rawDoctorId =
+              profile['id'] ??
+              profile['Id'] ??
+              profile['doctorId'] ??
+              profile['DoctorId'] ??
+              profile['userId'] ??
+              profile['UserId'];
           if (rawDoctorId != null) {
             final parsedId = rawDoctorId is int
                 ? rawDoctorId
@@ -99,27 +107,71 @@ class DoctorHomeCubit extends Cubit<DoctorHomeState> {
       List<DoctorNotificationModel> notifications = [];
       try {
         allBookings = await _repository.getDoctorAllBookings();
-        pendingBookings =
-            allBookings.where((b) => b.isPending).toList();
+        pendingBookings = allBookings.where((b) => b.isPending).toList();
       } catch (e) {
         print('Failed to load bookings: $e');
       }
 
       int unreadNotificationsCount = 0;
       try {
-        final notificationsRaw = await _repository.getDoctorNotifications(currentPage: 1);
+        final notificationsRaw = await _repository.getDoctorNotifications(
+          currentPage: 1,
+        );
         notifications = notificationsRaw
             .whereType<Map<String, dynamic>>()
             .map((n) => DoctorNotificationModel.fromJson(n))
             .toList();
-        final lastViewedId = await _sharedPrefController.getLastViewedDoctorNotificationId();
-        unreadNotificationsCount = notifications.where((n) => n.id > lastViewedId).length;
+        final lastViewedId = await _sharedPrefController
+            .getLastViewedDoctorNotificationId();
+        unreadNotificationsCount = notifications
+            .where((n) => n.id > lastViewedId)
+            .length;
       } catch (e) {
         print('Failed to load doctor notifications: $e');
       }
 
-      final patientRequests =
-          pendingBookings.map((b) => b.toRequestMap()).toList();
+      // جلب الصور الناقصة لكل الحجوزات كحل مؤقت لحين تعديل السيرفر
+      for (int i = 0; i < pendingBookings.length; i++) {
+        if ((pendingBookings[i].patientImageUrl == null ||
+                pendingBookings[i].patientImageUrl!.isEmpty) &&
+            pendingBookings[i].id > 0) {
+          try {
+            final details = await _repository.getDoctorAppointmentDetails(
+              pendingBookings[i].id,
+            );
+            if (details != null) {
+              String resolveImg(dynamic src) {
+                if (src == null) return '';
+                final s = src.toString().trim();
+                if (s.isEmpty) return '';
+                return s.startsWith('http')
+                    ? s
+                    : 'http://mediconnect.somee.com${s.startsWith('/') ? '' : '/'}$s';
+              }
+
+              String img = resolveImg(
+                details['patientDisplayImageUrl'] ??
+                    details['PatientDisplayImageUrl'] ??
+                    details['patientImageUrl'] ??
+                    details['PatientImageUrl'] ??
+                    details['patient']?['imageUrl'] ??
+                    details['patient']?['profileImageUrl'] ??
+                    details['patient']?['displayImageUrl'] ??
+                    details['patient']?['image'],
+              );
+              if (img.isNotEmpty) {
+                pendingBookings[i] = pendingBookings[i].copyWith(
+                  patientImageUrl: img,
+                );
+              }
+            }
+          } catch (_) {}
+        }
+      }
+
+      final patientRequests = pendingBookings
+          .map((b) => b.toRequestMap())
+          .toList();
 
       Map<String, dynamic> upNext = {
         'patientName': 'No upcoming appointments',
@@ -133,35 +185,9 @@ class DoctorHomeCubit extends Cubit<DoctorHomeState> {
 
       if (pendingBookings.isNotEmpty) {
         final next = pendingBookings.first;
-        // لو مفيش صورة للمريض، نجيب تفاصيل الحجز كامل من API
         String? patientImg = next.patientImageUrl;
-        if ((patientImg == null || patientImg.isEmpty) && next.id > 0) {
-          try {
-            print('[IMG] fetching details for appointment id=${next.id}');
-            final details = await _repository.getDoctorAppointmentDetails(next.id);
-            print('[IMG] details response: $details');
-            if (details != null) {
-              String resolveImg(dynamic src) {
-                if (src == null) return '';
-                final s = src.toString().trim();
-                if (s.isEmpty) return '';
-                return s.startsWith('http') ? s : 'http://mediconnect.somee.com${s.startsWith('/') ? '' : '/'}$s';
-              }
-              patientImg = resolveImg(
-                details['patientImageUrl'] ??
-                details['PatientImageUrl'] ??
-                details['patient']?['imageUrl'] ??
-                details['patient']?['ImageUrl'] ??
-                details['patient']?['profileImageUrl'] ??
-                details['patient']?['displayImageUrl'] ??
-                details['patient']?['image'] ??
-                details['patient']?['photo'],
-              );
-              if (patientImg!.isEmpty) patientImg = null;
-              print('[IMG] resolved patientImg: $patientImg');
-            }
-          } catch (e) { print('[IMG] error: $e'); }
-        }
+        if (patientImg != null && patientImg.isEmpty) patientImg = null;
+
         upNext = {
           'patientName': next.patientName,
           'time': next.startTime ?? next.time ?? 'Pending',
@@ -185,16 +211,13 @@ class DoctorHomeCubit extends Cubit<DoctorHomeState> {
 
       try {
         final schedules = await _repository.getAllSchedules();
-        todaySchedule = schedules
-            .whereType<Map<String, dynamic>>()
-            .map((s) {
-              return {
-                'time': s['startTime'] ?? s['StartTime'] ?? '',
-                'title': s['dayOfWeek'] ?? s['DayOfWeek'] ?? 'Schedule',
-                'patient': s['clinicName'] ?? s['notes'] ?? '',
-              };
-            })
-            .toList();
+        todaySchedule = schedules.whereType<Map<String, dynamic>>().map((s) {
+          return {
+            'time': s['startTime'] ?? s['StartTime'] ?? '',
+            'title': s['dayOfWeek'] ?? s['DayOfWeek'] ?? 'Schedule',
+            'patient': s['clinicName'] ?? s['notes'] ?? '',
+          };
+        }).toList();
       } catch (e) {
         print('Failed to load today schedule: $e');
       }
@@ -210,22 +233,24 @@ class DoctorHomeCubit extends Cubit<DoctorHomeState> {
         print('Failed to load doctor history bookings: $e');
       }
 
-      emit(DoctorHomeSuccess(
-        doctorName: doctorName,
-        imageUrl: imageUrl,
-        specialty: specialty,
-        age: doctorAge,
-        patientsToday: allBookings.length,
-        upNextAppointment: upNext,
-        patientRequests: patientRequests,
-        todaySchedule: todaySchedule,
-        pendingBookings: pendingBookings,
-        allBookings: allBookings,
-        historyBookings: historyBookings,
-        pendingBookingsCount: pendingBookings.length,
-        notifications: notifications,
-        unreadNotifications: unreadNotificationsCount,
-      ));
+      emit(
+        DoctorHomeSuccess(
+          doctorName: doctorName,
+          imageUrl: imageUrl,
+          specialty: specialty,
+          age: doctorAge,
+          patientsToday: allBookings.length,
+          upNextAppointment: upNext,
+          patientRequests: patientRequests,
+          todaySchedule: todaySchedule,
+          pendingBookings: pendingBookings,
+          allBookings: allBookings,
+          historyBookings: historyBookings,
+          pendingBookingsCount: pendingBookings.length,
+          notifications: notifications,
+          unreadNotifications: unreadNotificationsCount,
+        ),
+      );
     } catch (e) {
       emit(DoctorHomeError(e.toString()));
     }
@@ -240,10 +265,10 @@ class DoctorHomeCubit extends Cubit<DoctorHomeState> {
 
     try {
       final allBookings = await _repository.getDoctorAllBookings();
-      final pendingBookings =
-          allBookings.where((b) => b.isPending).toList();
-      final patientRequests =
-          pendingBookings.map((b) => b.toRequestMap()).toList();
+      final pendingBookings = allBookings.where((b) => b.isPending).toList();
+      final patientRequests = pendingBookings
+          .map((b) => b.toRequestMap())
+          .toList();
 
       List<BookingModel> historyBookings = [];
       try {
@@ -287,16 +312,18 @@ class DoctorHomeCubit extends Cubit<DoctorHomeState> {
         };
       }
 
-      emit(current.copyWith(
-        allBookings: allBookings,
-        pendingBookings: pendingBookings,
-        pendingBookingsCount: pendingBookings.length,
-        patientRequests: patientRequests,
-        patientsToday: allBookings.length,
-        historyBookings: historyBookings,
-        upNextAppointment: upNext,
-        clearProcessingBookingId: true,
-      ));
+      emit(
+        current.copyWith(
+          allBookings: allBookings,
+          pendingBookings: pendingBookings,
+          pendingBookingsCount: pendingBookings.length,
+          patientRequests: patientRequests,
+          patientsToday: allBookings.length,
+          historyBookings: historyBookings,
+          upNextAppointment: upNext,
+          clearProcessingBookingId: true,
+        ),
+      );
     } catch (e) {
       emit(current.copyWith(clearProcessingBookingId: true));
     }
@@ -306,14 +333,22 @@ class DoctorHomeCubit extends Cubit<DoctorHomeState> {
     final current = state;
     if (current is! DoctorHomeSuccess) return false;
 
-    emit(current.copyWith(processingBookingId: bookingId, processingAction: 'approve'));
+    emit(
+      current.copyWith(
+        processingBookingId: bookingId,
+        processingAction: 'approve',
+      ),
+    );
     try {
       BookingModel? bookingModel;
       try {
         bookingModel = current.allBookings.firstWhere((b) => b.id == bookingId);
       } catch (_) {}
 
-      final success = await _repository.acceptDoctorBooking(bookingId, booking: bookingModel);
+      final success = await _repository.acceptDoctorBooking(
+        bookingId,
+        booking: bookingModel,
+      );
       if (success) {
         await refreshBookings();
       } else {
@@ -330,14 +365,22 @@ class DoctorHomeCubit extends Cubit<DoctorHomeState> {
     final current = state;
     if (current is! DoctorHomeSuccess) return false;
 
-    emit(current.copyWith(processingBookingId: bookingId, processingAction: 'deny'));
+    emit(
+      current.copyWith(
+        processingBookingId: bookingId,
+        processingAction: 'deny',
+      ),
+    );
     try {
       BookingModel? bookingModel;
       try {
         bookingModel = current.allBookings.firstWhere((b) => b.id == bookingId);
       } catch (_) {}
 
-      final success = await _repository.rejectDoctorBooking(bookingId, booking: bookingModel);
+      final success = await _repository.rejectDoctorBooking(
+        bookingId,
+        booking: bookingModel,
+      );
       if (success) {
         await refreshBookings();
       } else {
@@ -354,14 +397,22 @@ class DoctorHomeCubit extends Cubit<DoctorHomeState> {
     final current = state;
     if (current is! DoctorHomeSuccess) return false;
 
-    emit(current.copyWith(processingBookingId: bookingId, processingAction: 'complete'));
+    emit(
+      current.copyWith(
+        processingBookingId: bookingId,
+        processingAction: 'complete',
+      ),
+    );
     try {
       BookingModel? bookingModel;
       try {
         bookingModel = current.allBookings.firstWhere((b) => b.id == bookingId);
       } catch (_) {}
 
-      final success = await _repository.completeDoctorBooking(bookingId, booking: bookingModel);
+      final success = await _repository.completeDoctorBooking(
+        bookingId,
+        booking: bookingModel,
+      );
       if (success) {
         await refreshBookings();
       } else {
@@ -379,19 +430,26 @@ class DoctorHomeCubit extends Cubit<DoctorHomeState> {
     if (current is! DoctorHomeSuccess) return;
 
     try {
-      final notificationsRaw = await _repository.getDoctorNotifications(currentPage: 1);
+      final notificationsRaw = await _repository.getDoctorNotifications(
+        currentPage: 1,
+      );
       final notifications = notificationsRaw
           .whereType<Map<String, dynamic>>()
           .map((n) => DoctorNotificationModel.fromJson(n))
           .toList();
 
-      final lastViewedId = await _sharedPrefController.getLastViewedDoctorNotificationId();
-      final unreadCount = notifications.where((n) => n.id > lastViewedId).length;
+      final lastViewedId = await _sharedPrefController
+          .getLastViewedDoctorNotificationId();
+      final unreadCount = notifications
+          .where((n) => n.id > lastViewedId)
+          .length;
 
-      emit(current.copyWith(
-        notifications: notifications,
-        unreadNotifications: unreadCount,
-      ));
+      emit(
+        current.copyWith(
+          notifications: notifications,
+          unreadNotifications: unreadCount,
+        ),
+      );
     } catch (e) {
       print('Failed to refresh doctor notifications: $e');
     }
@@ -421,11 +479,17 @@ class DoctorHomeCubit extends Cubit<DoctorHomeState> {
 
     emit(current.copyWith(processingNotificationId: notificationId));
     try {
-      final success = await _repository.discardDoctorNotification(notificationId);
+      final success = await _repository.discardDoctorNotification(
+        notificationId,
+      );
       if (success) {
         await refreshNotifications();
         if (state is DoctorHomeSuccess) {
-           emit((state as DoctorHomeSuccess).copyWith(clearProcessingNotificationId: true));
+          emit(
+            (state as DoctorHomeSuccess).copyWith(
+              clearProcessingNotificationId: true,
+            ),
+          );
         }
       } else {
         emit(current.copyWith(clearProcessingNotificationId: true));

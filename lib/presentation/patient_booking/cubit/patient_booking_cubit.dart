@@ -259,7 +259,8 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
         await repository.apiManager.chooseRole('Patient');
         final profile = await repository.apiManager.getPatientProfile();
         if (profile != null) {
-          final raw = profile['displayImageUrl'] ??
+          final raw =
+              profile['displayImageUrl'] ??
               profile['imageUrl'] ??
               profile['ImageUrl'] ??
               profile['profileImageUrl'] ??
@@ -284,6 +285,9 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
 
     // جلب كل الحجوزات النشطة للعيادة لتجنب التضارب
     List<dynamic> activeBookings = [];
+    // تم إيقاف جلب الحجوزات من جهة المريض لأنها تسبب تأخير (Timeout) وتقوم بتغيير صلاحية الحساب إلى دكتور عن طريق الخطأ.
+    // السيرفر هو المسؤول عن التحقق من تعارض المواعيد.
+    /*
     try {
       final clinicBookings = await repository.getClinicBookings(clinicId ?? 0);
       activeBookings = clinicBookings.where((b) {
@@ -299,6 +303,7 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
         return true;
       }).toList();
     } catch (_) {}
+    */
 
     int currentSlotMinutes = startMinutes;
     String dateStr = '';
@@ -412,9 +417,10 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
       targetDate = targetDate.add(const Duration(days: 7));
       currentSlotMinutes = startMinutes;
     }
-    
-    final selectedDateStr = '${targetDate.year}-${targetDate.month.toString().padLeft(2, '0')}-${targetDate.day.toString().padLeft(2, '0')}';
-    
+
+    final selectedDateStr =
+        '${targetDate.year}-${targetDate.month.toString().padLeft(2, '0')}-${targetDate.day.toString().padLeft(2, '0')}';
+
     // حفظ التوقيت كما تم اختياره بالضبط
     final selectedTimeStr = startTime ?? '10:00 AM';
 
@@ -447,10 +453,14 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
 
     String? caughtError;
     try {
+      print(
+        '🚀🚀🚀 REACHED API CALL: Preparing to call apiManager.bookPatientAppointment 🚀🚀🚀',
+      );
       final apiResult = await repository.apiManager.bookPatientAppointment(
         scheduleId: scheduleId,
         reasonForVisit: reasonForVisit,
         paymentMethod: paymentMethod,
+        patientImageUrl: patientImg,
       );
 
       print('📋 Booking API result: $apiResult');
@@ -486,7 +496,8 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
     } catch (e) {
       final errorStr = e.toString().toLowerCase();
       if (errorStr.contains('timeout')) {
-        caughtError = 'The server is taking too long to respond. Please check your connection or try again later.';
+        caughtError =
+            'The server is taking too long to respond. Please check your connection or try again later.';
       } else {
         caughtError = 'Failed to book appointment. Please try again.';
       }
@@ -567,9 +578,17 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
     } catch (e) {
       final errorStr = e.toString().toLowerCase();
       if (errorStr.contains('404')) {
-        emit(PatientPaymentError('Appointment not found on the server. Please check your schedule and try again.'));
+        emit(
+          PatientPaymentError(
+            'Appointment not found on the server. Please check your schedule and try again.',
+          ),
+        );
       } else if (errorStr.contains('timeout')) {
-        emit(PatientPaymentError('The server is taking too long to respond. Please try again later.'));
+        emit(
+          PatientPaymentError(
+            'The server is taking too long to respond. Please try again later.',
+          ),
+        );
       } else {
         emit(PatientPaymentError('Payment failed. Please try again.'));
       }

@@ -88,7 +88,7 @@ class _ManagePatientsBody extends StatelessWidget {
                     'Unknown Name';
                 final email =
                     patient['appUserEmail'] ?? patient['email'] ?? 'No Email';
-                final phone = patient['phoneNumber'] ?? 'No Phone';
+                final _ = patient['phoneNumber'] ?? 'No Phone';
 
                 final lockoutEndVal =
                     patient['lockoutEnd'] ?? patient['LockoutEnd'];

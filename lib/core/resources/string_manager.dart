@@ -1,5 +1,5 @@
 class AppStrings {
-  static const String welcome = 'Welcome to MedDoc';
+  static const String welcome = 'Welcome to MediConnect';
   static const String authChoiceDesc =
       'Your health journey starts here. Please choose how you want to proceed.';
   static const String login = 'Login';
