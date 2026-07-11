@@ -28,6 +28,7 @@ class ClinicSchedulesView extends StatefulWidget {
 class _ClinicSchedulesViewState extends State<ClinicSchedulesView> {
   String _selectedDay = 'All Days';
   bool _isSortedByDay = false;
+  List<dynamic> _latestSchedules = [];
 
   final List<String> _daysOfWeek = [
     'All Days',
@@ -125,6 +126,7 @@ class _ClinicSchedulesViewState extends State<ClinicSchedulesView> {
                     } else if (state is PatientBookingError) {
                       return _buildErrorState(state.message);
                     } else if (state is PatientBookingSchedulesSuccess) {
+                      _latestSchedules = state.schedules;
                       var schedules = state.schedules.where((sched) {
                         if (_selectedDay == 'All Days') return true;
                         final day = (sched['dayOfWeek'] ?? sched['day'] ?? '').toString().toLowerCase();
@@ -435,7 +437,16 @@ class _ClinicSchedulesViewState extends State<ClinicSchedulesView> {
                         scale: widget.scale,
                       ),
                     ),
-                  );
+                  ).then((_) {
+                    if (_latestSchedules.isNotEmpty) {
+                      widget.cubit.restoreSchedules(_latestSchedules);
+                    } else {
+                      final clinicId = widget.clinic.id;
+                      if (clinicId != null && clinicId > 0) {
+                        widget.cubit.fetchClinicSchedules(clinicId, widget.doctor.id);
+                      }
+                    }
+                  });
                 },
                 icon: Icon(Icons.check_circle_outline_rounded, size: s(16), color: Colors.white),
                 label: Text(
