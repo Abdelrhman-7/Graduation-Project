@@ -230,6 +230,22 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
     return '$hourStr:$minuteStr';
   }
 
+  Future<bool> checkHasBookedBefore(String clinicName) async {
+    try {
+      final appointments = await repository.getPatientAppointments();
+      for (var appt in appointments) {
+        final cName = (appt['clinicName'] ?? appt['clinic']?['name'] ?? '').toString().toLowerCase().trim();
+        final myName = clinicName.toLowerCase().trim();
+        final status = (appt['status'] ?? '').toString().toLowerCase();
+        final isNotCancelled = !status.contains('cancel') && !status.contains('reject') && !status.contains('denied');
+        if (cName.isNotEmpty && cName == myName && isNotCancelled) {
+          return true;
+        }
+      }
+    } catch (_) {}
+    return false;
+  }
+
   /// حجز موعد — نجاح فوري بعد الحفظ المحلي مع حساب اليوم والوقت بدقة
   Future<bool> bookPatientAppointment({
     required int scheduleId,
@@ -246,6 +262,7 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
     String? patientName,
     String? appointmentDuration,
     double? price,
+    bool hasBookedBefore = false,
   }) async {
     final currentState = state;
     emit(PatientBookingBooking());
@@ -282,6 +299,10 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
     int startMinutes = _parseTimeToMinutes(startTime ?? '09:00');
     int endMinutes = _parseTimeToMinutes(endTime ?? '17:00');
     int durationMinutes = _parseDurationToMinutes(appointmentDuration);
+
+    if (hasBookedBefore) {
+      targetDate = targetDate.add(const Duration(days: 7));
+    }
 
     // جلب كل الحجوزات النشطة للعيادة لتجنب التضارب
     List<dynamic> activeBookings = [];

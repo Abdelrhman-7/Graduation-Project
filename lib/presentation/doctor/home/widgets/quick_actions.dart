@@ -5,7 +5,7 @@ import '../../../../../core/resources/string_manager.dart';
 import '../../clinic/my_clinics/view/doctor_clinics_view.dart';
 import '../../wallet/view/doctor_wallet_view.dart';
 import '../../reviews/view/doctor_reviews_view.dart';
-
+import '../../notes/view/doctor_notes_view.dart';
 class QuickActionsGrid extends StatelessWidget {
   final double scale;
 
@@ -27,8 +27,11 @@ class QuickActionsGrid extends StatelessWidget {
                 Icons.edit_note_rounded,
                 ColorManager.tealHighlight,
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Write Note coming soon')),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const DoctorNotesView(),
+                    ),
                   );
                 },
               ),

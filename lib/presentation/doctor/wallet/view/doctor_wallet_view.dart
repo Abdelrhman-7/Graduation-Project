@@ -61,7 +61,7 @@ class _DoctorWalletViewState extends State<DoctorWalletView> {
             'appointmentId': b.id,
             'patientName': b.patientName,
             'amount': price,
-            'date': b.date ?? b.createdAt ?? DateTime.now().toIso8601String(),
+            'date': b.createdAt ?? b.date ?? DateTime.now().toIso8601String(),
             'isDeposit': true,
           });
         }
@@ -501,9 +501,15 @@ class _DoctorWalletViewState extends State<DoctorWalletView> {
                               DateTime? parsedDate = DateTime.tryParse(dateStr);
                               String formattedDate = dateStr;
                               if (parsedDate != null) {
-                                formattedDate = DateFormat(
-                                  'MMM dd, yyyy - hh:mm a',
-                                ).format(parsedDate);
+                                if (parsedDate.hour == 0 && parsedDate.minute == 0) {
+                                  formattedDate = DateFormat(
+                                    'MMM dd, yyyy',
+                                  ).format(parsedDate);
+                                } else {
+                                  formattedDate = DateFormat(
+                                    'MMM dd, yyyy - hh:mm a',
+                                  ).format(parsedDate);
+                                }
                               }
 
                               final isDeposit = amount > 0;

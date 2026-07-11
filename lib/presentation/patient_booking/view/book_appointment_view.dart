@@ -35,8 +35,21 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
   final TextEditingController _reasonController = TextEditingController();
   String _paymentMethod = 'Pay Online';
   bool _isSuccess = false;
+  bool _hasBooked = false;
 
   double s(double v) => v * widget.scale;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.cubit.checkHasBookedBefore(widget.clinic.name).then((val) {
+      if (mounted && val) {
+        setState(() {
+          _hasBooked = true;
+        });
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -135,6 +148,7 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
       endTime: widget.schedule['endTime']?.toString(),
       appointmentDuration: durationMinutes.toString(),
       price: double.tryParse(widget.clinic.consultationPrice.toString()),
+      hasBookedBefore: _hasBooked,
     );
   }
 
@@ -522,6 +536,10 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
                   nextDate = nextDate.add(const Duration(days: 7));
                 }
               } catch (_) {}
+            }
+
+            if (_hasBooked) {
+              nextDate = nextDate.add(const Duration(days: 7));
             }
 
             final months = [
