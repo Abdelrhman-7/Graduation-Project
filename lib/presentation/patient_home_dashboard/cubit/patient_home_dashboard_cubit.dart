@@ -270,4 +270,17 @@ class PatientHomeDashboardCubit extends Cubit<PatientHomeDashboardState> {
       }
     }
   }
+
+  Future<void> deleteMedication(int index) async {
+    try {
+      final currentMeds = await _repository.getPatientMedications();
+      if (index >= 0 && index < currentMeds.length) {
+        currentMeds.removeAt(index);
+        await _repository.savePatientMedications(currentMeds);
+        getDashboardData(silent: true);
+      }
+    } catch (e) {
+      print('Error deleting medication: \$e');
+    }
+  }
 }

@@ -230,7 +230,9 @@ class PatientHomeDashboardViewBody extends StatelessWidget {
                                   ),
                                 )
                               else
-                                ...medications.map((med) {
+                                ...medications.asMap().entries.map((entry) {
+                                  final index = entry.key;
+                                  final med = entry.value;
                                   final isRefill =
                                       med['badge'].toString().toLowerCase() ==
                                       'refill';
@@ -254,6 +256,9 @@ class PatientHomeDashboardViewBody extends StatelessWidget {
                                       badgeColor: isRefill
                                           ? const Color(0xFF2563EB)
                                           : const Color(0xFF16A34A),
+                                      onDelete: () {
+                                        context.read<PatientHomeDashboardCubit>().deleteMedication(index);
+                                      },
                                     ),
                                   );
                                 }),
@@ -521,6 +526,7 @@ class _MedicationTile extends StatelessWidget {
     required this.subtitle,
     required this.badge,
     required this.badgeColor,
+    required this.onDelete,
   });
   final double scale;
   final IconData icon;
@@ -529,6 +535,7 @@ class _MedicationTile extends StatelessWidget {
   final String subtitle;
   final String badge;
   final Color badgeColor;
+  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -611,10 +618,17 @@ class _MedicationTile extends StatelessWidget {
               ],
             ),
           ),
-          Icon(
-            Icons.chevron_right_rounded,
-            color: const Color(0xFF94A3B8),
-            size: 22 * scale,
+          GestureDetector(
+            onTap: onDelete,
+            child: Container(
+              padding: EdgeInsets.all(8 * scale),
+              color: Colors.transparent,
+              child: Icon(
+                Icons.delete_outline_rounded,
+                color: const Color(0xFFEF4444),
+                size: 22 * scale,
+              ),
+            ),
           ),
         ],
       ),
