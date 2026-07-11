@@ -271,8 +271,8 @@ class UpcomingAppointmentsSection extends StatelessWidget {
             final paymentMethodStr = (appt['paymentMethod'] ?? appt['PaymentMethod'] ?? '')
                 .toString()
                 .toLowerCase();
-            final isOfflinePayment = paymentMethodStr.contains('cash') || paymentMethodStr.contains('clinic') || paymentMethodStr.contains('offline');
-            final isPayable = isConfirmed && !isPaid && !isOfflinePayment;
+            final isOnlinePayment = paymentMethodStr.contains('online') || paymentMethodStr.contains('card') || paymentMethodStr.contains('visa');
+            final isPayable = isConfirmed && !isPaid && isOnlinePayment;
             // ────────────────────────────────────────────────────────────────
 
             // Extract amount & names for payment screen
