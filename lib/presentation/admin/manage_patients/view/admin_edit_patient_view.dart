@@ -7,20 +7,21 @@ import 'package:image_picker/image_picker.dart';
 class AdminEditPatientView extends StatefulWidget {
   final Map<String, dynamic> patient;
 
-  const AdminEditPatientView({Key? key, required this.patient}) : super(key: key);
+  const AdminEditPatientView({super.key, required this.patient});
 
   @override
+  // ignore: library_private_types_in_public_api
   _AdminEditPatientViewState createState() => _AdminEditPatientViewState();
 }
 
 class _AdminEditPatientViewState extends State<AdminEditPatientView> {
   final _formKey = GlobalKey<FormState>();
-  
+
   late TextEditingController _fullNameController;
   late TextEditingController _phoneController;
   late TextEditingController _addressController;
   late TextEditingController _dobController;
-  
+
   String? _selectedGender;
   String? _imagePath;
 
@@ -28,13 +29,21 @@ class _AdminEditPatientViewState extends State<AdminEditPatientView> {
   void initState() {
     super.initState();
     final p = widget.patient;
-    _fullNameController = TextEditingController(text: p['fullName'] ?? p['FullName'] ?? '');
-    _phoneController = TextEditingController(text: p['phoneNumber'] ?? p['PhoneNumber'] ?? '');
-    _addressController = TextEditingController(text: p['address'] ?? p['Address'] ?? '');
-    
+    _fullNameController = TextEditingController(
+      text: p['fullName'] ?? p['FullName'] ?? '',
+    );
+    _phoneController = TextEditingController(
+      text: p['phoneNumber'] ?? p['PhoneNumber'] ?? '',
+    );
+    _addressController = TextEditingController(
+      text: p['address'] ?? p['Address'] ?? '',
+    );
+
     final dob = p['dateOfBirth'] ?? p['DateOfBirth'];
-    _dobController = TextEditingController(text: dob != null ? dob.toString().split('T').first : '');
-    
+    _dobController = TextEditingController(
+      text: dob != null ? dob.toString().split('T').first : '',
+    );
+
     final gender = p['gender'] ?? p['Gender'];
     if (gender == 'Male' || gender == 'Female') {
       _selectedGender = gender;
@@ -84,14 +93,29 @@ class _AdminEditPatientViewState extends State<AdminEditPatientView> {
                         CircleAvatar(
                           radius: 50,
                           backgroundImage: _imagePath != null
-                              ? AssetImage(_imagePath!)
+                              ? NetworkImage(_imagePath!)
                               : (widget.patient['imageUrl'] != null
-                                  ? NetworkImage('http://mediconnect.somee.com${widget.patient['imageUrl']}')
-                                  : null) as ImageProvider?,
-                          child: _imagePath == null && widget.patient['imageUrl'] == null
+                                        ? NetworkImage(
+                                            'http://mediconnect.somee.com${widget.patient['imageUrl']}',
+                                          )
+                                        : null)
+                                    as ImageProvider?,
+                          child:
+                              _imagePath == null &&
+                                  widget.patient['imageUrl'] == null
                               ? const Icon(Icons.person, size: 50)
                               : null,
                         ),
+
+                        /* return CircleAvatar(
+                                  radius: 24,
+                                  backgroundImage: imageUrl.isNotEmpty
+                                      ? NetworkImage(imageUrl)
+                                      : null,
+                                  child: imageUrl.isEmpty
+                                      ? const Icon(Icons.person)
+                                      : null,
+                                );*/
                         TextButton.icon(
                           onPressed: _pickImage,
                           icon: const Icon(Icons.upload),
@@ -103,24 +127,37 @@ class _AdminEditPatientViewState extends State<AdminEditPatientView> {
                   const SizedBox(height: 20),
                   TextFormField(
                     controller: _fullNameController,
-                    decoration: const InputDecoration(labelText: 'Full Name', border: OutlineInputBorder()),
-                    validator: (val) => val == null || val.isEmpty ? 'Required' : null,
+                    decoration: const InputDecoration(
+                      labelText: 'Full Name',
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (val) =>
+                        val == null || val.isEmpty ? 'Required' : null,
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _phoneController,
-                    decoration: const InputDecoration(labelText: 'Phone Number', border: OutlineInputBorder()),
+                    decoration: const InputDecoration(
+                      labelText: 'Phone Number',
+                      border: OutlineInputBorder(),
+                    ),
                     keyboardType: TextInputType.phone,
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _addressController,
-                    decoration: const InputDecoration(labelText: 'Address', border: OutlineInputBorder()),
+                    decoration: const InputDecoration(
+                      labelText: 'Address',
+                      border: OutlineInputBorder(),
+                    ),
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
                     value: _selectedGender,
-                    decoration: const InputDecoration(labelText: 'Gender', border: OutlineInputBorder()),
+                    decoration: const InputDecoration(
+                      labelText: 'Gender',
+                      border: OutlineInputBorder(),
+                    ),
                     items: const [
                       DropdownMenuItem(value: 'Male', child: Text('Male')),
                       DropdownMenuItem(value: 'Female', child: Text('Female')),
@@ -130,7 +167,10 @@ class _AdminEditPatientViewState extends State<AdminEditPatientView> {
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _dobController,
-                    decoration: const InputDecoration(labelText: 'Date of Birth (YYYY-MM-DD)', border: OutlineInputBorder()),
+                    decoration: const InputDecoration(
+                      labelText: 'Date of Birth (YYYY-MM-DD)',
+                      border: OutlineInputBorder(),
+                    ),
                   ),
                   const SizedBox(height: 32),
                   Row(
@@ -155,14 +195,34 @@ class _AdminEditPatientViewState extends State<AdminEditPatientView> {
                                       'Gender': _selectedGender ?? '',
                                       'DateOfBirth': _dobController.text,
                                     };
-                                    final patientId = widget.patient['id'] ?? widget.patient['Id'];
-                                    context.read<ManagePatientsCubit>().editPatient(patientId, data, _imagePath);
+                                    final patientId =
+                                        widget.patient['id'] ??
+                                        widget.patient['Id'];
+                                    context
+                                        .read<ManagePatientsCubit>()
+                                        .editPatient(
+                                          patientId,
+                                          data,
+                                          _imagePath,
+                                        );
                                   }
                                 },
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                          ),
                           child: state is ManagePatientsOperationLoading
-                              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                              : const Text('Save Changes', style: TextStyle(color: Colors.white)),
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text(
+                                  'Save Changes',
+                                  style: TextStyle(color: Colors.white),
+                                ),
                         ),
                       ),
                     ],

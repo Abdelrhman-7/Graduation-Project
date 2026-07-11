@@ -116,16 +116,34 @@ class _AdminPatientDetailsViewState extends State<AdminPatientDetailsView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                CircleAvatar(
-                  radius: 50,
-                  backgroundImage: currentPatient['imageUrl'] != null
-                      ? NetworkImage(
-                          'http://mediconnect.somee.com${currentPatient['imageUrl']}',
-                        )
-                      : null,
-                  child: currentPatient['imageUrl'] == null
-                      ? const Icon(Icons.person, size: 50)
-                      : null,
+                Builder(
+                  builder: (context) {
+                    String getImageUrl(dynamic path) {
+                      if (path == null || path.toString().isEmpty) {
+                        return '';
+                      }
+                      String strPath = path.toString().replaceAll('\\', '/');
+                      if (strPath.startsWith('http')) {
+                        return strPath;
+                      } else if (strPath.startsWith('/')) {
+                        return 'http://mediconnect.somee.com$strPath';
+                      } else {
+                        return 'http://mediconnect.somee.com/$strPath';
+                      }
+                    }
+                    
+                    final String imageUrl = getImageUrl(currentPatient['imageUrl'] ?? currentPatient['displayImageUrl']);
+                    
+                    return CircleAvatar(
+                      radius: 50,
+                      backgroundImage: imageUrl.isNotEmpty
+                          ? NetworkImage(imageUrl)
+                          : null,
+                      child: imageUrl.isEmpty
+                          ? const Icon(Icons.person, size: 50)
+                          : null,
+                    );
+                  }
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -221,31 +239,47 @@ class _AdminPatientDetailsViewState extends State<AdminPatientDetailsView> {
                     ),
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: isLocked
-                            ? const Color(0xFF28A745)
-                            : const Color(
-                                0xFFFD7E14,
-                              ), // Unlock(Green) / Lock(Orange)
+                        backgroundColor: const Color(0xFF28A745), // Green
                         foregroundColor: Colors.white,
+                        disabledBackgroundColor: Colors.grey[300],
+                        disabledForegroundColor: Colors.grey[600],
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 12,
                         ),
                       ),
-                      onPressed: () {
-                        final newLockStatus = !isLocked;
-                        // حفظ الحالة الجديدة في SharedPreferences
-                        _saveLockStatus(patientId.toString(), newLockStatus);
-                        // إرسال الطلب للـ API
-                        context.read<ManagePatientsCubit>().togglePatientLock(
-                          patientId,
-                        );
-                      },
-                      icon: Icon(
-                        isLocked ? Icons.lock_open : Icons.lock,
-                        size: 16,
+                      onPressed: !isLocked
+                          ? null
+                          : () {
+                              _saveLockStatus(patientId.toString(), false);
+                              context.read<ManagePatientsCubit>().togglePatientLock(
+                                patientId,
+                              );
+                            },
+                      icon: const Icon(Icons.lock_open, size: 16),
+                      label: const Text('Unblock'),
+                    ),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFDC3545), // Red
+                        foregroundColor: Colors.white,
+                        disabledBackgroundColor: Colors.grey[300],
+                        disabledForegroundColor: Colors.grey[600],
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                       ),
-                      label: Text(isLocked ? 'Unlock' : 'Lock'),
+                      onPressed: isLocked
+                          ? null
+                          : () {
+                              _saveLockStatus(patientId.toString(), true);
+                              context.read<ManagePatientsCubit>().togglePatientLock(
+                                patientId,
+                              );
+                            },
+                      icon: const Icon(Icons.lock, size: 16),
+                      label: const Text('Block'),
                     ),
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(

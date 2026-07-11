@@ -118,18 +118,26 @@ class _ManageDoctorsBody extends StatelessWidget {
                                   if (path == null || path.toString().isEmpty) {
                                     return '';
                                   }
-                                  String strPath = path.toString().replaceAll('\\', '/');
+                                  String strPath = path.toString().replaceAll(
+                                    '\\',
+                                    '/',
+                                  );
                                   String finalUrl = '';
                                   if (strPath.startsWith('http')) {
                                     finalUrl = strPath;
                                   } else if (strPath.startsWith('/')) {
-                                    finalUrl = 'http://mediconnect.somee.com$strPath';
+                                    finalUrl =
+                                        'http://mediconnect.somee.com$strPath';
                                   } else {
-                                    finalUrl = 'http://mediconnect.somee.com/$strPath';
+                                    finalUrl =
+                                        'http://mediconnect.somee.com/$strPath';
                                   }
                                   return finalUrl;
                                 }
-                                final imageUrl = getImageUrl(doctor['displayImageUrl']);
+
+                                final imageUrl = getImageUrl(
+                                  doctor['displayImageUrl'],
+                                );
                                 return CircleAvatar(
                                   radius: 24,
                                   backgroundImage: imageUrl.isNotEmpty
@@ -140,6 +148,15 @@ class _ManageDoctorsBody extends StatelessWidget {
                                       : null,
                                 );
                               },
+                              /*   return CircleAvatar(
+                                  radius: 24,
+                                  backgroundImage: imageUrl.isNotEmpty
+                                      ? NetworkImage(imageUrl)
+                                      : null,
+                                  child: imageUrl.isEmpty
+                                      ? const Icon(Icons.person)
+                                      : null,
+                                );*/
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -213,15 +230,27 @@ class _ManageDoctorsBody extends StatelessWidget {
                                 style: TextStyle(fontSize: 12),
                               ),
                               onPressed: () {
+                                print(
+                                  'Navigating to details for $name (ID: $doctorId)',
+                                );
+                                print(
+                                  'Image URL: ${doctor['displayImageUrl']}',
+                                );
                                 context
                                     .read<ManageDoctorsCubit>()
-                                    .getDoctorDetails(doctorId);
+                                    .getDoctorDetails(
+                                      doctorId,
+                                      passedImageUrl:
+                                          doctor['displayImageUrl'],
+                                    );
                               },
                             ),
                             const SizedBox(width: 8),
                             ElevatedButton.icon(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF28A745), // Green
+                                backgroundColor: const Color(
+                                  0xFF28A745,
+                                ), // Green
                                 foregroundColor: Colors.white,
                                 disabledBackgroundColor: Colors.grey[300],
                                 disabledForegroundColor: Colors.grey[600],

@@ -5,7 +5,6 @@ import '../widgets/doctor_profile_header.dart';
 import '../widgets/doctor_profile_credentials.dart';
 import '../widgets/doctor_profile_logout_button.dart';
 import '../widgets/doctor_profile_security.dart';
-import '../../clinic/my_clinics/view/doctor_clinics_view.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../../data/repository/repository.dart';
 import '../../../../../data/repository/shared_pref_controller.dart';
@@ -44,7 +43,7 @@ class DoctorProfileViewBody extends StatelessWidget {
                 icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
               ),
               Text(
-                "Live Consultation",
+                "Doctor Profile",
                 style: GoogleFonts.cairo(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -77,7 +76,8 @@ class DoctorProfileViewBody extends StatelessWidget {
                         builder: (context) => BlocProvider(
                           create: (context) => DoctorProfileCubit(
                             repository: context.read<Repository>(),
-                            sharedPrefController: context.read<SharedPrefController>(),
+                            sharedPrefController: context
+                                .read<SharedPrefController>(),
                           ),
                           child: DoctorEditProfileView(currentName: doctorName),
                         ),
@@ -104,4 +104,3 @@ class DoctorProfileViewBody extends StatelessWidget {
     );
   }
 }
-

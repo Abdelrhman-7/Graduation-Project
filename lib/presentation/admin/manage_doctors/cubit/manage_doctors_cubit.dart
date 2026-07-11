@@ -183,7 +183,7 @@ class ManageDoctorsCubit extends Cubit<ManageDoctorsState> {
     }
   }
 
-  Future<void> getDoctorDetails(int doctorId) async {
+  Future<void> getDoctorDetails(int doctorId, {String? passedImageUrl}) async {
     final currentState = state;
     emit(ManageDoctorsOperationLoading());
     try {
@@ -191,6 +191,10 @@ class ManageDoctorsCubit extends Cubit<ManageDoctorsState> {
       if (rawDoctor != null) {
         // Apply saved lock override on top of API data
         final doctor = await _applyLockOverride(Map<String, dynamic>.from(rawDoctor));
+        if (passedImageUrl != null && passedImageUrl.isNotEmpty) {
+          doctor['imageUrl'] = passedImageUrl;
+          doctor['displayImageUrl'] = passedImageUrl;
+        }
         final index = doctorsList.indexWhere((d) => (d['id'] ?? d['Id']) == doctorId);
         if (index != -1) {
           doctorsList[index] = doctor;

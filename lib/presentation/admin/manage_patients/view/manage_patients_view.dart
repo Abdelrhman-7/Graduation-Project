@@ -122,18 +122,26 @@ class _ManagePatientsBody extends StatelessWidget {
                                   if (path == null || path.toString().isEmpty) {
                                     return '';
                                   }
-                                  String strPath = path.toString().replaceAll('\\', '/');
+                                  String strPath = path.toString().replaceAll(
+                                    '\\',
+                                    '/',
+                                  );
                                   String finalUrl = '';
                                   if (strPath.startsWith('http')) {
                                     finalUrl = strPath;
                                   } else if (strPath.startsWith('/')) {
-                                    finalUrl = 'http://mediconnect.somee.com$strPath';
+                                    finalUrl =
+                                        'http://mediconnect.somee.com$strPath';
                                   } else {
-                                    finalUrl = 'http://mediconnect.somee.com/$strPath';
+                                    finalUrl =
+                                        'http://mediconnect.somee.com/$strPath';
                                   }
                                   return finalUrl;
                                 }
-                                final imageUrl = getImageUrl(patient['displayImageUrl']);
+
+                                final imageUrl = getImageUrl(
+                                  patient['displayImageUrl'],
+                                );
                                 return CircleAvatar(
                                   radius: 24,
                                   backgroundImage: imageUrl.isNotEmpty
@@ -217,15 +225,27 @@ class _ManagePatientsBody extends StatelessWidget {
                                 style: TextStyle(fontSize: 12),
                               ),
                               onPressed: () {
+                                print(
+                                  'Navigating to details for $name (ID: $patientId)',
+                                );
+                                print(
+                                  'Image URL: ${patient['displayImageUrl']}',
+                                );
                                 context
                                     .read<ManagePatientsCubit>()
-                                    .getPatientDetails(patientId);
+                                    .getPatientDetails(
+                                      patientId,
+                                      passedImageUrl:
+                                          patient['displayImageUrl'],
+                                    );
                               },
                             ),
                             const SizedBox(width: 8),
                             ElevatedButton.icon(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF28A745), // Green
+                                backgroundColor: const Color(
+                                  0xFF28A745,
+                                ), // Green
                                 foregroundColor: Colors.white,
                                 disabledBackgroundColor: Colors.grey[300],
                                 disabledForegroundColor: Colors.grey[600],
