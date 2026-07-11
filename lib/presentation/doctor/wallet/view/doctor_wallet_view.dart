@@ -41,17 +41,21 @@ class _DoctorWalletViewState extends State<DoctorWalletView> {
       for (final b in allBookings) {
         final status = b.status?.toLowerCase() ?? '';
         final paymentMethod = b.paymentMethod?.toLowerCase() ?? '';
+        final rawPayStatusLower = (b.paymentStatus ?? '').toLowerCase().trim();
         
-        // التحقق من أن الدفع تم أونلاين فقط
+        // التحقق من أن الدفع تم أونلاين
         final isOnlinePayment = paymentMethod.contains('online') || paymentMethod == 'card' || paymentMethod == 'visa';
         
-        // التحقق من أن الحجز مقبول أو مكتمل (وليس معلق أو مرفوض)
-        final isBookingValid = b.isApproved || status.contains('complet') || status.contains('paid');
+        // التحقق من أن الدفع تم بالفعل
+        final isActuallyPaid = rawPayStatusLower == 'paid' || 
+                               rawPayStatusLower == 'completed' || 
+                               rawPayStatusLower == 'success' || 
+                               status.contains('paid');
 
         final price = b.price ?? b.consultationPrice ?? 0.0;
-
-        // الرصيد يُحسب فقط إذا كان الدفع أونلاين والحجز مقبول
-        if (isOnlinePayment && isBookingValid && price > 0) {
+        
+        // الرصيد يُحسب فقط إذا كان الدفع أونلاين وتم الدفع بالفعل (حتى لو كان الحجز لسه Pending)
+        if (isOnlinePayment && isActuallyPaid && price > 0) {
           calculatedBalance += price;
           apiTxs.add({
             'appointmentId': b.id,
@@ -63,9 +67,10 @@ class _DoctorWalletViewState extends State<DoctorWalletView> {
         }
       }
 
-      // Read local withdrawals (negative amounts)
+      // Read local withdrawals and deposits
       final txStrings = await _prefs.getDoctorWalletTransactions();
       double totalWithdrawn = 0.0;
+      double localDeposits = 0.0;
       final List<Map<String, dynamic>> localTxs = [];
 
       for (final txStr in txStrings) {
@@ -73,16 +78,29 @@ class _DoctorWalletViewState extends State<DoctorWalletView> {
           final decoded = json.decode(txStr);
           if (decoded is Map<String, dynamic>) {
             final amt = (decoded['amount'] as num?)?.toDouble() ?? 0.0;
+            final appId = decoded['appointmentId'];
+            
             if (amt < 0) {
               totalWithdrawn += amt.abs();
               decoded['isDeposit'] = false;
               localTxs.add(decoded);
+            } else if (amt > 0) {
+              // Only add local deposit if API hasn't returned it as paid yet
+              bool alreadyInApi = false;
+              if (appId != null) {
+                alreadyInApi = apiTxs.any((t) => t['appointmentId'] == appId);
+              }
+              if (!alreadyInApi) {
+                localDeposits += amt;
+                decoded['isDeposit'] = true;
+                localTxs.add(decoded);
+              }
             }
           }
         } catch (_) {}
       }
 
-      double finalBalance = calculatedBalance - totalWithdrawn;
+      double finalBalance = calculatedBalance + localDeposits - totalWithdrawn;
       if (finalBalance < 0) finalBalance = 0.0;
 
       final List<Map<String, dynamic>> allTxs = [];

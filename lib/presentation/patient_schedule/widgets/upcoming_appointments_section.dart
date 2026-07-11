@@ -268,10 +268,11 @@ class UpcomingAppointmentsSection extends StatelessWidget {
                 rawPayStatus.contains('complet') ||
                 rawPayStatus.contains('success') ||
                 rawStatus == 'paid';
-            (appt['paymentMethod'] ?? appt['PaymentMethod'] ?? '')
+            final paymentMethodStr = (appt['paymentMethod'] ?? appt['PaymentMethod'] ?? '')
                 .toString()
                 .toLowerCase();
-            final isPayable = isConfirmed && !isPaid;
+            final isOfflinePayment = paymentMethodStr.contains('cash') || paymentMethodStr.contains('clinic') || paymentMethodStr.contains('offline');
+            final isPayable = isConfirmed && !isPaid && !isOfflinePayment;
             // ────────────────────────────────────────────────────────────────
 
             // Extract amount & names for payment screen
