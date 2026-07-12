@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:graduationproject/data/repository/shared_pref_controller.dart';
 import '../../../data/api/api_manager.dart';
 
 class RateDoctorSheet extends StatefulWidget {
@@ -12,7 +13,11 @@ class RateDoctorSheet extends StatefulWidget {
     this.onReviewSubmitted,
   });
 
-  static void show(BuildContext context, int doctorId, {VoidCallback? onReviewSubmitted}) {
+  static void show(
+    BuildContext context,
+    int doctorId, {
+    VoidCallback? onReviewSubmitted,
+  }) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -46,7 +51,27 @@ class _RateDoctorSheetState extends State<RateDoctorSheet> {
   Future<void> _fetchExistingReview() async {
     try {
       final api = await ApiManager.create();
-      final reviews = await api.getPatientDoctorReviews(widget.doctorId);
+
+      // Get current patient ID
+      final profile = await api.getPatientProfile();
+      final prefs = SharedPrefController();
+      final currentPatientId =
+          profile?['id']?.toString() ??
+          await prefs.getEmail() ??
+          'unknown_patient';
+
+      final allReviews = await api.getPatientDoctorReviews(widget.doctorId);
+
+      // Filter for the current patient's review only
+      final reviews = allReviews.where((r) {
+        final rPatientId =
+            r['patientId']?.toString() ??
+            r['PatientId']?.toString() ??
+            r['userId']?.toString() ??
+            r['UserId']?.toString();
+        return rPatientId != null && rPatientId.toString() == currentPatientId;
+      }).toList();
+
       if (reviews.isNotEmpty && mounted) {
         final review = reviews.first;
         setState(() {
@@ -54,14 +79,18 @@ class _RateDoctorSheetState extends State<RateDoctorSheet> {
           // Dynamically search for ID
           for (final key in review.keys) {
             final k = key.toString().toLowerCase();
-            if ((k == 'id' || k.contains('reviewid')) && k != 'doctorid' && k != 'patientid') {
+            if ((k == 'id' || k.contains('reviewid')) &&
+                k != 'doctorid' &&
+                k != 'patientid') {
               rawId = review[key];
               break;
             }
           }
-          
-          existingReviewId = rawId is int ? rawId : int.tryParse(rawId?.toString() ?? '');
-          
+
+          existingReviewId = rawId is int
+              ? rawId
+              : int.tryParse(rawId?.toString() ?? '');
+
           // Fallback: if no ID found, assume the API uses doctorId for edit/delete
           existingReviewId ??= widget.doctorId;
 
@@ -137,10 +166,7 @@ class _RateDoctorSheetState extends State<RateDoctorSheet> {
                       focusNode: focusNode,
                       maxLines: 3,
                       autofocus: false, // Let user tap to focus
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.black,
-                      ),
+                      style: const TextStyle(fontSize: 14, color: Colors.black),
                       decoration: InputDecoration(
                         hintText: 'Add a comment (optional)...',
                         hintStyle: const TextStyle(
@@ -164,7 +190,7 @@ class _RateDoctorSheetState extends State<RateDoctorSheet> {
                             : () async {
                                 final api = await ApiManager.create();
                                 String? errorMessage;
-                                
+
                                 if (existingReviewId != null) {
                                   errorMessage = await api.editDoctorReview(
                                     reviewId: existingReviewId!,
@@ -185,7 +211,10 @@ class _RateDoctorSheetState extends State<RateDoctorSheet> {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: Text(
-                                        errorMessage ?? (existingReviewId != null ? 'Review updated!' : 'Review submitted!'),
+                                        errorMessage ??
+                                            (existingReviewId != null
+                                                ? 'Review updated!'
+                                                : 'Review submitted!'),
                                         style: GoogleFonts.cairo(),
                                       ),
                                       backgroundColor: errorMessage == null
@@ -203,7 +232,9 @@ class _RateDoctorSheetState extends State<RateDoctorSheet> {
                           ),
                         ),
                         child: Text(
-                          existingReviewId != null ? 'Update Review' : 'Submit Review',
+                          existingReviewId != null
+                              ? 'Update Review'
+                              : 'Submit Review',
                           style: GoogleFonts.cairo(
                             color: Colors.white,
                             fontSize: 16,
@@ -219,8 +250,10 @@ class _RateDoctorSheetState extends State<RateDoctorSheet> {
                         child: TextButton(
                           onPressed: () async {
                             final api = await ApiManager.create();
-                            final errorMessage = await api.deleteDoctorReview(existingReviewId!);
-                            
+                            final errorMessage = await api.deleteDoctorReview(
+                              existingReviewId!,
+                            );
+
                             if (context.mounted) {
                               Navigator.pop(context);
                               widget.onReviewSubmitted?.call();

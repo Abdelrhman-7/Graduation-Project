@@ -440,7 +440,7 @@ class Repository {
     BookingModel? booking,
   }) async {
     await chooseRole('Doctor');
-    final apiOk = await apiManager.confirmDoctorAppointment(bookingId);
+    final _ = await apiManager.confirmDoctorAppointment(bookingId);
     if (booking != null) {
       await LocalBookingStore.instance.addBooking(
         booking.copyWith(status: 'Approved', notificationUnread: true),
@@ -1217,19 +1217,53 @@ class Repository {
   // ============================================================
   // Patient Health Metrics (Local Mock)
   // ============================================================
-  Future<void> addPatientHealthMetricRecord(Map<String, dynamic> record) async {
+  Future<String> _getCurrentPatientId() async {
     final prefs = SharedPrefController();
-    await prefs.addHealthMetricRecord(record);
+    final profile = await getPatientProfile();
+    final pId = profile?['id']?.toString() ?? await prefs.getEmail() ?? 'unknown_patient';
+    return pId;
+  }
+
+  Future<void> addPatientHealthMetricRecord(Map<String, dynamic> record) async {
+    final patientId = await _getCurrentPatientId();
+    record['patientId'] = patientId;
+
+    bool success = await apiManager.addLabResult(record);
+    if (!success) {
+      final prefs = SharedPrefController();
+      await prefs.addHealthMetricRecord(record);
+    }
   }
 
   Future<List<String>> getPatientHealthMetricsHistory() async {
+    final patientId = await _getCurrentPatientId();
+    final apiResults = await apiManager.getLabResults(patientId);
+    
+    if (apiResults.isNotEmpty) {
+      return apiResults.map((r) {
+        if (r is Map) {
+          return '{"patientId": "${r['patientId'] ?? patientId}", "heartRate": "${r['heartRate']}", "bloodPressure": "${r['bloodPressure']}", "bloodSugar": "${r['bloodSugar']}", "weight": "${r['weight']}", "notes": "${r['notes']}", "timestamp": "${r['timestamp']}"}';
+        }
+        return '{}';
+      }).toList();
+    }
+    
     final prefs = SharedPrefController();
-    return await prefs.getHealthMetricsHistory();
+    return await prefs.getHealthMetricsHistory(patientId);
   }
 
   Future<Map<String, String>> getPatientHealthMetrics() async {
-    final prefs = SharedPrefController();
-    return await prefs.getHealthMetrics();
+    final history = await getPatientHealthMetricsHistory();
+    if (history.isNotEmpty) {
+      final latest = history.first;
+      final hrMatch = RegExp(r'"heartRate":\s*"([^"]+)"').firstMatch(latest);
+      final bpMatch = RegExp(r'"bloodPressure":\s*"([^"]+)"').firstMatch(latest);
+      
+      final hr = hrMatch?.group(1) ?? '0';
+      final bp = bpMatch?.group(1) ?? '0/0';
+      return {'heartRate': hr, 'bloodPressure': bp};
+    }
+    return {'heartRate': '0', 'bloodPressure': '0/0'};
   }
 
   Future<void> savePatientMedications(

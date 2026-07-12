@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:graduationproject/data/models/schudule/doctorModel.dart';
+import 'package:graduationproject/data/repository/shared_pref_controller.dart';
 import '../cubit/patient_booking_cubit.dart';
 import '../cubit/patient_booking_state.dart';
 import 'doctor_profile_view.dart';
@@ -509,6 +510,7 @@ class _DoctorCardWithRatingState extends State<_DoctorCardWithRating> {
   String _averageRating = "0.0";
   String _reviewCount = "0";
   bool _isLoadingRating = true;
+  bool _canRate = false;
 
   @override
   void initState() {
@@ -520,10 +522,31 @@ class _DoctorCardWithRatingState extends State<_DoctorCardWithRating> {
     try {
       final api = await ApiManager.create();
       final reviews = await api.getPatientDoctorReviews(widget.doctor.id);
+
+      // Get current patient ID
+      final profile = await api.getPatientProfile();
+      final prefs = SharedPrefController();
+      final currentPatientId =
+          profile?['id']?.toString() ??
+          await prefs.getEmail() ??
+          'unknown_patient';
+
+      bool hasReviewed = false;
+
       if (reviews.isNotEmpty && mounted) {
         double total = 0;
         int count = 0;
         for (var review in reviews) {
+          // Check if patient already reviewed
+          final rPatientId =
+              review['patientId']?.toString() ??
+              review['PatientId']?.toString() ??
+              review['userId']?.toString() ??
+              review['UserId']?.toString();
+          if (rPatientId != null && rPatientId.toString() == currentPatientId) {
+            hasReviewed = true;
+          }
+
           final rating = (review['rating'] as num?)?.toDouble() ?? 0.0;
           if (rating > 0) {
             total += rating;
@@ -536,6 +559,12 @@ class _DoctorCardWithRatingState extends State<_DoctorCardWithRating> {
             _reviewCount = count.toString();
           });
         }
+      }
+
+      if (mounted) {
+        setState(() {
+          _canRate = !hasReviewed;
+        });
       }
     } catch (e) {
       print('Error fetching rating: $e');
@@ -601,11 +630,12 @@ class _DoctorCardWithRatingState extends State<_DoctorCardWithRating> {
                           ? Image.network(
                               widget.avatarUrl,
                               fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) => Icon(
-                                Icons.person,
-                                color: const Color(0xFF137FEC),
-                                size: s(30),
-                              ),
+                              errorBuilder: (context, error, stackTrace) =>
+                                  Icon(
+                                    Icons.person,
+                                    color: const Color(0xFF137FEC),
+                                    size: s(30),
+                                  ),
                             )
                           : Icon(
                               Icons.person,
@@ -719,39 +749,40 @@ class _DoctorCardWithRatingState extends State<_DoctorCardWithRating> {
                               ),
                             ],
                             const Spacer(),
-                            InkWell(
-                              onTap: () => _showRateDoctorSheet(context),
-                              borderRadius: BorderRadius.circular(s(16)),
-                              child: Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: s(8),
-                                  vertical: s(4),
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFFEF9C3),
-                                  borderRadius: BorderRadius.circular(s(16)),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.star_rate_rounded,
-                                      size: s(14),
-                                      color: const Color(0xFFEAB308),
-                                    ),
-                                    SizedBox(width: s(4)),
-                                    Text(
-                                      'Rate',
-                                      style: GoogleFonts.cairo(
-                                        fontSize: s(12),
-                                        fontWeight: FontWeight.w600,
-                                        color: const Color(0xFF334155),
+                            if (_canRate)
+                              InkWell(
+                                onTap: () => _showRateDoctorSheet(context),
+                                borderRadius: BorderRadius.circular(s(16)),
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: s(8),
+                                    vertical: s(4),
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFEF9C3),
+                                    borderRadius: BorderRadius.circular(s(16)),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.star_rate_rounded,
+                                        size: s(14),
+                                        color: const Color(0xFFEAB308),
                                       ),
-                                    ),
-                                  ],
+                                      SizedBox(width: s(4)),
+                                      Text(
+                                        'Rate',
+                                        style: GoogleFonts.cairo(
+                                          fontSize: s(12),
+                                          fontWeight: FontWeight.w600,
+                                          color: const Color(0xFF334155),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
                           ],
                         ),
                     ],

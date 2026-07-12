@@ -234,16 +234,56 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
     try {
       final appointments = await repository.getPatientAppointments();
       for (var appt in appointments) {
-        final cName = (appt['clinicName'] ?? appt['clinic']?['name'] ?? '').toString().toLowerCase().trim();
+        final cName = (appt['clinicName'] ?? appt['clinic']?['name'] ?? '')
+            .toString()
+            .toLowerCase()
+            .trim();
         final myName = clinicName.toLowerCase().trim();
         final status = (appt['status'] ?? '').toString().toLowerCase();
-        final isNotCancelled = !status.contains('cancel') && !status.contains('reject') && !status.contains('denied');
+        final isNotCancelled =
+            !status.contains('cancel') &&
+            !status.contains('reject') &&
+            !status.contains('denied');
         if (cName.isNotEmpty && cName == myName && isNotCancelled) {
           return true;
         }
       }
     } catch (_) {}
     return false;
+  }
+
+  Future<DateTime?> _getLastAppointmentDate(String clinicName) async {
+    try {
+      final appointments = await repository.getPatientAppointments();
+      DateTime? latestDate;
+      for (var appt in appointments) {
+        final cName = (appt['clinicName'] ?? appt['clinic']?['name'] ?? '')
+            .toString()
+            .toLowerCase()
+            .trim();
+        final myName = clinicName.toLowerCase().trim();
+        final status = (appt['status'] ?? '').toString().toLowerCase();
+        final isNotCancelled =
+            !status.contains('cancel') &&
+            !status.contains('reject') &&
+            !status.contains('denied');
+        if (cName.isNotEmpty && cName == myName && isNotCancelled) {
+          final dateStr =
+              (appt['appointmentDate'] ?? appt['bookingDate'] ?? appt['date'])
+                  ?.toString();
+          if (dateStr != null) {
+            final parsedDate = DateTime.tryParse(dateStr);
+            if (parsedDate != null) {
+              if (latestDate == null || parsedDate.isAfter(latestDate)) {
+                latestDate = parsedDate;
+              }
+            }
+          }
+        }
+      }
+      return latestDate;
+    } catch (_) {}
+    return null;
   }
 
   /// حجز موعد — نجاح فوري بعد الحفظ المحلي مع حساب اليوم والوقت بدقة
@@ -266,6 +306,8 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
   }) async {
     final currentState = state;
     emit(PatientBookingBooking());
+    
+    print("🔴🔴🔴 Payment Method Sent = $paymentMethod 🔴🔴🔴");
 
     final name = patientName ?? await _prefs.getName() ?? 'Patient';
     final email = await _prefs.getEmail();
@@ -300,8 +342,9 @@ class PatientBookingCubit extends Cubit<PatientBookingState> {
     int endMinutes = _parseTimeToMinutes(endTime ?? '17:00');
     int durationMinutes = _parseDurationToMinutes(appointmentDuration);
 
-    if (hasBookedBefore) {
-      targetDate = targetDate.add(const Duration(days: 7));
+    final lastDate = await _getLastAppointmentDate(clinicName ?? '');
+    if (lastDate != null) {
+      targetDate = lastDate.add(const Duration(days: 7));
     }
 
     // جلب كل الحجوزات النشطة للعيادة لتجنب التضارب

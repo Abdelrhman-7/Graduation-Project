@@ -115,6 +115,9 @@ class _CustomChangePasswordDialogState extends State<CustomChangePasswordDialog>
                     if (value.length < 6) {
                       return 'Password must be at least 6 characters';
                     }
+                    if (!value.contains(RegExp(r'[A-Z]'))) {
+                      return "Passwords must have at least one uppercase ('A'-'Z').";
+                    }
                     return null;
                   },
                 ),

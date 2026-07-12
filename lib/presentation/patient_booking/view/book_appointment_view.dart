@@ -1067,9 +1067,7 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(
-                                  errorMessage == null
-                                      ? 'Review submitted!'
-                                      : errorMessage,
+                                  errorMessage ?? 'Review submitted!',
                                   style: GoogleFonts.cairo(),
                                 ),
                                 backgroundColor: errorMessage == null

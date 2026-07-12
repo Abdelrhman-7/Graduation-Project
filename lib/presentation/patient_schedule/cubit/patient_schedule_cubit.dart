@@ -17,13 +17,13 @@ class PatientScheduleCubit extends Cubit<PatientScheduleState> {
       
       // Inject doctor images into appointments
       try {
-        final doctors = await repository.getPatientDoctors();
+        final results = await Future.wait([
+          repository.getPatientDoctors(),
+          repository.getPatientAllClinics().catchError((_) => <ClinicModel>[]),
+        ]);
         
-        // Also fetch clinics to match by clinic name (since appt doesn't return doctorId)
-        List<ClinicModel> clinics = [];
-        try {
-          clinics = await repository.getPatientAllClinics();
-        } catch (_) {}
+        final doctors = results[0] as List<DoctorModel>;
+        final clinics = results[1] as List<ClinicModel>;
         
         for (var appt in appointments) {
           if (appt is Map) {

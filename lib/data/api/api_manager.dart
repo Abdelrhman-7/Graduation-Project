@@ -618,7 +618,11 @@ class ApiManager {
     }
   }
 
+  String? _currentRole;
+
   Future<bool> chooseRole(String role) async {
+    if (_currentRole == role) return true; // Optimization: skip if already selected
+
     try {
       final response = await _dio.get(
         'Identity/AccountApi/ChooseRole',
@@ -626,7 +630,11 @@ class ApiManager {
         options: Options(validateStatus: (status) => true),
       );
       print('ChooseRole [$role]: ${response.statusCode} - ${response.data}');
-      return response.statusCode == 200 || response.statusCode == 201;
+      if (response.statusCode == 200 || response.statusCode == 201 || response.statusCode == 204) {
+        _currentRole = role;
+        return true;
+      }
+      return false;
     } catch (e) {
       print('ChooseRole error: $e');
       return false;
@@ -2968,5 +2976,40 @@ class ApiManager {
 
   Future<bool> deleteDepartment(int id) async {
     return _deleteRequest('Admin/DepartmentApi/DeleteDepartment/$id');
+  }
+
+  // ============================================================
+  // Lab Results / Health Metrics
+  // ============================================================
+  Future<List<dynamic>> getLabResults(String patientId) async {
+    try {
+      final response = await _dio.get(
+        'LabResults?patientId=$patientId',
+        options: Options(validateStatus: (status) => true),
+      );
+      if (response.statusCode == 200 && response.data is List) {
+        return response.data as List<dynamic>;
+      } else if (response.statusCode == 200 && response.data is Map && response.data.containsKey('data')) {
+        return response.data['data'] as List<dynamic>;
+      }
+      return [];
+    } catch (e) {
+      print('Failed to fetch LabResults: $e');
+      return [];
+    }
+  }
+
+  Future<bool> addLabResult(Map<String, dynamic> record) async {
+    try {
+      final response = await _dio.post(
+        'LabResults',
+        data: record,
+        options: Options(validateStatus: (status) => true),
+      );
+      return response.statusCode == 200 || response.statusCode == 201;
+    } catch (e) {
+      print('Failed to add LabResult: $e');
+      return false;
+    }
   }
 }

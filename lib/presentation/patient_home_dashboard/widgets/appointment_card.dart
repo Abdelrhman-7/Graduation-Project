@@ -18,6 +18,7 @@ class AppointmentCard extends StatelessWidget {
   final VoidCallback? onEdit;
   final VoidCallback? onDeleteImage;
   final bool isCancelling;
+
   /// When true, shows a green "Pay Now" button (appointment confirmed, not yet paid, pay online)
   final bool isPayable;
 
@@ -67,7 +68,9 @@ class AppointmentCard extends StatelessWidget {
               CircleAvatar(
                 radius: AppSize.s32,
                 backgroundColor: ColorManager.primaryOpacity10,
-                backgroundImage: (imagePath.isNotEmpty) ? NetworkImage(imagePath) : null,
+                backgroundImage: (imagePath.isNotEmpty)
+                    ? NetworkImage(imagePath)
+                    : null,
                 child: imagePath.isEmpty
                     ? const Icon(
                         Icons.person,
@@ -101,7 +104,10 @@ class AppointmentCard extends StatelessWidget {
               ),
               if (status != null && status!.isNotEmpty)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: _getStatusColor(status!).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
@@ -310,7 +316,9 @@ class AppointmentCard extends StatelessWidget {
                 const SizedBox(width: AppSize.s8),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: isCancelling ? null : () => _confirmCancel(context),
+                    onPressed: isCancelling
+                        ? null
+                        : () => _confirmCancel(context),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: ColorManager.cancelRedBg,
                       foregroundColor: ColorManager.cancelRedText,

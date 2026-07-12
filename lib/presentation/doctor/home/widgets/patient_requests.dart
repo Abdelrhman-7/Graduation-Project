@@ -87,7 +87,7 @@ class PatientRequestsList extends StatelessWidget {
           ),
         ),
         SizedBox(
-          height: s(195),
+          height: s(220),
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: EdgeInsets.symmetric(horizontal: s(18)),

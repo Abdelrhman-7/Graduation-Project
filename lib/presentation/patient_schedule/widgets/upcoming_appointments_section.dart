@@ -41,7 +41,8 @@ class UpcomingAppointmentsSection extends StatelessWidget {
           _buildEmptyState()
         else
           ...appointments.map((appt) {
-            String rawDocName = (appt['realDoctorName'] ?? appt['doctorName'] ?? '').toString();
+            String rawDocName =
+                (appt['realDoctorName'] ?? appt['doctorName'] ?? '').toString();
             if (rawDocName.isEmpty) {
               rawDocName = (appt['DoctorName'] ?? '').toString();
             }
@@ -64,13 +65,16 @@ class UpcomingAppointmentsSection extends StatelessWidget {
               rawDocName = (appt['doctor']?['UserName'] ?? '').toString();
             }
             if (rawDocName.isEmpty) {
-              rawDocName = (appt['schedule']?['doctor']?['fullName'] ?? '').toString();
+              rawDocName = (appt['schedule']?['doctor']?['fullName'] ?? '')
+                  .toString();
             }
             if (rawDocName.isEmpty) {
-              rawDocName = (appt['schedule']?['doctor']?['name'] ?? '').toString();
+              rawDocName = (appt['schedule']?['doctor']?['name'] ?? '')
+                  .toString();
             }
             if (rawDocName.isEmpty) {
-              rawDocName = (appt['schedule']?['doctor']?['userName'] ?? '').toString();
+              rawDocName = (appt['schedule']?['doctor']?['userName'] ?? '')
+                  .toString();
             }
             if (rawDocName.isEmpty) {
               rawDocName = (appt['userName'] ?? '').toString();
@@ -79,8 +83,7 @@ class UpcomingAppointmentsSection extends StatelessWidget {
               rawDocName = (appt['UserName'] ?? '').toString();
             }
 
-            final doctorName =
-                (rawDocName.isEmpty || rawDocName == 'null')
+            final doctorName = (rawDocName.isEmpty || rawDocName == 'null')
                 ? 'Unknown Doctor'
                 : rawDocName;
 
@@ -252,27 +255,32 @@ class UpcomingAppointmentsSection extends StatelessWidget {
                 state.processingBookingId == bookingId;
 
             // ── Pay Now detection ────────────────────────────────────────────
-            // The API doesn't return paymentMethod, so we show Pay Now for
-            // all confirmed/approved appointments and let the server validate.
-            final rawStatus = (appt['status'] ?? '').toString().toLowerCase();
-            final isConfirmed =
-                rawStatus.contains('confirm') ||
-                rawStatus.contains('accept') ||
-                rawStatus.contains('approv');
-            final rawPayStatus =
-                (appt['paymentStatus'] ?? appt['PaymentStatus'] ?? '')
+            final paymentMethodStr =
+                (appt['paymentMethod'] ?? appt['PaymentMethod'] ?? '')
                     .toString()
                     .toLowerCase();
-            final isPaid =
-                rawPayStatus.contains('paid') ||
-                rawPayStatus.contains('complet') ||
-                rawPayStatus.contains('success') ||
-                rawStatus == 'paid';
-            final paymentMethodStr = (appt['paymentMethod'] ?? appt['PaymentMethod'] ?? '')
-                .toString()
-                .toLowerCase();
-            final isOnlinePayment = paymentMethodStr.contains('online') || paymentMethodStr.contains('card') || paymentMethodStr.contains('visa');
-            final isPayable = isConfirmed && !isPaid && isOnlinePayment;
+            final isOnlinePayment =
+                paymentMethodStr.contains('online') ||
+                paymentMethodStr.contains('card') ||
+                paymentMethodStr.contains('visa');
+            final rawPaymentStatus = (appt['paymentStatus'] ?? appt['PaymentStatus'] ?? '').toString().toLowerCase().trim();
+            final rawStatus = (appt['status'] ?? '').toString().toLowerCase().trim();
+            
+            print('🔴🔴🔴🔴🔴🔴🔴🔴 APPT DEBUG START 🔴🔴🔴🔴🔴🔴🔴🔴');
+            print('🎯 Appt = $appt');
+            print('🎯 Status = ${appt['status']}');
+            print('🎯 PaymentMethod = ${appt['paymentMethod']}');
+            print('🎯 PaymentStatus = ${appt['paymentStatus']}');
+            print('🔴🔴🔴🔴🔴🔴🔴🔴 APPT DEBUG END 🔴🔴🔴🔴🔴🔴🔴🔴');
+
+            final isAccepted = rawStatus.contains('accept') ||
+                               rawStatus.contains('approve') ||
+                               rawStatus.contains('confirm') ||
+                               rawStatus == '2' ||
+                               rawStatus == '1';
+
+            final isPaid = rawPaymentStatus == 'paid' || rawPaymentStatus == '1';
+            final isPayable = isOnlinePayment && isAccepted && !isPaid;
             // ────────────────────────────────────────────────────────────────
 
             // Extract amount & names for payment screen

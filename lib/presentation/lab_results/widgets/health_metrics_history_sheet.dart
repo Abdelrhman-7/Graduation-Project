@@ -5,9 +5,12 @@ import '../../../../core/resources/color_manager.dart';
 import '../../../../data/repository/shared_pref_controller.dart';
 import 'package:intl/intl.dart';
 
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../data/repository/repository.dart';
+
 Future<void> showHealthMetricsHistorySheet(BuildContext context) async {
-  final prefs = SharedPrefController();
-  final historyRaw = await prefs.getHealthMetricsHistory();
+  final repository = context.read<Repository>();
+  final historyRaw = await repository.getPatientHealthMetricsHistory();
   
   final history = historyRaw.map((e) {
     try {

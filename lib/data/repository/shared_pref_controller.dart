@@ -246,29 +246,32 @@ class SharedPrefController {
     final prefs = await SharedPreferences.getInstance();
     final List<String> history = List<String>.from(prefs.getStringList(_healthMetricsHistoryKey) ?? []);
     
-    // Add the new record as a JSON string at the beginning
-    // We assume 'dart:convert' is available, but if not we can build simple json string.
-    // It's safer to use dart:convert. Wait, I should add the import if needed.
-    // I will use a simple string serialization or import dart:convert at the top.
-    
-    final recordStr = '{"heartRate": "${record['heartRate']}", "bloodPressure": "${record['bloodPressure']}", "bloodSugar": "${record['bloodSugar']}", "weight": "${record['weight']}", "notes": "${record['notes']}", "timestamp": "${record['timestamp']}"}';
+    final recordStr = '{"patientId": "${record['patientId']}", "heartRate": "${record['heartRate']}", "bloodPressure": "${record['bloodPressure']}", "bloodSugar": "${record['bloodSugar']}", "weight": "${record['weight']}", "notes": "${record['notes']}", "timestamp": "${record['timestamp']}"}';
     
     history.insert(0, recordStr);
     await prefs.setStringList(_healthMetricsHistoryKey, history);
   }
 
-  Future<List<String>> getHealthMetricsHistory() async {
+  Future<List<String>> getHealthMetricsHistory([String? patientId]) async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getStringList(_healthMetricsHistoryKey) ?? [];
+    final allHistory = prefs.getStringList(_healthMetricsHistoryKey) ?? [];
+    
+    if (patientId == null || patientId.isEmpty) {
+      return allHistory;
+    }
+    
+    return allHistory.where((recordStr) {
+      final match = RegExp(r'"patientId":\s*"([^"]+)"').firstMatch(recordStr);
+      final storedPatientId = match?.group(1) ?? '';
+      return storedPatientId == patientId;
+    }).toList();
   }
 
-  Future<Map<String, String>> getHealthMetrics() async {
-    final prefs = await SharedPreferences.getInstance();
-    final history = prefs.getStringList(_healthMetricsHistoryKey) ?? [];
+  Future<Map<String, String>> getHealthMetrics([String? patientId]) async {
+    final history = await getHealthMetricsHistory(patientId);
     
     if (history.isNotEmpty) {
       final latest = history.first;
-      // manual parsing for simplicity if dart:convert is not imported
       final hrMatch = RegExp(r'"heartRate":\s*"([^"]+)"').firstMatch(latest);
       final bpMatch = RegExp(r'"bloodPressure":\s*"([^"]+)"').firstMatch(latest);
       
